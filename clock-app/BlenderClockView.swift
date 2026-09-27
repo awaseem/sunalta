@@ -4,13 +4,15 @@ import UIKit
 
 /// Renders the original Blender vertices and corner normals, without substituting a font.
 struct BlenderClockView: UIViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
     let date: Date
 
     func makeUIView(context: Context) -> ClockRenderView {
-        ClockRenderView()
+        ClockRenderView(colorScheme: colorScheme)
     }
 
     func updateUIView(_ view: ClockRenderView, context: Context) {
+        view.applyAppearance(colorScheme)
         let components = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
         let time = String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
         view.show(time: time)
@@ -20,6 +22,8 @@ struct BlenderClockView: UIViewRepresentable {
 
 final class ClockRenderView: ARView {
     private let clock = Entity()
+    private let backdrop = ModelEntity()
+    private var appliedColorScheme: ColorScheme?
     private let placement = Entity()
     private var cameraRestOffset = SIMD3<Float>.zero
     private var angles = SIMD2<Float>.zero
@@ -32,9 +36,8 @@ final class ClockRenderView: ARView {
     private var glyphs: [Character: ModelEntity] = [:]
     private var displayedTime: String?
 
-    init() {
+    init(colorScheme: ColorScheme) {
         super.init(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
-        environment.background = .color(UIColor(white: 0.07, alpha: 1))
         renderOptions = [.disableMotionBlur, .disableDepthOfField, .disableCameraGrain]
         isAccessibilityElement = true
         accessibilityTraits = .staticText
@@ -62,14 +65,9 @@ final class ClockRenderView: ARView {
             depthBias: 0.1
         )
         placement.addChild(key)
-        environment.lighting.intensityExponent = -2
-
-        var backdropMaterial = PhysicallyBasedMaterial()
-        backdropMaterial.baseColor = .init(tint: UIColor(white: 0.10, alpha: 1))
-        backdropMaterial.roughness = .init(floatLiteral: 1)
-        let backdrop = ModelEntity(
+        backdrop.model = ModelComponent(
             mesh: .generatePlane(width: 200, height: 200),
-            materials: [backdropMaterial]
+            materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
         backdrop.position.z = -0.04
@@ -80,7 +78,7 @@ final class ClockRenderView: ARView {
         } catch {
             let message = UILabel()
             message.text = "Unable to load Blender numerals"
-            message.textColor = .lightGray
+            message.textColor = .label
             message.textAlignment = .center
             message.numberOfLines = 0
             message.translatesAutoresizingMaskIntoConstraints = false
@@ -92,13 +90,32 @@ final class ClockRenderView: ARView {
             ])
             assertionFailure("Numeral asset failed to load: \(error)")
         }
+        applyAppearance(colorScheme)
     }
 
     @available(*, unavailable)
-    required init(frame frameRect: CGRect) { fatalError("Use init()") }
+    required init(frame frameRect: CGRect) { fatalError("Use init(colorScheme:)") }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("Use init()") }
+    required init?(coder: NSCoder) { fatalError("Use init(colorScheme:)") }
+
+    func applyAppearance(_ colorScheme: ColorScheme) {
+        guard appliedColorScheme != colorScheme else { return }
+        appliedColorScheme = colorScheme
+        let appearance = ClockAppearance(colorScheme: colorScheme)
+        environment.background = .color(appearance.backdropColor)
+        environment.lighting.intensityExponent = appearance.ambientIntensityExponent
+        backdrop.model?.materials = [appearance.backdropMaterial]
+
+        // Update both the visible digits and prototypes used by the next minute.
+        let material = appearance.numeralMaterial
+        for glyph in glyphs.values {
+            glyph.model?.materials = [material]
+        }
+        for case let glyph as ModelEntity in clock.children {
+            glyph.model?.materials = [material]
+        }
+    }
 
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -223,11 +240,6 @@ final class ClockRenderView: ARView {
             throw CocoaError(.fileNoSuchFile)
         }
         let data = try JSONDecoder().decode([String: MeshData].self, from: Data(contentsOf: url))
-        var material = PhysicallyBasedMaterial()
-        // Matte white faces and broad chamfers, like the supplied reference.
-        material.baseColor = .init(tint: UIColor(white: 0.92, alpha: 1))
-        material.metallic = .init(floatLiteral: 0)
-        material.roughness = .init(floatLiteral: 0.8)
         var result: [Character: ModelEntity] = [:]
         for character in "0123456789:" {
             guard let source = data[String(character)],
@@ -242,7 +254,7 @@ final class ClockRenderView: ARView {
             descriptor.normals = MeshBuffers.Normals(source.normals.map { SIMD3($0[0], $0[1], $0[2]) })
             descriptor.primitives = .triangles(source.indices)
             let mesh = try MeshResource.generate(from: [descriptor])
-            result[character] = ModelEntity(mesh: mesh, materials: [material])
+            result[character] = ModelEntity(mesh: mesh, materials: [])
         }
         return result
     }

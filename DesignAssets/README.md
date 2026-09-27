@@ -2,7 +2,7 @@
 
 `Blender/daybreak-chamfered-block.blend` is the editable source for the chamfered block numerals. It contains a clock composition and the full digit set with a colon.
 
-The iOS app renders the original meshes in RealityKit. `clock-app/Resources/Numerals.json` contains local-space vertices, triangle indices, and per-corner normals for `0–9` and `:`. Keeping the corner normals preserves the flat chamfers. The app uses matte white material on the original geometry, a charcoal shadow-receiving backdrop, and a fixed upper-right directional light, following the supplied visual reference. The Blender source materials are unchanged.
+The iOS app renders the original meshes in RealityKit. `clock-app/Resources/Numerals.json` contains local-space vertices, triangle indices, and per-corner normals for `0–9` and `:`. Keeping the corner normals preserves the flat chamfers. The app follows the system appearance: dark mode uses matte white numerals on charcoal, and light mode uses graphite numerals on an off-white backdrop with more ambient fill. Both use a fixed upper-right directional light and a shadow-receiving backdrop. `clock-app/ClockAppearance.swift` defines the materials and ambient lighting; `BlenderClockView` observes SwiftUI’s `colorScheme` and updates both visible numerals and cached prototypes when it changes. The Blender source materials are unchanged.
 
 To regenerate after editing the Blender source, run from the repository root:
 

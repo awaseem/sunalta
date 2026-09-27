@@ -6,11 +6,16 @@ struct ContentView: View {
             BlenderClockView(date: context.date)
                 .ignoresSafeArea()
         }
-        .background(Color(white: 0.07))
-        .preferredColorScheme(.dark)
+        .background(Color(uiColor: .systemBackground))
     }
 }
 
-#Preview {
+#Preview("Light") {
     ContentView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    ContentView()
+        .preferredColorScheme(.dark)
 }
