@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct clock_appApp: App {
@@ -6,5 +7,6 @@ struct clock_appApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self])
     }
 }

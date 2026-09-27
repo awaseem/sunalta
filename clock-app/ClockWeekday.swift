@@ -1,6 +1,5 @@
 import Foundation
 
-/// Calendar.weekday uses Sunday = 1, regardless of the user's first weekday setting.
 enum ClockWeekday: Int, CaseIterable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 

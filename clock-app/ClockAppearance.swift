@@ -2,7 +2,6 @@ import RealityKit
 import SwiftUI
 import UIKit
 
-/// Material and lighting choices for the same 3D scene in each system appearance.
 struct ClockAppearance {
     let numeralColor: UIColor
     let backdropColor: UIColor

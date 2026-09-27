@@ -2,7 +2,6 @@ import RealityKit
 import SwiftUI
 import UIKit
 
-/// Renders the original Blender vertices and corner normals, without substituting a font.
 struct BlenderClockView: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let date: Date
@@ -48,16 +47,12 @@ final class ClockRenderView: ARView {
         anchor.addChild(placement)
         placement.addChild(calendarDetails)
         placement.addChild(clock)
-        // Stretch the numeral set vertically without changing width or depth.
         clock.scale.y = 1.25
-        // Face the camera directly; a narrow field of view minimizes perspective.
         camera.camera.fieldOfViewInDegrees = 12
         addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(pan(_:))))
         accessibilityHint = "Drag to change the viewing angle; release to return to the front view"
         anchor.addChild(camera)
 
-        // Light and geometry stay in world space. Only the camera orbits,
-        // so highlights and cast shadows stay tied to the same light source.
         let key = DirectionalLight()
         key.light.intensity = 2600
         key.light.color = .white
@@ -112,7 +107,6 @@ final class ClockRenderView: ARView {
         environment.lighting.intensityExponent = appearance.ambientIntensityExponent
         backdrop.model?.materials = [appearance.backdropMaterial]
 
-        // Update both the visible digits and prototypes used by the next minute.
         let material = appearance.numeralMaterial
         for glyph in glyphs.values {
             glyph.model?.materials = [material]
@@ -130,10 +124,7 @@ final class ClockRenderView: ARView {
         let aspect = Float(bounds.width / bounds.height)
         let visibleHeight = max(12.3, 7.0 / aspect)
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
-        // Orbit about the clock's center while retaining its screen position
-        // in the top third. No glyph translation or rotation is applied.
         let usableHeight = bounds.height - safeAreaInsets.top - safeAreaInsets.bottom
-        // Leave room above the numerals for the small planetary symbol.
         let centerFromTop = safeAreaInsets.top + usableHeight / 6 + 36
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
@@ -144,8 +135,6 @@ final class ClockRenderView: ARView {
 
     private func layoutCalendarDetails() {
         guard bounds.height > 0, cameraRestOffset.z > 0, !clock.children.isEmpty else { return }
-        // Align to the numeral group's actual edges, including its vertical stretch.
-        // Compensate for depth so smaller meshes can sit on the wall and still align.
         let timeBounds = clock.visualBounds(relativeTo: placement)
         let unitsPerPoint = (cameraRestOffset.z - timeBounds.max.z) * 2
             * tan(Float(6 * Double.pi / 180)) / Float(bounds.height)
@@ -230,7 +219,6 @@ final class ClockRenderView: ARView {
     @objc private func returnToCenter(_ link: CADisplayLink) {
         let elapsed = lastFrame == 0 ? link.duration : link.timestamp - lastFrame
         lastFrame = link.timestamp
-        // Small integration steps keep the spring stable at any refresh rate.
         let duration = Float(min(elapsed, 1.0 / 30))
         let steps = max(1, Int(ceil(duration / (1.0 / 240))))
         let dt = duration / Float(steps)
@@ -282,7 +270,6 @@ final class ClockRenderView: ARView {
             guard let prototype = glyphs[String(character)] else { continue }
             let glyph = prototype.clone(recursive: true)
             let bounds = glyph.visualBounds(relativeTo: glyph)
-            // Pack actual mesh edges, including narrow digits such as 1.
             glyph.position.x = cursor - bounds.min.x
             if character == ":" {
                 glyph.position.y = -bounds.center.y
