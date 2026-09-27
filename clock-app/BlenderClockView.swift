@@ -13,16 +13,17 @@ struct BlenderClockView: UIViewRepresentable {
 
     func updateUIView(_ view: ClockRenderView, context: Context) {
         view.applyAppearance(colorScheme)
-        let components = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
-        let time = String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
-        view.show(time: time)
-        view.accessibilityLabel = "Time, \(time)"
+        view.show(date: date)
     }
 }
 
 final class ClockRenderView: ARView {
     private let clock = Entity()
     private let backdrop = ModelEntity()
+    private let calendarDetails = Entity()
+    private var weekdayLabel: ModelEntity?
+    private var weekdaySymbol: ModelEntity?
+    private var displayedWeekday: ClockWeekday?
     private var appliedColorScheme: ColorScheme?
     private let placement = Entity()
     private var cameraRestOffset = SIMD3<Float>.zero
@@ -33,7 +34,7 @@ final class ClockRenderView: ARView {
     private var returnLink: CADisplayLink?
     private var lastFrame: CFTimeInterval = 0
     private let camera = PerspectiveCamera()
-    private var glyphs: [Character: ModelEntity] = [:]
+    private var glyphs: [String: ModelEntity] = [:]
     private var displayedTime: String?
 
     init(colorScheme: ColorScheme) {
@@ -45,6 +46,7 @@ final class ClockRenderView: ARView {
         let anchor = AnchorEntity(world: .zero)
         scene.addAnchor(anchor)
         anchor.addChild(placement)
+        placement.addChild(calendarDetails)
         placement.addChild(clock)
         // Stretch the numeral set vertically without changing width or depth.
         clock.scale.y = 1.25
@@ -74,10 +76,13 @@ final class ClockRenderView: ARView {
         anchor.addChild(backdrop)
 
         do {
-            glyphs = try Self.loadGlyphs()
+            glyphs = try Self.loadGlyphs(resource: "Numerals", keys: "0123456789:".map(String.init))
+            let weekdayKeys = ClockWeekday.allCases.flatMap { [$0.abbreviation, $0.symbol] }
+            let weekdays = try Self.loadGlyphs(resource: "Weekdays", keys: weekdayKeys)
+            glyphs.merge(weekdays) { _, new in new }
         } catch {
             let message = UILabel()
-            message.text = "Unable to load Blender numerals"
+            message.text = "Unable to load Blender clock assets"
             message.textColor = .label
             message.textAlignment = .center
             message.numberOfLines = 0
@@ -112,8 +117,10 @@ final class ClockRenderView: ARView {
         for glyph in glyphs.values {
             glyph.model?.materials = [material]
         }
-        for case let glyph as ModelEntity in clock.children {
-            glyph.model?.materials = [material]
+        for container in [clock, calendarDetails] {
+            for case let glyph as ModelEntity in container.children {
+                glyph.model?.materials = [material]
+            }
         }
     }
 
@@ -126,11 +133,49 @@ final class ClockRenderView: ARView {
         // Orbit about the clock's center while retaining its screen position
         // in the top third. No glyph translation or rotation is applied.
         let usableHeight = bounds.height - safeAreaInsets.top - safeAreaInsets.bottom
-        let centerFromTop = safeAreaInsets.top + usableHeight / 6
+        // Leave room above the numerals for the small planetary symbol.
+        let centerFromTop = safeAreaInsets.top + usableHeight / 6 + 36
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
+        layoutCalendarDetails()
         applyViewingAngle()
+    }
+
+    private func layoutCalendarDetails() {
+        guard bounds.height > 0, cameraRestOffset.z > 0, !clock.children.isEmpty else { return }
+        // Align to the numeral group's actual edges, including its vertical stretch.
+        // Compensate for depth so smaller meshes can sit on the wall and still align.
+        let timeBounds = clock.visualBounds(relativeTo: placement)
+        let unitsPerPoint = (cameraRestOffset.z - timeBounds.max.z) * 2
+            * tan(Float(6 * Double.pi / 180)) / Float(bounds.height)
+        let gap = 12 * unitsPerPoint
+        if let label = weekdayLabel {
+            let meshBounds = label.visualBounds(relativeTo: label)
+            let scale = 28 * unitsPerPoint / meshBounds.extents.y
+            label.scale = [scale / 1.25, scale, scale / 1.25]
+            let depthRatio = (cameraRestOffset.z - 0.025 - meshBounds.max.z * label.scale.z)
+                / (cameraRestOffset.z - timeBounds.max.z)
+            label.position = [
+                timeBounds.min.x * depthRatio - meshBounds.min.x * label.scale.x,
+                (placement.position.y + timeBounds.min.y - gap) * depthRatio
+                    - placement.position.y - meshBounds.max.y * scale,
+                0.025
+            ]
+        }
+        if let symbol = weekdaySymbol {
+            let meshBounds = symbol.visualBounds(relativeTo: symbol)
+            let scale = 26 * unitsPerPoint / max(meshBounds.extents.x, meshBounds.extents.y)
+            symbol.scale = SIMD3(repeating: scale)
+            let depthRatio = (cameraRestOffset.z - 0.025 - meshBounds.max.z * scale)
+                / (cameraRestOffset.z - timeBounds.max.z)
+            symbol.position = [
+                timeBounds.max.x * depthRatio - meshBounds.max.x * scale,
+                (placement.position.y + timeBounds.max.y + gap) * depthRatio
+                    - placement.position.y - meshBounds.min.y * scale,
+                0.025
+            ]
+        }
     }
 
     private func applyViewingAngle() {
@@ -207,13 +252,34 @@ final class ClockRenderView: ARView {
         velocity = .zero
     }
 
-    func show(time: String) {
+    func show(date: Date) {
+        let components = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
+        let time = String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
+        let weekday = ClockWeekday(date: date)
+        accessibilityLabel = "\(weekday.name), time, \(time)"
+        if displayedWeekday != weekday,
+           let label = glyphs[weekday.abbreviation], let symbol = glyphs[weekday.symbol] {
+            displayedWeekday = weekday
+            calendarDetails.children.removeAll()
+            let newLabel = label.clone(recursive: true)
+            let newSymbol = symbol.clone(recursive: true)
+            calendarDetails.addChild(newLabel)
+            calendarDetails.addChild(newSymbol)
+            weekdayLabel = newLabel
+            weekdaySymbol = newSymbol
+            layoutCalendarDetails()
+        }
+        show(time: time)
+        layoutCalendarDetails()
+    }
+
+    private func show(time: String) {
         guard time != displayedTime, !glyphs.isEmpty else { return }
         displayedTime = time
         clock.children.removeAll()
         var cursor: Float = 0
         for character in time {
-            guard let prototype = glyphs[character] else { continue }
+            guard let prototype = glyphs[String(character)] else { continue }
             let glyph = prototype.clone(recursive: true)
             let bounds = glyph.visualBounds(relativeTo: glyph)
             // Pack actual mesh edges, including narrow digits such as 1.
@@ -230,18 +296,18 @@ final class ClockRenderView: ARView {
         }
     }
 
-    private static func loadGlyphs() throws -> [Character: ModelEntity] {
+    private static func loadGlyphs(resource: String, keys: [String]) throws -> [String: ModelEntity] {
         struct MeshData: Decodable {
             let positions: [[Float]]
             let normals: [[Float]]
             let indices: [UInt32]
         }
-        guard let url = Bundle.main.url(forResource: "Numerals", withExtension: "json") else {
+        guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
             throw CocoaError(.fileNoSuchFile)
         }
         let data = try JSONDecoder().decode([String: MeshData].self, from: Data(contentsOf: url))
-        var result: [Character: ModelEntity] = [:]
-        for character in "0123456789:" {
+        var result: [String: ModelEntity] = [:]
+        for character in keys {
             guard let source = data[String(character)],
                   source.positions.count == source.normals.count,
                   source.positions.allSatisfy({ $0.count == 3 }),
