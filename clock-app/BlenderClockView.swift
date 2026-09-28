@@ -22,18 +22,28 @@ struct AlarmClockPreview: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let time: String
     let days: Set<ClockWeekday>
+    let previewHeight: CGFloat
+    let contentSafeAreaInsets: UIEdgeInsets
 
     func makeUIView(context: Context) -> ClockRenderView {
         ClockRenderView(colorScheme: colorScheme, isAlarmPreview: true)
     }
 
     func updateUIView(_ view: ClockRenderView, context: Context) {
+        view.contentSafeAreaInsets = contentSafeAreaInsets
+        view.previewHeight = previewHeight
         view.applyAppearance(colorScheme)
         view.showAlarm(time: time, days: days)
     }
 }
 
 final class ClockRenderView: ARView {
+    var previewHeight: CGFloat = 240 {
+        didSet { if oldValue != previewHeight { setNeedsLayout() } }
+    }
+    private static var glyphCache: [String: [String: ModelEntity]] = [:]
+    private var glyphBounds: [String: BoundingBox] = [:]
+    private var timeSlots: [ModelEntity] = []
     private let isAlarmPreview: Bool
     private var displayedRepeatDays: Set<ClockWeekday>?
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
@@ -77,8 +87,9 @@ final class ClockRenderView: ARView {
         let orbitGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         orbitGesture.delegate = self
         addGestureRecognizer(orbitGesture)
-        accessibilityHint = "Drag horizontally to change the viewing angle. Swipe up to see alarms."
-        if isAlarmPreview { accessibilityHint = "Drag horizontally to explore the alarm preview" }
+        accessibilityHint = isAlarmPreview
+            ? "Drag to change the viewing angle. Release to return to the front view."
+            : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
 
         let key = DirectionalLight()
@@ -103,6 +114,7 @@ final class ClockRenderView: ARView {
             let weekdayKeys = ClockWeekday.allCases.flatMap { [$0.abbreviation, $0.symbol] }
             let weekdays = try Self.loadGlyphs(resource: "Weekdays", keys: weekdayKeys)
             glyphs.merge(weekdays) { _, new in new }
+            glyphBounds = glyphs.mapValues { $0.visualBounds(relativeTo: $0) }
         } catch {
             let message = UILabel()
             message.text = "Unable to load Blender clock assets"
@@ -150,12 +162,17 @@ final class ClockRenderView: ARView {
         super.layoutSubviews()
         guard bounds.width > 0, bounds.height > 0 else { return }
         let aspect = Float(bounds.width / bounds.height)
-        let visibleHeight = isAlarmPreview ? max(8.0, 7.0 / aspect) : max(12.3, 7.0 / aspect)
+        // The preview's lit backdrop fills the entire modal, eliminating color seams.
+        let visibleHeight = isAlarmPreview
+            ? max(Float(bounds.height / max(previewHeight, 1)) * 5.8, 7.0 / aspect)
+            : max(12.3, 7.0 / aspect)
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
         let topInset = max(safeAreaInsets.top, contentSafeAreaInsets.top)
         let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
         let usableHeight = bounds.height - topInset - bottomInset
-        let centerFromTop = isAlarmPreview ? bounds.height * 0.38 : topInset + usableHeight / 6 + 36
+        let centerFromTop = isAlarmPreview
+            ? topInset + 44 + previewHeight * 0.40
+            : topInset + usableHeight / 6 + 36
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
@@ -218,6 +235,7 @@ final class ClockRenderView: ARView {
     }
 
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if isAlarmPreview { return true }
         guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
         let velocity = pan.velocity(in: self)
         return abs(velocity.x) > abs(velocity.y)
@@ -302,6 +320,7 @@ final class ClockRenderView: ARView {
     }
 
     func showAlarm(time: String, days: Set<ClockWeekday>) {
+        guard displayedTime != time || displayedRepeatDays != days else { return }
         show(time: time)
         if displayedRepeatDays != days {
             displayedRepeatDays = days
@@ -341,19 +360,27 @@ final class ClockRenderView: ARView {
 
     private func show(time: String) {
         guard time != displayedTime, !glyphs.isEmpty else { return }
+        let previous = Array(displayedTime ?? "")
         displayedTime = time
-        clock.children.removeAll()
+        let characters = Array(time)
+        // Keep the same five scene entities. Only changed slots receive a cached model.
+        while timeSlots.count < characters.count {
+            let slot = ModelEntity()
+            clock.addChild(slot)
+            timeSlots.append(slot)
+        }
         var cursor: Float = 0
-        for character in time {
-            guard let prototype = glyphs[String(character)] else { continue }
-            let glyph = prototype.clone(recursive: true)
-            let bounds = glyph.visualBounds(relativeTo: glyph)
-            glyph.position.x = cursor - bounds.min.x
-            if character == ":" {
-                glyph.position.y = -bounds.center.y
+        for (index, character) in characters.enumerated() {
+            let key = String(character)
+            guard let prototype = glyphs[key], let bounds = glyphBounds[key] else { continue }
+            let glyph = timeSlots[index]
+            if index >= previous.count || previous[index] != character {
+                glyph.model = prototype.model
             }
-            clock.addChild(glyph)
-            cursor += bounds.extents.x + 0.12
+            let width: Float = isAlarmPreview && character != ":" ? 1.35 : bounds.extents.x
+            glyph.position = [cursor + width / 2 - bounds.center.x,
+                              character == ":" ? -bounds.center.y : 0, 0]
+            cursor += width + 0.12
         }
         let width = cursor - 0.12
         for glyph in clock.children {
@@ -362,6 +389,9 @@ final class ClockRenderView: ARView {
     }
 
     private static func loadGlyphs(resource: String, keys: [String]) throws -> [String: ModelEntity] {
+        if let cached = glyphCache[resource] {
+            return cached.mapValues { $0.clone(recursive: true) }
+        }
         struct MeshData: Decodable {
             let positions: [[Float]]
             let normals: [[Float]]
@@ -387,6 +417,7 @@ final class ClockRenderView: ARView {
             let mesh = try MeshResource.generate(from: [descriptor])
             result[character] = ModelEntity(mesh: mesh, materials: [])
         }
-        return result
+        glyphCache[resource] = result
+        return result.mapValues { $0.clone(recursive: true) }
     }
 }
