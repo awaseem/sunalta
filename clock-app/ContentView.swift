@@ -2,13 +2,19 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var isScrolling = false
+    @State private var isClockVisible = true
+
     var body: some View {
         GeometryReader { geometry in
             let pageHeight = geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
                     TimelineView(.everyMinute) { context in
-                        BlenderClockView(date: context.date, contentSafeAreaInsets: UIEdgeInsets(
+                        BlenderClockView(date: context.date, isScrolling: isScrolling,
+                                         isVisible: isClockVisible && scenePhase == .active,
+                                         contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
                             bottom: geometry.safeAreaInsets.bottom, right: 0
                         ))
@@ -35,6 +41,14 @@ struct ContentView: View {
             .scrollIndicators(.hidden)
             .defaultScrollAnchor(.top)
             .scrollTargetBehavior(.paging)
+            .onScrollPhaseChange { _, phase in
+                isScrolling = phase != .idle
+            }
+            .onScrollGeometryChange(for: Bool.self) { scroll in
+                scroll.contentOffset.y < pageHeight
+            } action: { _, visible in
+                isClockVisible = visible
+            }
             .frame(height: pageHeight)
             .ignoresSafeArea()
         }
