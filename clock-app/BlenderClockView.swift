@@ -18,7 +18,24 @@ struct BlenderClockView: UIViewRepresentable {
     }
 }
 
+struct AlarmClockPreview: UIViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
+    let time: String
+    let days: Set<ClockWeekday>
+
+    func makeUIView(context: Context) -> ClockRenderView {
+        ClockRenderView(colorScheme: colorScheme, isAlarmPreview: true)
+    }
+
+    func updateUIView(_ view: ClockRenderView, context: Context) {
+        view.applyAppearance(colorScheme)
+        view.showAlarm(time: time, days: days)
+    }
+}
+
 final class ClockRenderView: ARView {
+    private let isAlarmPreview: Bool
+    private var displayedRepeatDays: Set<ClockWeekday>?
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
         didSet {
             if oldValue != contentSafeAreaInsets { setNeedsLayout() }
@@ -43,7 +60,8 @@ final class ClockRenderView: ARView {
     private var glyphs: [String: ModelEntity] = [:]
     private var displayedTime: String?
 
-    init(colorScheme: ColorScheme) {
+    init(colorScheme: ColorScheme, isAlarmPreview: Bool = false) {
+        self.isAlarmPreview = isAlarmPreview
         super.init(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         renderOptions = [.disableMotionBlur, .disableDepthOfField, .disableCameraGrain]
         isAccessibilityElement = true
@@ -60,6 +78,7 @@ final class ClockRenderView: ARView {
         orbitGesture.delegate = self
         addGestureRecognizer(orbitGesture)
         accessibilityHint = "Drag horizontally to change the viewing angle. Swipe up to see alarms."
+        if isAlarmPreview { accessibilityHint = "Drag horizontally to explore the alarm preview" }
         anchor.addChild(camera)
 
         let key = DirectionalLight()
@@ -131,12 +150,12 @@ final class ClockRenderView: ARView {
         super.layoutSubviews()
         guard bounds.width > 0, bounds.height > 0 else { return }
         let aspect = Float(bounds.width / bounds.height)
-        let visibleHeight = max(12.3, 7.0 / aspect)
+        let visibleHeight = isAlarmPreview ? max(8.0, 7.0 / aspect) : max(12.3, 7.0 / aspect)
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
         let topInset = max(safeAreaInsets.top, contentSafeAreaInsets.top)
         let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
         let usableHeight = bounds.height - topInset - bottomInset
-        let centerFromTop = topInset + usableHeight / 6 + 36
+        let centerFromTop = isAlarmPreview ? bounds.height * 0.38 : topInset + usableHeight / 6 + 36
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
@@ -146,6 +165,10 @@ final class ClockRenderView: ARView {
 
     private func layoutCalendarDetails() {
         guard bounds.height > 0, cameraRestOffset.z > 0, !clock.children.isEmpty else { return }
+        if isAlarmPreview {
+            layoutRepeatDays()
+            return
+        }
         let timeBounds = clock.visualBounds(relativeTo: placement)
         let unitsPerPoint = (cameraRestOffset.z - timeBounds.max.z) * 2
             * tan(Float(6 * Double.pi / 180)) / Float(bounds.height)
@@ -276,6 +299,44 @@ final class ClockRenderView: ARView {
         }
         show(time: time)
         layoutCalendarDetails()
+    }
+
+    func showAlarm(time: String, days: Set<ClockWeekday>) {
+        show(time: time)
+        if displayedRepeatDays != days {
+            displayedRepeatDays = days
+            calendarDetails.children.removeAll()
+            for day in AlarmRepeatSummary.orderedDays where days.contains(day) {
+                if let glyph = glyphs[day.abbreviation] {
+                    calendarDetails.addChild(glyph.clone(recursive: true))
+                }
+            }
+        }
+        layoutCalendarDetails()
+        accessibilityLabel = "\(time), \(AlarmRepeatSummary.text(for: days))"
+    }
+
+    private func layoutRepeatDays() {
+        let labels = calendarDetails.children.compactMap { $0 as? ModelEntity }
+        guard !labels.isEmpty else { return }
+        let timeBounds = clock.visualBounds(relativeTo: placement)
+        let gap: Float = 0.18
+        let widths = labels.map { label -> Float in
+            label.scale = SIMD3(repeating: 1)
+            let bounds = label.visualBounds(relativeTo: label)
+            return bounds.extents.x * 0.60 / bounds.extents.y
+        }
+        let totalWidth = widths.reduce(0, +) + gap * Float(labels.count - 1)
+        let fit = min(1, timeBounds.extents.x / totalWidth)
+        var cursor = -totalWidth * fit / 2
+        for (index, label) in labels.enumerated() {
+            let bounds = label.visualBounds(relativeTo: label)
+            let scale = 0.60 / bounds.extents.y * fit
+            label.scale = SIMD3(repeating: scale)
+            label.position = [cursor - bounds.min.x * scale,
+                              timeBounds.min.y - 0.35 - bounds.max.y * scale, 0.025]
+            cursor += (widths[index] + gap) * fit
+        }
     }
 
     private func show(time: String) {

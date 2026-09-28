@@ -4,6 +4,7 @@ import SwiftUI
 struct AlarmListPage: View {
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
+    @State private var showingNewAlarm = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
@@ -12,19 +13,39 @@ struct AlarmListPage: View {
                 .frame(minHeight: 44)
                 .accessibilityLabel("Swipe down to return to the clock")
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Alarms")
-                    .font(.largeTitle.bold())
-                    .accessibilityAddTraits(.isHeader)
-                Text(alarms.isEmpty ? "Your mornings, at your pace." : "Your daily rhythm.")
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Alarms")
+                        .font(.largeTitle.bold())
+                        .accessibilityAddTraits(.isHeader)
+                    Text(alarms.isEmpty ? "Your mornings, at your pace." : "Your daily rhythm.")
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 12)
+                Button {
+                    showingNewAlarm = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.title3.weight(.semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.circle)
+                .tint(.primary)
+                .accessibilityLabel("Add alarm")
             }
 
             if alarms.isEmpty {
                 ContentUnavailableView {
                     Label("No alarms yet", systemImage: "alarm")
                 } description: {
-                    Text("Your saved alarms will appear here.")
+                    Text("Give your next morning a time.")
+                } actions: {
+                    Button("Add your first alarm") {
+                        showingNewAlarm = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.primary)
                 }
                 .padding(.top, 48)
             } else {
@@ -38,25 +59,17 @@ struct AlarmListPage: View {
         .padding(.horizontal, 24)
         .frame(maxWidth: 640)
         .frame(maxWidth: .infinity, alignment: .top)
+        .fullScreenCover(isPresented: $showingNewAlarm) {
+            NewAlarmView()
+        }
     }
 }
 
 private struct AlarmRow: View {
     let alarm: AlarmRecord
 
-    private var time: Date {
-        Calendar.autoupdatingCurrent.date(from: DateComponents(
-            year: 2001, month: 1, day: 1, hour: alarm.hour, minute: alarm.minute
-        )) ?? .distantPast
-    }
-
     private var repeatDescription: String {
-        let days = alarm.repeatDays
-        if days.isEmpty { return "Once" }
-        if days.count == 7 { return "Every day" }
-        if days == [.monday, .tuesday, .wednesday, .thursday, .friday] { return "Weekdays" }
-        if days == [.saturday, .sunday] { return "Weekends" }
-        return days.sorted { $0.rawValue < $1.rawValue }.map(\.abbreviation).joined(separator: ", ")
+        AlarmRepeatSummary.text(for: alarm.repeatDays)
     }
 
     var body: some View {
@@ -90,7 +103,7 @@ private struct AlarmRow: View {
     }
 
     private var timeLabel: some View {
-        Text(time, format: .dateTime.hour().minute())
+        Text(String(format: "%02d:%02d", alarm.hour, alarm.minute))
             .font(.system(.largeTitle, design: .rounded, weight: .regular))
             .monospacedDigit()
     }
