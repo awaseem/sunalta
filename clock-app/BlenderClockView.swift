@@ -5,18 +5,25 @@ import UIKit
 struct BlenderClockView: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let date: Date
+    var contentSafeAreaInsets: UIEdgeInsets = .zero
 
     func makeUIView(context: Context) -> ClockRenderView {
         ClockRenderView(colorScheme: colorScheme)
     }
 
     func updateUIView(_ view: ClockRenderView, context: Context) {
+        view.contentSafeAreaInsets = contentSafeAreaInsets
         view.applyAppearance(colorScheme)
         view.show(date: date)
     }
 }
 
 final class ClockRenderView: ARView {
+    var contentSafeAreaInsets: UIEdgeInsets = .zero {
+        didSet {
+            if oldValue != contentSafeAreaInsets { setNeedsLayout() }
+        }
+    }
     private let clock = Entity()
     private let backdrop = ModelEntity()
     private let calendarDetails = Entity()
@@ -49,8 +56,10 @@ final class ClockRenderView: ARView {
         placement.addChild(clock)
         clock.scale.y = 1.25
         camera.camera.fieldOfViewInDegrees = 12
-        addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(pan(_:))))
-        accessibilityHint = "Drag to change the viewing angle; release to return to the front view"
+        let orbitGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
+        orbitGesture.delegate = self
+        addGestureRecognizer(orbitGesture)
+        accessibilityHint = "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
 
         let key = DirectionalLight()
@@ -124,8 +133,10 @@ final class ClockRenderView: ARView {
         let aspect = Float(bounds.width / bounds.height)
         let visibleHeight = max(12.3, 7.0 / aspect)
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
-        let usableHeight = bounds.height - safeAreaInsets.top - safeAreaInsets.bottom
-        let centerFromTop = safeAreaInsets.top + usableHeight / 6 + 36
+        let topInset = max(safeAreaInsets.top, contentSafeAreaInsets.top)
+        let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
+        let usableHeight = bounds.height - topInset - bottomInset
+        let centerFromTop = topInset + usableHeight / 6 + 36
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
@@ -181,6 +192,12 @@ final class ClockRenderView: ARView {
             angles = .zero
             applyViewingAngle()
         }
+    }
+
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
+        let velocity = pan.velocity(in: self)
+        return abs(velocity.x) > abs(velocity.y)
     }
 
     @objc private func pan(_ recognizer: UIPanGestureRecognizer) {
