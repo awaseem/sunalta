@@ -1,0 +1,23 @@
+import SwiftUI
+import UIKit
+
+struct BlenderClockView: UIViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
+    let date: Date
+    var isScrolling = false
+    var isVisible = true
+    var contentSafeAreaInsets: UIEdgeInsets = .zero
+
+    func makeUIView(context: Context) -> ClockPageView {
+        ClockPageView(colorScheme: colorScheme)
+    }
+
+    func updateUIView(_ view: ClockPageView, context: Context) {
+        view.update(date: date, colorScheme: colorScheme, insets: contentSafeAreaInsets,
+                    isScrolling: isScrolling, isVisible: isVisible)
+    }
+
+    static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {
+        view.stop()
+    }
+}

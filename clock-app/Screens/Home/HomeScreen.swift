@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-struct ContentView: View {
+struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isScrolling = false
     @State private var isClockVisible = true
@@ -57,13 +57,13 @@ struct ContentView: View {
 }
 
 #Preview("Light") {
-    ContentView()
+    HomeScreen()
         .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    ContentView()
+    HomeScreen()
         .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

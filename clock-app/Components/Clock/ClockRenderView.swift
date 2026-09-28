@@ -2,46 +2,6 @@ import RealityKit
 import SwiftUI
 import UIKit
 
-struct BlenderClockView: UIViewRepresentable {
-    @Environment(\.colorScheme) private var colorScheme
-    let date: Date
-    var isScrolling = false
-    var isVisible = true
-    var contentSafeAreaInsets: UIEdgeInsets = .zero
-
-    func makeUIView(context: Context) -> ClockPageView {
-        ClockPageView(colorScheme: colorScheme)
-    }
-
-    func updateUIView(_ view: ClockPageView, context: Context) {
-        view.update(date: date, colorScheme: colorScheme, insets: contentSafeAreaInsets,
-                    isScrolling: isScrolling, isVisible: isVisible)
-    }
-
-    static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {
-        view.stop()
-    }
-}
-
-struct AlarmClockPreview: UIViewRepresentable {
-    @Environment(\.colorScheme) private var colorScheme
-    let time: String
-    let days: Set<ClockWeekday>
-    let previewHeight: CGFloat
-    let contentSafeAreaInsets: UIEdgeInsets
-
-    func makeUIView(context: Context) -> ClockRenderView {
-        ClockRenderView(colorScheme: colorScheme, isAlarmPreview: true)
-    }
-
-    func updateUIView(_ view: ClockRenderView, context: Context) {
-        view.contentSafeAreaInsets = contentSafeAreaInsets
-        view.previewHeight = previewHeight
-        view.applyAppearance(colorScheme)
-        view.showAlarm(time: time, days: days)
-    }
-}
-
 final class ClockRenderView: ARView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?

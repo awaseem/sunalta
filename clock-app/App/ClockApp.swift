@@ -2,10 +2,10 @@ import SwiftUI
 import SwiftData
 
 @main
-struct clock_appApp: App {
+struct ClockApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeScreen()
         }
         .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self])
     }
