@@ -13,6 +13,8 @@ final class ClockPageView: UIView {
     private var isScrolling = false
     private var isPageVisible = true
     private var isOrbiting = false
+    private var isEditingLighting = false
+    private var lighting = ClockLightingSettings()
     private var minute: Int?
     private var appearance: ColorScheme?
     private var insets: UIEdgeInsets = .zero
@@ -28,6 +30,11 @@ final class ClockPageView: UIView {
         accessibilityTraits = .staticText
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
+        renderer.onMaterialChanged = { [weak self] in
+            guard let self else { return }
+            invalidateSnapshot()
+            updatePresentation()
+        }
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
@@ -47,9 +54,21 @@ final class ClockPageView: UIView {
     required init?(coder: NSCoder) { fatalError("Use init(colorScheme:)") }
 
     func update(date: Date, colorScheme: ColorScheme, insets: UIEdgeInsets,
-                isScrolling: Bool, isVisible: Bool) {
+                isScrolling: Bool, isVisible: Bool,
+                lighting: ClockLightingSettings, isEditingLighting: Bool) {
         self.isScrolling = isScrolling
         isPageVisible = isVisible
+        self.isEditingLighting = isEditingLighting
+        if self.lighting != lighting {
+            self.lighting = lighting
+            invalidateSnapshot()
+            renderer.applyLighting(lighting)
+            still.isHidden = true
+        }
+        if isEditingLighting {
+            invalidateSnapshot()
+            still.isHidden = true
+        }
         let minute = Int(date.timeIntervalSince1970 / 60)
         if self.minute != minute || appearance != colorScheme || self.insets != insets {
             self.minute = minute
@@ -115,7 +134,7 @@ final class ClockPageView: UIView {
     }
 
     private func scheduleSnapshot() {
-        guard !hasCurrentSnapshot, snapshotTask == nil, !isOrbiting,
+        guard !hasCurrentSnapshot, snapshotTask == nil, !isOrbiting, !isEditingLighting,
               !isScrolling, isPageVisible, window != nil,
               renderer.superview != nil, bounds.width > 0, bounds.height > 0 else { return }
         let requestedRevision = revision

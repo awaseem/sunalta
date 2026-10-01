@@ -18,6 +18,16 @@ License: MIT, copyright (c) 2021 Paul Hudson.
 
 CodeScanner is linked through Swift Package Manager. The complete notice is in `clock-app/Licenses/CodeScanner-MIT.txt` and is included in the app bundle.
 
+## Poly Haven — Clock surfaces
+
+Light- and dark-mode numerals: Hangar Concrete Floor by Dimitrios Savva.
+Source: https://polyhaven.com/a/hangar_concrete_floor
+
+Bundled alternative surface: Plastered Wall by Amal Kumar.
+Source: https://polyhaven.com/a/plastered_wall
+
+Both assets are CC0 (https://polyhaven.com/license). Their original 1K JPEG diffuse, OpenGL normal, roughness, and ambient-occlusion maps are bundled in `clock-app/Resources/Textures/HangarConcrete` and `clock-app/Resources/Textures/PlasteredWall`. Each material loads asynchronously on first use and is shared between clock views.
+
 # Scanner integration
 
 Retain an `NFCScannerUtil` instance for the lifetime of the scanning flow, set `onTagScanned` / `onError`, and call `scan(alarmName:)`. Call `cancel()` when leaving that flow. Use `NFCResult.id` as the `.nfc` target's `codeValue`.

@@ -1,10 +1,14 @@
 import RealityKit
+import OSLog
 import SwiftUI
 import UIKit
 
 final class ClockRenderView: ARView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
+    var onMaterialChanged: (() -> Void)?
+    private var surfaceTextures: [ClockSurface: ClockSurfaceTextures] = [:]
+    private var requestedSurfaces: Set<ClockSurface> = []
     var previewHeight: CGFloat = 240 {
         didSet { if oldValue != previewHeight { setNeedsLayout() } }
     }
@@ -20,6 +24,7 @@ final class ClockRenderView: ARView {
     }
     private let clock = Entity()
     private let backdrop = ModelEntity()
+    private let shadowLayer = ClockShadowLayer()
     private let calendarDetails = Entity()
     private var weekdayLabel: ModelEntity?
     private var weekdaySymbol: ModelEntity?
@@ -34,6 +39,8 @@ final class ClockRenderView: ARView {
     private var returnLink: CADisplayLink?
     private var lastFrame: CFTimeInterval = 0
     private let camera = PerspectiveCamera()
+    private let keyLight = DirectionalLight()
+    private var lighting = ClockLightingSettings()
     private var glyphs: [String: ModelEntity] = [:]
     private var displayedTime: String?
 
@@ -49,6 +56,7 @@ final class ClockRenderView: ARView {
         anchor.addChild(placement)
         placement.addChild(calendarDetails)
         placement.addChild(clock)
+        placement.addChild(shadowLayer.root)
         clock.scale.y = 1.25
         camera.camera.fieldOfViewInDegrees = 12
         let orbitGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
@@ -59,21 +67,14 @@ final class ClockRenderView: ARView {
             : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
 
-        let key = DirectionalLight()
-        key.light.intensity = 2600
-        key.light.color = .white
-        key.look(at: .zero, from: [4, 6, 6], relativeTo: nil)
-        key.shadow = .init(
-            shadowProjection: .fixed(zNear: 0.1, zFar: 30, orthographicScale: 10),
-            depthBias: 0.1
-        )
-        placement.addChild(key)
+        keyLight.light.color = .white
+        placement.addChild(keyLight)
         backdrop.model = ModelComponent(
             mesh: .generatePlane(width: 200, height: 200),
             materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
-        backdrop.position.z = -0.04
+        backdrop.position.z = ClockShadowProjection.backdropDepth
         anchor.addChild(backdrop)
 
         do {
@@ -110,17 +111,54 @@ final class ClockRenderView: ARView {
         guard appliedColorScheme != colorScheme else { return }
         appliedColorScheme = colorScheme
         let appearance = ClockAppearance(colorScheme: colorScheme)
-        environment.background = .color(appearance.backdropColor)
-        environment.lighting.intensityExponent = appearance.ambientIntensityExponent
-        backdrop.model?.materials = [appearance.backdropMaterial]
+        applyLighting(lighting)
 
-        let material = appearance.numeralMaterial
-        for glyph in glyphs.values {
-            glyph.model?.materials = [material]
+        let plainMaterial = appearance.numeralMaterial
+        let numeralMaterial = surfaceTextures[appearance.numeralSurface]
+            .map { appearance.texturedNumeralMaterial(textures: $0) } ?? plainMaterial
+        for (key, glyph) in glyphs {
+            glyph.model?.materials = [key.count == 1 && "0123456789:".contains(key) ? numeralMaterial : plainMaterial]
         }
         for container in [clock, calendarDetails] {
             for case let glyph as ModelEntity in container.children {
-                glyph.model?.materials = [material]
+                glyph.model?.materials = [container === clock ? numeralMaterial : plainMaterial]
+            }
+        }
+        loadTexturesIfNeeded(for: appearance.numeralSurface)
+    }
+
+    func applyLighting(_ settings: ClockLightingSettings) {
+        lighting = settings
+        keyLight.light.intensity = Float(settings.strength)
+        keyLight.look(at: .zero, from: settings.lightPosition, relativeTo: placement)
+        keyLight.shadow = settings.shadowsEnabled ? .init(
+            shadowProjection: .fixed(zNear: 0.1, zFar: 30, orthographicScale: 10),
+            depthBias: 0.1
+        ) : nil
+        let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
+        environment.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
+        let background = UIColor(settings.backgroundColor(for: appliedColorScheme ?? .light))
+        environment.background = .color(background)
+        backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
+        shadowLayer.update(settings: settings, background: background)
+    }
+
+    private func loadTexturesIfNeeded(for surface: ClockSurface) {
+        guard requestedSurfaces.insert(surface).inserted else { return }
+        Task { [weak self] in
+            do {
+                let textures = try await ClockSurfaceTextures.load(surface)
+                guard let self else { return }
+                surfaceTextures[surface] = textures
+                // A completed load must never restore a theme the user left.
+                guard let currentScheme = appliedColorScheme,
+                      ClockAppearance(colorScheme: currentScheme).numeralSurface == surface else { return }
+                appliedColorScheme = nil
+                applyAppearance(currentScheme)
+                onMaterialChanged?()
+            } catch {
+                Logger(subsystem: "dev.ambitionsoftware.clock-app", category: "Textures")
+                    .error("Clock surface \(surface.rawValue) failed to load: \(error.localizedDescription)")
             }
         }
     }
@@ -149,6 +187,12 @@ final class ClockRenderView: ARView {
 
     private func layoutCalendarDetails() {
         guard bounds.height > 0, cameraRestOffset.z > 0, !clock.children.isEmpty else { return }
+        defer {
+            let sources = [clock, calendarDetails].flatMap { container in
+                container.children.compactMap { $0 as? ModelEntity }
+            }
+            shadowLayer.synchronize(sources, relativeTo: placement)
+        }
         if isAlarmPreview {
             layoutRepeatDays()
             return
@@ -367,6 +411,7 @@ final class ClockRenderView: ARView {
             let positions: [[Float]]
             let normals: [[Float]]
             let indices: [UInt32]
+            let textureCoordinates: [[Float]]?
         }
         guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
             throw CocoaError(.fileNoSuchFile)
@@ -384,6 +429,15 @@ final class ClockRenderView: ARView {
             var descriptor = MeshDescriptor(name: "Blender \(character)")
             descriptor.positions = MeshBuffers.Positions(source.positions.map { SIMD3($0[0], $0[1], $0[2]) })
             descriptor.normals = MeshBuffers.Normals(source.normals.map { SIMD3($0[0], $0[1], $0[2]) })
+            if let coordinates = source.textureCoordinates {
+                guard coordinates.count == source.positions.count,
+                      coordinates.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isFinite) }) else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
+                descriptor.textureCoordinates = MeshBuffers.TextureCoordinates(coordinates.map { SIMD2($0[0], $0[1]) })
+            } else if resource == "Numerals" {
+                throw CocoaError(.fileReadCorruptFile)
+            }
             descriptor.primitives = .triangles(source.indices)
             let mesh = try MeshResource.generate(from: [descriptor])
             result[character] = ModelEntity(mesh: mesh, materials: [])

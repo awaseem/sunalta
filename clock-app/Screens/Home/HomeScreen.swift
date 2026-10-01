@@ -5,6 +5,9 @@ struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isScrolling = false
     @State private var isClockVisible = true
+    @State private var lighting = ClockLightingSettings()
+    @State private var showsLighting = false
+    @State private var isEditingLighting = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -14,6 +17,7 @@ struct HomeScreen: View {
                     TimelineView(.everyMinute) { context in
                         BlenderClockView(date: context.date, isScrolling: isScrolling,
                                          isVisible: isClockVisible && scenePhase == .active,
+                                         lighting: lighting, isEditingLighting: isEditingLighting,
                                          contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
                             bottom: geometry.safeAreaInsets.bottom, right: 0
@@ -30,6 +34,28 @@ struct HomeScreen: View {
                         .padding(.bottom, geometry.safeAreaInsets.bottom + 32)
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel("Swipe up for alarms")
+                    }
+                    .overlay(alignment: .bottom) {
+                        Group {
+                            if showsLighting {
+                                ClockLightingPanel(settings: $lighting, isEditing: $isEditingLighting) {
+                                    showsLighting = false
+                                }
+                            } else {
+                                Button {
+                                    showsLighting = true
+                                } label: {
+                                    Label("Appearance", systemImage: "slider.horizontal.3")
+                                        .font(.subheadline.weight(.medium))
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 12)
+                                        .background(.regularMaterial, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, geometry.safeAreaInsets.bottom + 100)
                     }
 
                     AlarmListPage()
