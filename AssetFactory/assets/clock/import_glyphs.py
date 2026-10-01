@@ -13,7 +13,7 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parent
-RESOURCES = ROOT.parents[1] / "clock-app" / "Resources"
+RESOURCES = ROOT.parents[2] / "clock-app" / "Resources"
 
 
 def load_glb(path):

@@ -20,9 +20,9 @@
 			path = "clock-app";
 			sourceTree = "<group>";
 		};
-		B04D834BF17D4B51B4732C01 /* DesignAssets */ = {
+		B04D834BF17D4B51B4732C01 /* AssetFactory */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DesignAssets;
+			path = AssetFactory;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -41,7 +41,7 @@
 			isa = PBXGroup;
 			children = (
 				80EED2783069B7BE006EC23D /* clock-app */,
-				B04D834BF17D4B51B4732C01 /* DesignAssets */,
+				B04D834BF17D4B51B4732C01 /* AssetFactory */,
 				80EED2773069B7BE006EC23D /* Products */,
 			);
 			sourceTree = "<group>";

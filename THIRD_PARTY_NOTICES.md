@@ -20,13 +20,13 @@ CodeScanner is linked through Swift Package Manager. The complete notice is in `
 
 ## Three.js
 
-The offline asset preview vendors Three.js 0.186.1, OrbitControls, FontLoader, and GLTFExporter from the supplied clock handoff. These are development assets in `DesignAssets/ThreeJS/vendor`; the app uses imported mesh buffers rather than shipping the JavaScript renderer.
+The offline asset preview vendors Three.js 0.186.1, OrbitControls, FontLoader, and GLTFExporter from the supplied clock handoff. These are development assets in `AssetFactory/vendor`; the app uses imported mesh buffers rather than shipping the JavaScript renderer.
 
-The complete MIT notice is in `DesignAssets/ThreeJS/vendor/THREE-LICENSE.txt`.
+The complete MIT notice is in `AssetFactory/vendor/THREE-LICENSE.txt`.
 
 ## Clock font outlines
 
-`DesignAssets/ThreeJS/font.json` contains the project-local converted Impact outlines supplied in the handoff. The sculpted numerals are an Impact approximation, not Obviously Condensed Black. Font use and redistribution remain subject to the original font license; the Three.js MIT license does not license the font.
+`AssetFactory/assets/clock/font.json` contains the project-local converted Impact outlines supplied in the handoff. The sculpted numerals are an Impact approximation, not Obviously Condensed Black. Font use and redistribution remain subject to the original font license; the Three.js MIT license does not license the font.
 
 # Scanner integration
 

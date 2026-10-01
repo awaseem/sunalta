@@ -1,6 +1,6 @@
-# Local Three.js image exports
-DesignAssets/ThreeJS/png/
-DesignAssets/ThreeJS/manifest.json
+# Generated asset previews and export manifests
+AssetFactory/assets/*/png/
+AssetFactory/assets/*/manifest.json
 # Python caches
 __pycache__/
 *.pyc
