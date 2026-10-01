@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-        C10C00000000000000000001 /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = C10C00000000000000000003 /* CodeScanner */; };
+		C10C00000000000000000001 /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = C10C00000000000000000003 /* CodeScanner */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -15,14 +15,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B04D834BF17D4B51B4732C01 /* DesignAssets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DesignAssets;
-			sourceTree = "<group>";
-		};
 		80EED2783069B7BE006EC23D /* clock-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "clock-app";
+			sourceTree = "<group>";
+		};
+		B04D834BF17D4B51B4732C01 /* DesignAssets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DesignAssets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -31,7 +31,7 @@
 		80EED2733069B7BE006EC23D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-                C10C00000000000000000001 /* CodeScanner in Frameworks */,
+				C10C00000000000000000001 /* CodeScanner in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -71,7 +71,9 @@
 				80EED2783069B7BE006EC23D /* clock-app */,
 			);
 			name = "clock-app";
-			packageProductDependencies = (C10C00000000000000000003 /* CodeScanner */);
+			packageProductDependencies = (
+				C10C00000000000000000003 /* CodeScanner */,
+			);
 			productName = "clock-app";
 			productReference = 80EED2763069B7BE006EC23D /* clock-app.app */;
 			productType = "com.apple.product-type.application";
@@ -100,7 +102,9 @@
 			);
 			mainGroup = 80EED26D3069B7BE006EC23D;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */);
+			packageReferences = (
+				C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 80EED2773069B7BE006EC23D /* Products */;
 			projectDirPath = "";
@@ -126,22 +130,6 @@
 			);
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-        C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
-            isa = XCRemoteSwiftPackageReference;
-            repositoryURL = "https://github.com/twostraws/CodeScanner";
-            requirement = { kind = exactVersion; version = 2.5.2; };
-        };
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-        C10C00000000000000000003 /* CodeScanner */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */;
-            productName = CodeScanner;
-        };
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		80EED2813069B7BE006EC23D /* Debug configuration for PBXProject "clock-app" */ = {
@@ -265,15 +253,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = "clock-app/clock-app.entitlements";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YR54789JNV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-                INFOPLIST_FILE = Config/Info.plist;
-                INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes and barcodes to set up or stop your alarms.";
-                INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags to set up or stop your alarms.";
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags to set up or stop your alarms.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes and barcodes to set up or stop your alarms.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -310,15 +298,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = "clock-app/clock-app.entitlements";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YR54789JNV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-                INFOPLIST_FILE = Config/Info.plist;
-                INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes and barcodes to set up or stop your alarms.";
-                INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags to set up or stop your alarms.";
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Scan NFC tags to set up or stop your alarms.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan QR codes and barcodes to set up or stop your alarms.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -370,6 +358,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/CodeScanner";
+			requirement = {
+				kind = exactVersion;
+				version = 2.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C10C00000000000000000003 /* CodeScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C10C00000000000000000002 /* XCRemoteSwiftPackageReference "CodeScanner" */;
+			productName = CodeScanner;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 80EED26E3069B7BE006EC23D /* Project object */;
 	validationLevel = 1;

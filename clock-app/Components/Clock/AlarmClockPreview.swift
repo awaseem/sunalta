@@ -4,7 +4,6 @@ import UIKit
 struct AlarmClockPreview: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let time: String
-    let days: Set<ClockWeekday>
     let previewHeight: CGFloat
     let contentSafeAreaInsets: UIEdgeInsets
 
@@ -16,6 +15,6 @@ struct AlarmClockPreview: UIViewRepresentable {
         view.contentSafeAreaInsets = contentSafeAreaInsets
         view.previewHeight = previewHeight
         view.applyAppearance(colorScheme)
-        view.showAlarm(time: time, days: days)
+        view.showAlarm(time: time)
     }
 }

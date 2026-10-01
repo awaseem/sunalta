@@ -3,10 +3,6 @@ import Foundation
 enum ClockWeekday: Int, CaseIterable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 
-    init(date: Date, calendar: Calendar = .autoupdatingCurrent) {
-        self = Self(rawValue: calendar.component(.weekday, from: date)) ?? .sunday
-    }
-
     var abbreviation: String {
         switch self {
         case .sunday: "Sun"
@@ -16,18 +12,6 @@ enum ClockWeekday: Int, CaseIterable {
         case .thursday: "Thu"
         case .friday: "Fri"
         case .saturday: "Sat"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .sunday: "☉"
-        case .monday: "☽"
-        case .tuesday: "♂"
-        case .wednesday: "☿"
-        case .thursday: "♃"
-        case .friday: "♀"
-        case .saturday: "♄"
         }
     }
 

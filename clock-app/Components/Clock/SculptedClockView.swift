@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-struct BlenderClockView: UIViewRepresentable {
+struct SculptedClockView: UIViewRepresentable {
     @Environment(\.colorScheme) private var colorScheme
     let date: Date
     var isScrolling = false

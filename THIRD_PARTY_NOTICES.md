@@ -18,15 +18,15 @@ License: MIT, copyright (c) 2021 Paul Hudson.
 
 CodeScanner is linked through Swift Package Manager. The complete notice is in `clock-app/Licenses/CodeScanner-MIT.txt` and is included in the app bundle.
 
-## Poly Haven — Clock surfaces
+## Three.js
 
-Light- and dark-mode numerals: Hangar Concrete Floor by Dimitrios Savva.
-Source: https://polyhaven.com/a/hangar_concrete_floor
+The offline asset preview vendors Three.js 0.186.1, OrbitControls, FontLoader, and GLTFExporter from the supplied clock handoff. These are development assets in `DesignAssets/ThreeJS/vendor`; the app uses imported mesh buffers rather than shipping the JavaScript renderer.
 
-Bundled alternative surface: Plastered Wall by Amal Kumar.
-Source: https://polyhaven.com/a/plastered_wall
+The complete MIT notice is in `DesignAssets/ThreeJS/vendor/THREE-LICENSE.txt`.
 
-Both assets are CC0 (https://polyhaven.com/license). Their original 1K JPEG diffuse, OpenGL normal, roughness, and ambient-occlusion maps are bundled in `clock-app/Resources/Textures/HangarConcrete` and `clock-app/Resources/Textures/PlasteredWall`. Each material loads asynchronously on first use and is shared between clock views.
+## Clock font outlines
+
+`DesignAssets/ThreeJS/font.json` contains the project-local converted Impact outlines supplied in the handoff. The sculpted numerals are an Impact approximation, not Obviously Condensed Black. Font use and redistribution remain subject to the original font license; the Three.js MIT license does not license the font.
 
 # Scanner integration
 

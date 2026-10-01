@@ -15,7 +15,7 @@ struct HomeScreen: View {
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
                     TimelineView(.everyMinute) { context in
-                        BlenderClockView(date: context.date, isScrolling: isScrolling,
+                        SculptedClockView(date: context.date, isScrolling: isScrolling,
                                          isVisible: isClockVisible && scenePhase == .active,
                                          lighting: lighting, isEditingLighting: isEditingLighting,
                                          contentSafeAreaInsets: UIEdgeInsets(

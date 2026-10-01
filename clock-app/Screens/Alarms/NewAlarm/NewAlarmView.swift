@@ -33,7 +33,7 @@ struct NewAlarmView: View {
             let previewHeight = min(340, max(160, geometry.size.height * 0.40))
             ZStack {
                 AlarmClockPreview(
-                    time: displayTime, days: repeatDays,
+                    time: displayTime,
                     previewHeight: previewHeight,
                     contentSafeAreaInsets: UIEdgeInsets(
                         top: geometry.safeAreaInsets.top, left: 0,

@@ -7,16 +7,17 @@ final class ClockRenderView: ARView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
     var onMaterialChanged: (() -> Void)?
-    private var surfaceTextures: [ClockSurface: ClockSurfaceTextures] = [:]
-    private var requestedSurfaces: Set<ClockSurface> = []
+    private var sandpaperTextures: ClockSurfaceTextures?
+    private var requestedTextures = false
     var previewHeight: CGFloat = 240 {
         didSet { if oldValue != previewHeight { setNeedsLayout() } }
     }
-    private static var glyphCache: [String: [String: ModelEntity]] = [:]
     private var glyphBounds: [String: BoundingBox] = [:]
     private var timeSlots: [ModelEntity] = []
+    private let digitHeightScale: Float = 1.15
+    private let digitGap: Float = 0.14
+    private let rowGap: Float = 0.28
     private let isAlarmPreview: Bool
-    private var displayedRepeatDays: Set<ClockWeekday>?
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
         didSet {
             if oldValue != contentSafeAreaInsets { setNeedsLayout() }
@@ -25,10 +26,6 @@ final class ClockRenderView: ARView {
     private let clock = Entity()
     private let backdrop = ModelEntity()
     private let shadowLayer = ClockShadowLayer()
-    private let calendarDetails = Entity()
-    private var weekdayLabel: ModelEntity?
-    private var weekdaySymbol: ModelEntity?
-    private var displayedWeekday: ClockWeekday?
     private var appliedColorScheme: ColorScheme?
     private let placement = Entity()
     private var cameraRestOffset = SIMD3<Float>.zero
@@ -54,10 +51,8 @@ final class ClockRenderView: ARView {
         let anchor = AnchorEntity(world: .zero)
         scene.addAnchor(anchor)
         anchor.addChild(placement)
-        placement.addChild(calendarDetails)
         placement.addChild(clock)
         placement.addChild(shadowLayer.root)
-        clock.scale.y = 1.25
         camera.camera.fieldOfViewInDegrees = 12
         let orbitGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         orbitGesture.delegate = self
@@ -78,14 +73,11 @@ final class ClockRenderView: ARView {
         anchor.addChild(backdrop)
 
         do {
-            glyphs = try Self.loadGlyphs(resource: "Numerals", keys: "0123456789:".map(String.init))
-            let weekdayKeys = ClockWeekday.allCases.flatMap { [$0.abbreviation, $0.symbol] }
-            let weekdays = try Self.loadGlyphs(resource: "Weekdays", keys: weekdayKeys)
-            glyphs.merge(weekdays) { _, new in new }
+            glyphs = try ClockGlyphAssets.load()
             glyphBounds = glyphs.mapValues { $0.visualBounds(relativeTo: $0) }
         } catch {
             let message = UILabel()
-            message.text = "Unable to load Blender clock assets"
+            message.text = "Unable to load sculpted clock assets"
             message.textColor = .label
             message.textAlignment = .center
             message.numberOfLines = 0
@@ -113,18 +105,11 @@ final class ClockRenderView: ARView {
         let appearance = ClockAppearance(colorScheme: colorScheme)
         applyLighting(lighting)
 
-        let plainMaterial = appearance.numeralMaterial
-        let numeralMaterial = surfaceTextures[appearance.numeralSurface]
-            .map { appearance.texturedNumeralMaterial(textures: $0) } ?? plainMaterial
-        for (key, glyph) in glyphs {
-            glyph.model?.materials = [key.count == 1 && "0123456789:".contains(key) ? numeralMaterial : plainMaterial]
-        }
-        for container in [clock, calendarDetails] {
-            for case let glyph as ModelEntity in container.children {
-                glyph.model?.materials = [container === clock ? numeralMaterial : plainMaterial]
-            }
-        }
-        loadTexturesIfNeeded(for: appearance.numeralSurface)
+        let material = sandpaperTextures.map { appearance.texturedNumeralMaterial(textures: $0) }
+            ?? appearance.numeralMaterial
+        for glyph in glyphs.values { glyph.model?.materials = [material] }
+        for case let glyph as ModelEntity in clock.children { glyph.model?.materials = [material] }
+        if appearance.usesSandpaper { loadTexturesIfNeeded() }
     }
 
     func applyLighting(_ settings: ClockLightingSettings) {
@@ -143,22 +128,22 @@ final class ClockRenderView: ARView {
         shadowLayer.update(settings: settings, background: background)
     }
 
-    private func loadTexturesIfNeeded(for surface: ClockSurface) {
-        guard requestedSurfaces.insert(surface).inserted else { return }
+    private func loadTexturesIfNeeded() {
+        guard !requestedTextures else { return }
+        requestedTextures = true
         Task { [weak self] in
             do {
-                let textures = try await ClockSurfaceTextures.load(surface)
+                let textures = try await ClockSurfaceTextures.load()
                 guard let self else { return }
-                surfaceTextures[surface] = textures
-                // A completed load must never restore a theme the user left.
+                sandpaperTextures = textures
                 guard let currentScheme = appliedColorScheme,
-                      ClockAppearance(colorScheme: currentScheme).numeralSurface == surface else { return }
+                      ClockAppearance(colorScheme: currentScheme).usesSandpaper else { return }
                 appliedColorScheme = nil
                 applyAppearance(currentScheme)
                 onMaterialChanged?()
             } catch {
                 Logger(subsystem: "dev.ambitionsoftware.clock-app", category: "Textures")
-                    .error("Clock surface \(surface.rawValue) failed to load: \(error.localizedDescription)")
+                    .error("Sandpaper finish failed to load: \(error.localizedDescription)")
             }
         }
     }
@@ -169,64 +154,24 @@ final class ClockRenderView: ARView {
         let aspect = Float(bounds.width / bounds.height)
         // The preview's lit backdrop fills the entire modal, eliminating color seams.
         let visibleHeight = isAlarmPreview
-            ? max(Float(bounds.height / max(previewHeight, 1)) * 5.8, 7.0 / aspect)
-            : max(12.3, 7.0 / aspect)
+            ? max(Float(bounds.height / max(previewHeight, 1)) * 10.7, 4.4 / aspect)
+            : max(13.8, 4.4 / aspect)
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
         let topInset = max(safeAreaInsets.top, contentSafeAreaInsets.top)
         let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
         let usableHeight = bounds.height - topInset - bottomInset
         let centerFromTop = isAlarmPreview
-            ? topInset + 44 + previewHeight * 0.40
-            : topInset + usableHeight / 6 + 36
+            ? topInset + 44 + previewHeight * 0.50
+            : topInset + usableHeight * 0.40
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
-        layoutCalendarDetails()
+        synchronizeShadows()
         applyViewingAngle()
     }
 
-    private func layoutCalendarDetails() {
-        guard bounds.height > 0, cameraRestOffset.z > 0, !clock.children.isEmpty else { return }
-        defer {
-            let sources = [clock, calendarDetails].flatMap { container in
-                container.children.compactMap { $0 as? ModelEntity }
-            }
-            shadowLayer.synchronize(sources, relativeTo: placement)
-        }
-        if isAlarmPreview {
-            layoutRepeatDays()
-            return
-        }
-        let timeBounds = clock.visualBounds(relativeTo: placement)
-        let unitsPerPoint = (cameraRestOffset.z - timeBounds.max.z) * 2
-            * tan(Float(6 * Double.pi / 180)) / Float(bounds.height)
-        let gap = 12 * unitsPerPoint
-        if let label = weekdayLabel {
-            let meshBounds = label.visualBounds(relativeTo: label)
-            let scale = 28 * unitsPerPoint / meshBounds.extents.y
-            label.scale = [scale / 1.25, scale, scale / 1.25]
-            let depthRatio = (cameraRestOffset.z - 0.025 - meshBounds.max.z * label.scale.z)
-                / (cameraRestOffset.z - timeBounds.max.z)
-            label.position = [
-                timeBounds.min.x * depthRatio - meshBounds.min.x * label.scale.x,
-                (placement.position.y + timeBounds.min.y - gap) * depthRatio
-                    - placement.position.y - meshBounds.max.y * scale,
-                0.025
-            ]
-        }
-        if let symbol = weekdaySymbol {
-            let meshBounds = symbol.visualBounds(relativeTo: symbol)
-            let scale = 26 * unitsPerPoint / max(meshBounds.extents.x, meshBounds.extents.y)
-            symbol.scale = SIMD3(repeating: scale)
-            let depthRatio = (cameraRestOffset.z - 0.025 - meshBounds.max.z * scale)
-                / (cameraRestOffset.z - timeBounds.max.z)
-            symbol.position = [
-                timeBounds.max.x * depthRatio - meshBounds.max.x * scale,
-                (placement.position.y + timeBounds.max.y + gap) * depthRatio
-                    - placement.position.y - meshBounds.min.y * scale,
-                0.025
-            ]
-        }
+    private func synchronizeShadows() {
+        shadowLayer.synchronize(clock.children.compactMap { $0 as? ModelEntity }, relativeTo: placement)
     }
 
     private func applyViewingAngle() {
@@ -316,75 +261,30 @@ final class ClockRenderView: ARView {
     func show(date: Date) {
         let components = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
         let time = String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
-        let weekday = ClockWeekday(date: date)
-        accessibilityLabel = "\(weekday.name), time, \(time)"
-        if displayedWeekday != weekday,
-           let label = glyphs[weekday.abbreviation], let symbol = glyphs[weekday.symbol] {
-            displayedWeekday = weekday
-            calendarDetails.children.removeAll()
-            let newLabel = label.clone(recursive: true)
-            let newSymbol = symbol.clone(recursive: true)
-            calendarDetails.addChild(newLabel)
-            calendarDetails.addChild(newSymbol)
-            weekdayLabel = newLabel
-            weekdaySymbol = newSymbol
-            layoutCalendarDetails()
-        }
+        accessibilityLabel = "Time, \(time)"
         show(time: time)
-        layoutCalendarDetails()
     }
 
-    func showAlarm(time: String, days: Set<ClockWeekday>) {
-        guard displayedTime != time || displayedRepeatDays != days else { return }
+    func showAlarm(time: String) {
+        accessibilityLabel = "Alarm time, \(time)"
         show(time: time)
-        if displayedRepeatDays != days {
-            displayedRepeatDays = days
-            calendarDetails.children.removeAll()
-            for day in AlarmRepeatSummary.orderedDays where days.contains(day) {
-                if let glyph = glyphs[day.abbreviation] {
-                    calendarDetails.addChild(glyph.clone(recursive: true))
-                }
-            }
-        }
-        layoutCalendarDetails()
-        accessibilityLabel = "\(time), \(AlarmRepeatSummary.text(for: days))"
-    }
-
-    private func layoutRepeatDays() {
-        let labels = calendarDetails.children.compactMap { $0 as? ModelEntity }
-        guard !labels.isEmpty else { return }
-        let timeBounds = clock.visualBounds(relativeTo: placement)
-        let gap: Float = 0.18
-        let widths = labels.map { label -> Float in
-            label.scale = SIMD3(repeating: 1)
-            let bounds = label.visualBounds(relativeTo: label)
-            return bounds.extents.x * 0.60 / bounds.extents.y
-        }
-        let totalWidth = widths.reduce(0, +) + gap * Float(labels.count - 1)
-        let fit = min(1, timeBounds.extents.x / totalWidth)
-        var cursor = -totalWidth * fit / 2
-        for (index, label) in labels.enumerated() {
-            let bounds = label.visualBounds(relativeTo: label)
-            let scale = 0.60 / bounds.extents.y * fit
-            label.scale = SIMD3(repeating: scale)
-            label.position = [cursor - bounds.min.x * scale,
-                              timeBounds.min.y - 0.35 - bounds.max.y * scale, 0.025]
-            cursor += (widths[index] + gap) * fit
-        }
     }
 
     private func show(time: String) {
         guard time != displayedTime, !glyphs.isEmpty else { return }
-        let previous = Array(displayedTime ?? "")
+        let characters = Array(time.filter(\.isNumber))
+        guard characters.count == 4 else { return }
+        let previous = Array((displayedTime ?? "").filter(\.isNumber))
         displayedTime = time
-        let characters = Array(time)
-        // Keep the same five scene entities. Only changed slots receive a cached model.
+        // Four persistent slots: hours above minutes, with aligned digit columns.
         while timeSlots.count < characters.count {
             let slot = ModelEntity()
             clock.addChild(slot)
             timeSlots.append(slot)
         }
-        var cursor: Float = 0
+        let digitBounds = "0123456789".compactMap { glyphBounds[String($0)] }
+        let columnWidth = digitBounds.map(\.extents.x).max() ?? 1.6
+        let rowHeight = (digitBounds.map(\.extents.y).max() ?? 3.712) * digitHeightScale
         for (index, character) in characters.enumerated() {
             let key = String(character)
             guard let prototype = glyphs[key], let bounds = glyphBounds[key] else { continue }
@@ -392,57 +292,14 @@ final class ClockRenderView: ARView {
             if index >= previous.count || previous[index] != character {
                 glyph.model = prototype.model
             }
-            let width: Float = isAlarmPreview && character != ":" ? 1.35 : bounds.extents.x
-            glyph.position = [cursor + width / 2 - bounds.center.x,
-                              character == ":" ? -bounds.center.y : 0, 0]
-            cursor += width + 0.12
+            let columnCenter = (index.isMultiple(of: 2) ? -1 : Float(1)) * (columnWidth + digitGap) / 2
+            let rowCenter = (index < 2 ? 1 : Float(-1)) * (rowHeight + rowGap) / 2
+            glyph.scale = [1, digitHeightScale, 1]
+            glyph.position = [columnCenter - bounds.center.x,
+                              rowCenter - bounds.center.y * digitHeightScale, 0]
         }
-        let width = cursor - 0.12
-        for glyph in clock.children {
-            glyph.position.x -= width / 2
-        }
+        clock.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
+        synchronizeShadows()
     }
 
-    private static func loadGlyphs(resource: String, keys: [String]) throws -> [String: ModelEntity] {
-        if let cached = glyphCache[resource] {
-            return cached.mapValues { $0.clone(recursive: true) }
-        }
-        struct MeshData: Decodable {
-            let positions: [[Float]]
-            let normals: [[Float]]
-            let indices: [UInt32]
-            let textureCoordinates: [[Float]]?
-        }
-        guard let url = Bundle.main.url(forResource: resource, withExtension: "json") else {
-            throw CocoaError(.fileNoSuchFile)
-        }
-        let data = try JSONDecoder().decode([String: MeshData].self, from: Data(contentsOf: url))
-        var result: [String: ModelEntity] = [:]
-        for character in keys {
-            guard let source = data[String(character)],
-                  source.positions.count == source.normals.count,
-                  source.positions.allSatisfy({ $0.count == 3 }),
-                  source.normals.allSatisfy({ $0.count == 3 }),
-                  source.indices.allSatisfy({ Int($0) < source.positions.count }) else {
-                throw CocoaError(.fileReadCorruptFile)
-            }
-            var descriptor = MeshDescriptor(name: "Blender \(character)")
-            descriptor.positions = MeshBuffers.Positions(source.positions.map { SIMD3($0[0], $0[1], $0[2]) })
-            descriptor.normals = MeshBuffers.Normals(source.normals.map { SIMD3($0[0], $0[1], $0[2]) })
-            if let coordinates = source.textureCoordinates {
-                guard coordinates.count == source.positions.count,
-                      coordinates.allSatisfy({ $0.count == 2 && $0.allSatisfy(\.isFinite) }) else {
-                    throw CocoaError(.fileReadCorruptFile)
-                }
-                descriptor.textureCoordinates = MeshBuffers.TextureCoordinates(coordinates.map { SIMD2($0[0], $0[1]) })
-            } else if resource == "Numerals" {
-                throw CocoaError(.fileReadCorruptFile)
-            }
-            descriptor.primitives = .triangles(source.indices)
-            let mesh = try MeshResource.generate(from: [descriptor])
-            result[character] = ModelEntity(mesh: mesh, materials: [])
-        }
-        glyphCache[resource] = result
-        return result.mapValues { $0.clone(recursive: true) }
-    }
 }

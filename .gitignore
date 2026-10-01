@@ -1,2 +1,6 @@
-# Blender's numbered backup files
-*.blend[0-9]*
+# Local Three.js image exports
+DesignAssets/ThreeJS/png/
+DesignAssets/ThreeJS/manifest.json
+# Python caches
+__pycache__/
+*.pyc
