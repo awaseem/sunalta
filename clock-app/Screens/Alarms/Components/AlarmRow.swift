@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AlarmRow: View {
     let alarm: AlarmRecord
+    var isUpdating = false
+    var onEnabledChange: (Bool) -> Void = { _ in }
 
     private var repeatDescription: String {
         AlarmRepeatSummary.text(for: alarm.repeatDays)
@@ -13,11 +15,11 @@ struct AlarmRow: View {
                 HStack(alignment: .firstTextBaseline) {
                     timeLabel
                     Spacer(minLength: 16)
-                    statusLabel
+                    enabledToggle
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     timeLabel
-                    statusLabel
+                    enabledToggle
                 }
             }
             Text(alarm.label.isEmpty ? "Alarm" : alarm.label)
@@ -26,7 +28,7 @@ struct AlarmRow: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             if alarm.requiresScanToStop {
-                Label("Scan to stop", systemImage: "qrcode.viewfinder")
+                Label(alarm.exitPointSummary, systemImage: "qrcode.viewfinder")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -34,7 +36,7 @@ struct AlarmRow: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 
     private var timeLabel: some View {
@@ -43,12 +45,19 @@ struct AlarmRow: View {
             .monospacedDigit()
     }
 
-    private var statusLabel: some View {
-        Text(alarm.isEnabled ? "On" : "Off")
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(alarm.isEnabled ? .primary : .secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(.quaternary, in: .capsule)
+    private var enabledToggle: some View {
+        HStack(spacing: 10) {
+            if isUpdating {
+                ProgressView()
+                    .accessibilityLabel("Updating alarm")
+            }
+            Toggle("Alarm enabled", isOn: Binding(
+                get: { alarm.isEnabled }, set: onEnabledChange
+            ))
+            .labelsHidden()
+            .tint(.primary)
+            .accessibilityLabel("Alarm at \(String(format: "%02d:%02d", alarm.hour, alarm.minute))")
+            .accessibilityValue(alarm.isEnabled ? "On" : "Off")
+        }
     }
 }

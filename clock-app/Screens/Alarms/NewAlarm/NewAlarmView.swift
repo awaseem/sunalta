@@ -7,9 +7,10 @@ struct NewAlarmView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let titles = ["Time", "Repeat", "Snooze"]
+    private let titles = ["Time", "Repeat", "Snooze", "Exit point"]
     private let subtitles = ["24-hour time", "Choose the days. Leave empty for a one-time alarm.",
-                             "Choose how long to snooze."]
+                             "Choose how long to snooze.",
+                             "Choose where you'll go to stop your alarm. Setup is optional."]
 
     @State private var step = 0
     @State private var time = Calendar.autoupdatingCurrent.date(
@@ -18,6 +19,7 @@ struct NewAlarmView: View {
     @State private var repeatDays: Set<ClockWeekday> = []
     @State private var snoozeEnabled = true
     @State private var snoozeMinutes = 10
+    @State private var exitPoint = AlarmExitPointDraft()
     @State private var saveError: String?
 
     private var timeComponents: DateComponents {
@@ -44,7 +46,7 @@ struct NewAlarmView: View {
                 .accessibilityHidden(true)
 
                 VStack(spacing: 0) {
-                    NewAlarmHeader(step: step, onBack: goBack, onCancel: { dismiss() })
+                    NewAlarmHeader(step: step, stepCount: titles.count, onBack: goBack, onCancel: { dismiss() })
                     Color.clear
                         .frame(height: previewHeight)
                         .allowsHitTesting(false)
@@ -90,7 +92,8 @@ struct NewAlarmView: View {
             switch step {
             case 0: timePicker
             case 1: AlarmRepeatPicker(repeatDays: $repeatDays)
-            default: AlarmSnoozeOptions(snoozeEnabled: $snoozeEnabled, snoozeMinutes: $snoozeMinutes)
+            case 2: AlarmSnoozeOptions(snoozeEnabled: $snoozeEnabled, snoozeMinutes: $snoozeMinutes)
+            default: AlarmExitPointOptions(draft: $exitPoint)
             }
         }
         .padding(.horizontal, 24)
@@ -109,10 +112,10 @@ struct NewAlarmView: View {
 
     private var footer: some View {
         Button {
-            if step < 2 { changeStep(to: step + 1) }
+            if step < titles.count - 1 { changeStep(to: step + 1) }
             else { save() }
         } label: {
-            Text(step == 2 ? "Create alarm" : "Continue")
+            Text(step == titles.count - 1 ? "Create alarm" : "Continue")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
             .padding(.horizontal, 8)
@@ -139,15 +142,21 @@ struct NewAlarmView: View {
 
     private func save() {
         do {
+            let target = try exitPoint.makeStopTarget()
             let alarm = try AlarmRecord(
                 hour: timeComponents.hour ?? 7, minute: timeComponents.minute ?? 0, isEnabled: false,
                 repeatDays: repeatDays, snoozeEnabled: snoozeEnabled,
-                snoozeDurationMinutes: snoozeMinutes
+                snoozeDurationMinutes: snoozeMinutes,
+                requiresScanToStop: true, stopTargets: target.map { [$0] } ?? [],
+                exitPointName: exitPoint.name
             )
+            let newTarget = exitPoint.scannedCode == nil ? nil : target
+            if let newTarget { modelContext.insert(newTarget) }
             modelContext.insert(alarm)
             do { try modelContext.save() }
             catch {
                 modelContext.delete(alarm)
+                if let newTarget { modelContext.delete(newTarget) }
                 throw error
             }
             dismiss()

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NewAlarmHeader: View {
     let step: Int
+    let stepCount: Int
     let onBack: () -> Void
     let onCancel: () -> Void
 
@@ -21,7 +22,7 @@ struct NewAlarmHeader: View {
                         .font(.caption.weight(.semibold))
                         .tracking(2)
                     HStack(spacing: 5) {
-                        ForEach(0..<3) { index in
+                        ForEach(0..<stepCount, id: \.self) { index in
                             Capsule()
                                 .fill(index <= step ? Color.primary : Color.secondary.opacity(0.25))
                                 .frame(width: 24, height: 3)
@@ -29,7 +30,7 @@ struct NewAlarmHeader: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("New alarm, step \(step + 1) of 3")
+                .accessibilityLabel("New alarm, step \(step + 1) of \(stepCount)")
                 Spacer()
                 if step > 0 {
                     Button(action: onCancel) {

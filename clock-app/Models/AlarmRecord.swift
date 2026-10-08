@@ -5,7 +5,6 @@ enum AlarmValidationError: Error, Equatable {
     case invalidTime
     case invalidSnoozeDuration
     case invalidSoundName
-    case missingStopTarget
     case invalidScanTarget
 }
 
@@ -21,6 +20,7 @@ final class AlarmRecord {
     var snoozeEnabled: Bool
     private(set) var snoozeDurationMinutes: Int
     var requiresScanToStop: Bool
+    var exitPointName: String? = nil
     @Relationship(deleteRule: .nullify, inverse: \AlarmStopTarget.alarms)
     var stopTargets: [AlarmStopTarget]
 
@@ -28,7 +28,8 @@ final class AlarmRecord {
         hour: Int, minute: Int, label: String = "Alarm", isEnabled: Bool = true,
         repeatDays: Set<ClockWeekday> = [], soundName: String? = nil,
         snoozeEnabled: Bool = true, snoozeDurationMinutes: Int = 9,
-        requiresScanToStop: Bool = false, stopTargets: [AlarmStopTarget] = []
+        requiresScanToStop: Bool = false, stopTargets: [AlarmStopTarget] = [],
+        exitPointName: String? = nil
     ) throws {
         self.id = UUID()
         self.hour = hour
@@ -41,6 +42,8 @@ final class AlarmRecord {
         self.snoozeDurationMinutes = snoozeDurationMinutes
         self.requiresScanToStop = requiresScanToStop
         self.stopTargets = stopTargets
+        let trimmedName = exitPointName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.exitPointName = trimmedName?.isEmpty == false ? trimmedName : nil
         try validate()
     }
 
@@ -70,11 +73,21 @@ final class AlarmRecord {
         if let soundName, soundName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw AlarmValidationError.invalidSoundName
         }
-        if requiresScanToStop && stopTargets.isEmpty { throw AlarmValidationError.missingStopTarget }
+        // An empty target list means any QR code or NFC tag can stop the alarm.
         for target in stopTargets { try target.validate() }
     }
 
     func acceptsScan(codeValue: String, kind: AlarmStopTarget.Kind) -> Bool {
-        requiresScanToStop && stopTargets.contains { $0.matches(codeValue: codeValue, kind: kind) }
+        guard requiresScanToStop, AlarmStopTarget.isValidScan(codeValue: codeValue, kind: kind) else {
+            return false
+        }
+        return stopTargets.isEmpty || stopTargets.contains { $0.matches(codeValue: codeValue, kind: kind) }
+    }
+
+    var exitPointSummary: String {
+        let scanDescription = stopTargets.isEmpty ? "Any QR code or NFC tag" : "Scan to stop"
+        let name = exitPointName ?? stopTargets.first?.name
+        guard let name, !name.isEmpty else { return scanDescription }
+        return "\(name) · \(scanDescription)"
     }
 }

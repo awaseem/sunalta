@@ -34,6 +34,10 @@ final class AlarmStopTarget {
         return self.codeValue == Self.normalizedCodeValue(codeValue, kind: kind)
     }
 
+    static func isValidScan(codeValue: String, kind: Kind) -> Bool {
+        !normalizedCodeValue(codeValue, kind: kind).isEmpty
+    }
+
     static func nfcIdentifier(from data: Data) -> String {
         data.map { String(format: "%02hhX", $0) }.joined()
     }
