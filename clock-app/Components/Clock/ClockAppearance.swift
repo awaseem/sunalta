@@ -20,16 +20,17 @@ struct ClockAppearance {
         }
     }
 
-    var numeralMaterial: PhysicallyBasedMaterial {
+    func numeralMaterial(shimmer: Double) -> PhysicallyBasedMaterial {
         var material = PhysicallyBasedMaterial()
         material.baseColor = .init(tint: numeralColor)
         material.metallic = .init(floatLiteral: 0)
-        material.roughness = .init(floatLiteral: usesSandpaper ? 0.94 : 0.25)
+        let amount = Float(min(max(shimmer, 0), 1))
+        material.roughness = .init(floatLiteral: usesSandpaper ? 0.85 - amount * 0.75 : 0.65 - amount * 0.55)
         return material
     }
 
-    func texturedNumeralMaterial(textures: ClockSurfaceTextures) -> PhysicallyBasedMaterial {
-        var material = numeralMaterial
+    func texturedNumeralMaterial(textures: ClockSurfaceTextures, shimmer: Double) -> PhysicallyBasedMaterial {
+        var material = numeralMaterial(shimmer: shimmer)
         guard usesSandpaper else { return material }
         material.baseColor = .init(tint: .white, texture: .init(textures.color))
         material.normal = .init(texture: .init(textures.normal))

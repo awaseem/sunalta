@@ -2,13 +2,13 @@ import SwiftUI
 
 struct ClockLightingPanel: View {
     @Environment(\.colorScheme) private var colorScheme
-    @State private var section = Section.shadows
+    @State private var section = Section.finish
     @Binding var settings: ClockLightingSettings
     @Binding var isEditing: Bool
     var onClose: () -> Void
 
     private enum Section: String, CaseIterable {
-        case background = "Background", numbers = "Numbers", shadows = "Shadows"
+        case background = "Background", lighting = "Lighting", finish = "Finish"
     }
 
     private var backgroundColor: Binding<Color> {
@@ -46,20 +46,20 @@ struct ClockLightingPanel: View {
                     .font(.subheadline)
                 Text("Stays fixed as you adjust the lighting. Each mode has its own color.")
                     .font(.caption).foregroundStyle(.secondary)
-            case .numbers:
-                slider("Light strength", value: $settings.strength, range: 0...6000,
+            case .lighting:
+                slider("Brightness", value: $settings.strength, range: 0...6000,
                        display: "\(Int(settings.strength / 2600 * 100))%")
-                slider("Fill light", value: $settings.fill, range: -3...3,
+                slider("Ambient light", value: $settings.fill, range: -3...3,
                        display: String(format: "%+.1f", settings.fill))
-            case .shadows:
                 slider("Direction", value: $settings.direction, range: -180...180,
                        display: "\(Int(settings.direction))°")
-                slider("Shadow length", value: $settings.shadowLength, range: 5...75,
-                       display: "\(Int((settings.shadowLength - 5) / 70 * 100))%")
-                slider("Darkness", value: $settings.shadowDarkness, range: 0...1,
-                       display: "\(Int(settings.shadowDarkness * 100))%")
-                Toggle("Cast shadows", isOn: $settings.shadowsEnabled)
-                    .font(.subheadline)
+                slider("Light angle", value: $settings.tilt, range: 5...75,
+                       display: "\(Int(settings.tilt))°")
+            case .finish:
+                slider("Shimmer", value: $settings.shimmer, range: 0...1,
+                       display: "\(Int(settings.shimmer * 100))%")
+                Text("Drag across the numbers to catch the light.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)

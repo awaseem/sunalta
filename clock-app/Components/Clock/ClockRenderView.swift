@@ -25,7 +25,6 @@ final class ClockRenderView: ARView {
     }
     private let clock = Entity()
     private let backdrop = ModelEntity()
-    private let shadowLayer = ClockShadowLayer()
     private var appliedColorScheme: ColorScheme?
     private let placement = Entity()
     private var cameraRestOffset = SIMD3<Float>.zero
@@ -52,7 +51,6 @@ final class ClockRenderView: ARView {
         scene.addAnchor(anchor)
         anchor.addChild(placement)
         placement.addChild(clock)
-        placement.addChild(shadowLayer.root)
         camera.camera.fieldOfViewInDegrees = 12
         let orbitGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
         orbitGesture.delegate = self
@@ -69,7 +67,7 @@ final class ClockRenderView: ARView {
             materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
-        backdrop.position.z = ClockShadowProjection.backdropDepth
+        backdrop.position.z = -0.04
         anchor.addChild(backdrop)
 
         do {
@@ -105,27 +103,31 @@ final class ClockRenderView: ARView {
         let appearance = ClockAppearance(colorScheme: colorScheme)
         applyLighting(lighting)
 
-        let material = sandpaperTextures.map { appearance.texturedNumeralMaterial(textures: $0) }
-            ?? appearance.numeralMaterial
-        for glyph in glyphs.values { glyph.model?.materials = [material] }
-        for case let glyph as ModelEntity in clock.children { glyph.model?.materials = [material] }
+        applyNumeralMaterials()
         if appearance.usesSandpaper { loadTexturesIfNeeded() }
     }
 
     func applyLighting(_ settings: ClockLightingSettings) {
+        let finishChanged = lighting.shimmer != settings.shimmer
         lighting = settings
         keyLight.light.intensity = Float(settings.strength)
-        keyLight.look(at: .zero, from: settings.lightPosition, relativeTo: placement)
-        keyLight.shadow = settings.shadowsEnabled ? .init(
-            shadowProjection: .fixed(zNear: 0.1, zFar: 30, orthographicScale: 10),
-            depthBias: 0.1
-        ) : nil
+        keyLight.shadow = nil
         let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
         environment.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
         let background = UIColor(settings.backgroundColor(for: appliedColorScheme ?? .light))
         environment.background = .color(background)
         backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
-        shadowLayer.update(settings: settings, background: background)
+        if finishChanged { applyNumeralMaterials() }
+        applyInteractionLighting()
+    }
+
+    private func applyNumeralMaterials() {
+        let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
+        let material = sandpaperTextures.map {
+            appearance.texturedNumeralMaterial(textures: $0, shimmer: lighting.shimmer)
+        } ?? appearance.numeralMaterial(shimmer: lighting.shimmer)
+        for glyph in glyphs.values { glyph.model?.materials = [material] }
+        for case let glyph as ModelEntity in clock.children { glyph.model?.materials = [material] }
     }
 
     private func loadTexturesIfNeeded() {
@@ -166,12 +168,7 @@ final class ClockRenderView: ARView {
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
-        synchronizeShadows()
         applyViewingAngle()
-    }
-
-    private func synchronizeShadows() {
-        shadowLayer.synchronize(clock.children.compactMap { $0 as? ModelEntity }, relativeTo: placement)
     }
 
     private func applyViewingAngle() {
@@ -179,6 +176,21 @@ final class ClockRenderView: ARView {
             * simd_quatf(angle: angles.y, axis: [1, 0, 0])
         camera.orientation = orbit
         camera.position = placement.position + orbit.act(cameraRestOffset)
+        applyInteractionLighting()
+    }
+
+    private func applyInteractionLighting() {
+        var position = lighting.lightPosition
+        if angles != .zero && !UIAccessibility.isReduceMotionEnabled {
+            // The camera moves opposite the finger. Let the light follow the
+            // finger at 30% of that angle, using the same spring on release.
+            let boundedAngles = simd_clamp(angles, SIMD2(repeating: -maximumAngle),
+                                          SIMD2(repeating: maximumAngle))
+            let lightOrbit = simd_quatf(angle: -boundedAngles.x * 0.3, axis: [0, 1, 0])
+                * simd_quatf(angle: -boundedAngles.y * 0.3, axis: [1, 0, 0])
+            position = lightOrbit.act(position)
+        }
+        keyLight.look(at: .zero, from: position, relativeTo: placement)
     }
 
     override func didMoveToWindow() {
@@ -299,7 +311,6 @@ final class ClockRenderView: ARView {
                               rowCenter - bounds.center.y * digitHeightScale, 0]
         }
         clock.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
-        synchronizeShadows()
     }
 
 }
