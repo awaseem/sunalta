@@ -1,8 +1,6 @@
-import SwiftData
 import SwiftUI
 
 struct AlarmExitPointOptions: View {
-    @Query(sort: \AlarmStopTarget.name) private var savedTargets: [AlarmStopTarget]
     @Binding var draft: AlarmExitPointDraft
     @State private var nfcScanner = NFCScannerUtil()
     @State private var scanError: String?
@@ -15,61 +13,19 @@ struct AlarmExitPointOptions: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Exit point name (optional)")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                TextField("Bathroom, kitchen, hallway…", text: $draft.name)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                    .padding(16)
-                    .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 16))
-                    .accessibilityLabel("Exit point name, optional")
-            }
-
-            selectionRow(
-                title: "Any QR code or NFC tag", detail: "No setup needed. Scan either one to stop your alarm.",
-                icon: "qrcode.viewfinder", selected: draft.usesAnyScan
-            ) {
-                draft.scannedCode = nil
-                draft.savedTarget = nil
-            }
-
-            if let code = draft.scannedCode {
-                Label(code.kind == .nfc ? "NFC tag set up" : "QR code set up",
-                      systemImage: "checkmark.circle.fill")
-                    .font(.headline)
-                Text("Only this \(code.kind == .nfc ? "tag" : "code") will stop your alarm.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 12) {
-                Button { scanNFC() } label: {
-                    Label("Set up NFC", systemImage: "wave.3.right")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                Button { scannerSheet = .qrCode } label: {
-                    Label("Set up QR", systemImage: "qrcode")
-                        .frame(maxWidth: .infinity, minHeight: 44)
+            VStack(spacing: 12) {
+                ForEach(AlarmExitPoint.allCases) { option in
+                    optionCard(option)
                 }
             }
-            .buttonStyle(.bordered)
-            .tint(.primary)
+            .accessibilityLabel("Exit point")
 
-            if !savedTargets.isEmpty {
-                Text("Saved exit points").font(.headline)
-                ForEach(savedTargets.filter { (try? $0.validate()) != nil }) { target in
-                    selectionRow(
-                        title: target.name, detail: target.kind == .nfc ? "NFC tag" : "QR code",
-                        icon: target.kind == .nfc ? "wave.3.right" : "qrcode",
-                        selected: draft.savedTarget?.id == target.id
-                    ) {
-                        draft = AlarmExitPointDraft(name: target.name, savedTarget: target)
-                    }
-                }
+            if draft.selection != .normal {
+                scanSetup
             }
         }
         .sheet(item: $scannerSheet) { _ in
-            AlarmQRSetupView(scannedCode: $draft.scannedCode, savedTarget: $draft.savedTarget)
+            AlarmQRSetupView(draft: $draft)
         }
         .alert("Couldn't scan NFC tag", isPresented: Binding(
             get: { scanError != nil }, set: { if !$0 { scanError = nil } }
@@ -78,29 +34,30 @@ struct AlarmExitPointOptions: View {
         } message: {
             Text(scanError ?? "Please try again.")
         }
-        .onDisappear {
-            nfcScanner.onTagScanned = nil
-            nfcScanner.onError = nil
-            nfcScanner.cancel()
-        }
+        .onDisappear { cancelNFC() }
     }
 
-    private func selectionRow(
-        title: String, detail: String, icon: String, selected: Bool, action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
+    private func optionCard(_ option: AlarmExitPoint) -> some View {
+        let selected = draft.selection == option
+        return Button {
+            if !selected {
+                cancelNFC()
+                draft.select(option)
+            }
+        } label: {
             HStack(spacing: 12) {
-                Image(systemName: icon).font(.title3).frame(width: 28)
+                Image(systemName: option.symbol).font(.title3).frame(width: 28)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(title).font(.body.weight(.medium))
-                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                    Text(option.title).font(.body.weight(.semibold))
+                    Text(option.detail).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                    .font(.title3)
                     .accessibilityHidden(true)
             }
             .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
             .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 16))
             .overlay {
                 RoundedRectangle(cornerRadius: 16)
@@ -109,29 +66,68 @@ struct AlarmExitPointOptions: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("exit-point-\(option.rawValue)")
+    }
+
+    private var scanSetup: some View {
+        let isNFC = draft.selection == .nfc
+        let type = isNFC ? "NFC tag" : "QR code"
+        let configured = draft.scannedCode != nil
+        return VStack(alignment: .leading, spacing: 12) {
+            Label(configured ? "Specific \(type) set" : "Any \(type)",
+                  systemImage: configured ? "checkmark.circle.fill" : draft.selection.symbol)
+                .font(.headline)
+            Text(configured
+                 ? "Only this \(isNFC ? "tag" : "code") will be accepted."
+                 : "Setup is optional. Leave it empty to accept any \(type).")
+                .font(.subheadline).foregroundStyle(.secondary)
+            Button {
+                if isNFC { scanNFC() }
+                else { scannerSheet = .qrCode }
+            } label: {
+                Label(configured ? "Replace \(type)" : "Scan a specific \(type)", systemImage: draft.selection.symbol)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .tint(.primary)
+            if configured {
+                Button("Use any \(type)") { draft.scannedCode = nil }
+                    .buttonStyle(.plain)
+                    .font(.subheadline)
+                    .frame(minHeight: 44)
+            }
+        }
     }
 
     private func scanNFC() {
         nfcScanner.onTagScanned = { result in
+            guard draft.selection == .nfc else { return }
             draft.scannedCode = .init(kind: .nfc, value: result.id)
-            draft.savedTarget = nil
         }
         nfcScanner.onError = { scanError = $0 }
-        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        nfcScanner.scan(alarmName: name.isEmpty ? "your exit point" : name)
+        nfcScanner.scan(alarmName: "your alarm")
+    }
+
+    private func cancelNFC() {
+        nfcScanner.onTagScanned = nil
+        nfcScanner.onError = nil
+        nfcScanner.cancel()
     }
 }
 
-#Preview("Exit point") {
+#Preview("Normal default") {
     @Previewable @State var draft = AlarmExitPointDraft()
     ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
-        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
 }
 
-#Preview("Configured exit point") {
+#Preview("Any NFC tag") {
+    @Previewable @State var draft = AlarmExitPointDraft(selection: .nfc)
+    ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
+}
+
+#Preview("Specific QR code") {
     @Previewable @State var draft = AlarmExitPointDraft(
-        name: "Bathroom", scannedCode: .init(kind: .qrCode, value: "bathroom")
+        selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "my-alarm-qr")
     )
     ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
-        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
 }

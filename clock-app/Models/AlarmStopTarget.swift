@@ -24,7 +24,7 @@ final class AlarmStopTarget {
     }
 
     func validate() throws {
-        guard let kind, !Self.normalizedCodeValue(codeValue, kind: kind).isEmpty else {
+        guard let kind, Self.isValidScan(codeValue: codeValue, kind: kind) else {
             throw AlarmValidationError.invalidScanTarget
         }
     }
@@ -35,7 +35,7 @@ final class AlarmStopTarget {
     }
 
     static func isValidScan(codeValue: String, kind: Kind) -> Bool {
-        !normalizedCodeValue(codeValue, kind: kind).isEmpty
+        !normalizedCodeValue(codeValue, kind: kind).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     static func nfcIdentifier(from data: Data) -> String {
@@ -43,17 +43,8 @@ final class AlarmStopTarget {
     }
 
     private static func normalizedCodeValue(_ value: String, kind: Kind) -> String {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard kind == .qrCode,
-              var components = URLComponents(string: trimmed),
-              components.scheme != nil, components.host != nil else {
-            return trimmed
-        }
-        components.scheme = components.scheme?.lowercased()
-        components.host = components.host?.lowercased()
-        if components.path == "/" && components.query == nil && components.fragment == nil {
-            components.path = ""
-        }
-        return components.string ?? trimmed
+        // Specific QR codes match their exact payload, including URL spelling.
+        if kind == .qrCode { return value }
+        return value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
     }
 }

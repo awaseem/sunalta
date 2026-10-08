@@ -5,8 +5,7 @@ import SwiftUI
 struct AlarmQRSetupView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
-    @Binding var scannedCode: AlarmExitPointDraft.ScannedCode?
-    @Binding var savedTarget: AlarmStopTarget?
+    @Binding var draft: AlarmExitPointDraft
     @State private var scanError: String?
     @State private var permissionDenied = false
     @State private var scannerID = UUID()
@@ -14,7 +13,7 @@ struct AlarmQRSetupView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("Scan the QR code at your exit point.")
+                Text("Scan the specific QR code you'll use to stop your alarm.")
                     .font(.subheadline).foregroundStyle(.secondary)
                     .padding(.horizontal)
                 scanner
@@ -49,7 +48,7 @@ struct AlarmQRSetupView: View {
         #if targetEnvironment(simulator)
         ContentUnavailableView(
             "Camera scanning needs an iPhone", systemImage: "qrcode.viewfinder",
-            description: Text("Set up your QR code on a device, or use any QR code or NFC tag for now.")
+            description: Text("Scan a specific QR code on a device, or leave setup empty to use any QR code.")
         )
         #else
         cameraScanner
@@ -61,13 +60,13 @@ struct AlarmQRSetupView: View {
                         requiresPhotoOutput: false, isPaused: scanError != nil) { result in
             switch result {
             case .success(let scan):
+                guard draft.selection == .qrCode else { dismiss(); return }
                 guard scan.type == .qr,
                       AlarmStopTarget.isValidScan(codeValue: scan.string, kind: .qrCode) else {
                     scanError = "This QR code is empty. Try a different code."
                     return
                 }
-                scannedCode = .init(kind: .qrCode, value: scan.string)
-                savedTarget = nil
+                draft.scannedCode = .init(kind: .qrCode, value: scan.string)
                 dismiss()
             case .failure:
                 permissionDenied = AVCaptureDevice.authorizationStatus(for: .video) == .denied
@@ -84,7 +83,7 @@ struct AlarmQRSetupView: View {
         .onAppear {
             if AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
                 permissionDenied = true
-                scanError = "Camera access is restricted on this device. You can use an NFC tag or skip setup."
+                scanError = "Camera access is restricted on this device. Leave setup empty to use any QR code."
             }
         }
     }

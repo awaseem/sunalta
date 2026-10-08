@@ -10,7 +10,7 @@ struct NewAlarmView: View {
     private let titles = ["Time", "Repeat", "Snooze", "Exit point"]
     private let subtitles = ["24-hour time", "Choose the days. Leave empty for a one-time alarm.",
                              "Choose how long to snooze.",
-                             "Choose where you'll go to stop your alarm. Setup is optional."]
+                             "Choose how you'll stop your alarm."]
 
     @State private var step = 0
     @State private var time = Calendar.autoupdatingCurrent.date(
@@ -32,7 +32,9 @@ struct NewAlarmView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let previewHeight = min(340, max(160, geometry.size.height * 0.40))
+            let previewHeight = step == titles.count - 1
+                ? min(220, max(120, geometry.size.height * 0.24))
+                : min(340, max(160, geometry.size.height * 0.40))
             ZStack {
                 AlarmClockPreview(
                     time: displayTime,
@@ -147,16 +149,14 @@ struct NewAlarmView: View {
                 hour: timeComponents.hour ?? 7, minute: timeComponents.minute ?? 0, isEnabled: false,
                 repeatDays: repeatDays, snoozeEnabled: snoozeEnabled,
                 snoozeDurationMinutes: snoozeMinutes,
-                requiresScanToStop: true, stopTargets: target.map { [$0] } ?? [],
-                exitPointName: exitPoint.name
+                exitPoint: exitPoint.selection, stopTargets: target.map { [$0] } ?? []
             )
-            let newTarget = exitPoint.scannedCode == nil ? nil : target
-            if let newTarget { modelContext.insert(newTarget) }
+            if let target { modelContext.insert(target) }
             modelContext.insert(alarm)
             do { try modelContext.save() }
             catch {
                 modelContext.delete(alarm)
-                if let newTarget { modelContext.delete(newTarget) }
+                if let target { modelContext.delete(target) }
                 throw error
             }
             dismiss()

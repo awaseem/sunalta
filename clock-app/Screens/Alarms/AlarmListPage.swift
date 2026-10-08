@@ -3,8 +3,6 @@ import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
@@ -83,16 +81,6 @@ struct AlarmListPage: View {
         } message: {
             Text(schedulingError ?? "Please try again.")
         }
-        .task {
-            refreshAlarmStates()
-            for await systemAlarms in AlarmManager.shared.alarmUpdates {
-                guard !Task.isCancelled else { return }
-                synchronizeAlarmStates(systemAlarms)
-            }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { refreshAlarmStates() }
-        }
     }
 
     private func setEnabled(_ enabled: Bool, for alarm: AlarmRecord) async {
@@ -100,41 +88,12 @@ struct AlarmListPage: View {
         updatingAlarmID = alarm.id
         defer { updatingAlarmID = nil }
         do {
-            if enabled { try await AlarmScheduler.schedule(alarm) }
-            else { try AlarmScheduler.cancel(alarm) }
-            alarm.isEnabled = enabled
-            do { try modelContext.save() }
-            catch {
-                schedulingError = "The alarm is \(enabled ? "on" : "off"), but its status couldn't be saved. \(error.localizedDescription)"
-            }
+            try await AlarmRuntime.shared.setEnabled(enabled, for: alarm)
         } catch {
             schedulingError = error.localizedDescription
         }
     }
 
-    private func refreshAlarmStates() {
-        if AlarmManager.shared.authorizationState == .denied {
-            synchronizeAlarmStates([])
-        } else if let systemAlarms = try? AlarmManager.shared.alarms {
-            synchronizeAlarmStates(systemAlarms)
-        }
-    }
-
-    private func synchronizeAlarmStates(_ systemAlarms: [Alarm]) {
-        let scheduledIDs = Set(systemAlarms.map(\.id))
-        var changed = false
-        for alarm in alarms where alarm.id != updatingAlarmID {
-            let enabled = scheduledIDs.contains(alarm.id)
-            if alarm.isEnabled != enabled {
-                alarm.isEnabled = enabled
-                changed = true
-            }
-        }
-        if changed {
-            do { try modelContext.save() }
-            catch { schedulingError = "Couldn't save the alarm status. \(error.localizedDescription)" }
-        }
-    }
 }
 
 #Preview("Saved alarms") {

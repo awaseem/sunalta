@@ -19,8 +19,17 @@ final class AlarmRecord {
     var soundName: String?
     var snoozeEnabled: Bool
     private(set) var snoozeDurationMinutes: Int
-    var requiresScanToStop: Bool
+    private var requiresScanToStop: Bool
+    private var exitPointValue: String? = nil
     var exitPointName: String? = nil
+    // The wake-up session survives system Stop and an app restart.
+    var scheduleToken: String? = nil
+    var lastCompletedAt: Date? = nil
+    var pendingSince: Date? = nil
+    var retryAlarmIDs: [UUID] = []
+    var nextRetryAt: Date? = nil
+    var snoozedUntil: Date? = nil
+    var configurationVersion: Int? = nil
     @Relationship(deleteRule: .nullify, inverse: \AlarmStopTarget.alarms)
     var stopTargets: [AlarmStopTarget]
 
@@ -28,7 +37,7 @@ final class AlarmRecord {
         hour: Int, minute: Int, label: String = "Alarm", isEnabled: Bool = true,
         repeatDays: Set<ClockWeekday> = [], soundName: String? = nil,
         snoozeEnabled: Bool = true, snoozeDurationMinutes: Int = 9,
-        requiresScanToStop: Bool = false, stopTargets: [AlarmStopTarget] = [],
+        exitPoint: AlarmExitPoint = .normal, stopTargets: [AlarmStopTarget] = [],
         exitPointName: String? = nil
     ) throws {
         self.id = UUID()
@@ -40,7 +49,8 @@ final class AlarmRecord {
         self.soundName = soundName
         self.snoozeEnabled = snoozeEnabled
         self.snoozeDurationMinutes = snoozeDurationMinutes
-        self.requiresScanToStop = requiresScanToStop
+        self.requiresScanToStop = exitPoint != .normal
+        self.exitPointValue = exitPoint.rawValue
         self.stopTargets = stopTargets
         let trimmedName = exitPointName?.trimmingCharacters(in: .whitespacesAndNewlines)
         self.exitPointName = trimmedName?.isEmpty == false ? trimmedName : nil
@@ -50,6 +60,20 @@ final class AlarmRecord {
     var repeatDays: Set<ClockWeekday> {
         get { Set(repeatDayValues.compactMap(ClockWeekday.init(rawValue:))) }
         set { repeatDayValues = newValue.map(\.rawValue).sorted() }
+    }
+
+    var exitPoint: AlarmExitPoint {
+        if let exitPointValue, let selection = AlarmExitPoint(rawValue: exitPointValue) {
+            return selection
+        }
+        // Older alarms didn't store a method. Preserve configured scan targets;
+        // alarms without a target use the new Normal default.
+        guard requiresScanToStop else { return .normal }
+        switch stopTargets.first?.kind {
+        case .nfc: return .nfc
+        case .qrCode: return .qrCode
+        case nil: return .normal
+        }
     }
 
     func setTime(hour: Int, minute: Int) throws {
@@ -73,21 +97,39 @@ final class AlarmRecord {
         if let soundName, soundName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw AlarmValidationError.invalidSoundName
         }
-        // An empty target list means any QR code or NFC tag can stop the alarm.
-        for target in stopTargets { try target.validate() }
+        guard stopTargets.count <= 1 else { throw AlarmValidationError.invalidScanTarget }
+        for target in stopTargets {
+            try target.validate()
+            guard target.kind == exitPoint.scanKind else { throw AlarmValidationError.invalidScanTarget }
+        }
     }
 
     func acceptsScan(codeValue: String, kind: AlarmStopTarget.Kind) -> Bool {
-        guard requiresScanToStop, AlarmStopTarget.isValidScan(codeValue: codeValue, kind: kind) else {
+        guard exitPoint.scanKind == kind, AlarmStopTarget.isValidScan(codeValue: codeValue, kind: kind) else {
             return false
         }
         return stopTargets.isEmpty || stopTargets.contains { $0.matches(codeValue: codeValue, kind: kind) }
     }
 
     var exitPointSummary: String {
-        let scanDescription = stopTargets.isEmpty ? "Any QR code or NFC tag" : "Scan to stop"
-        let name = exitPointName ?? stopTargets.first?.name
-        guard let name, !name.isEmpty else { return scanDescription }
-        return "\(name) · \(scanDescription)"
+        switch exitPoint {
+        case .normal: "Normal stop button"
+        case .nfc: stopTargets.isEmpty ? "Any NFC tag" : "Specific NFC tag"
+        case .qrCode: stopTargets.isEmpty ? "Any QR code" : "Specific QR code"
+        }
+    }
+
+    func latestOccurrence(before date: Date = .now) -> Date? {
+        let calendar = Calendar.autoupdatingCurrent
+        let weekdays: [Int?] = repeatDays.isEmpty ? [nil] : repeatDays.map { $0.rawValue }
+        return weekdays.compactMap { weekday in
+            var components = DateComponents()
+            components.hour = hour
+            components.minute = minute
+            components.second = 0
+            components.weekday = weekday
+            return calendar.nextDate(after: date, matching: components,
+                                     matchingPolicy: .nextTime, direction: .backward)
+        }.max()
     }
 }

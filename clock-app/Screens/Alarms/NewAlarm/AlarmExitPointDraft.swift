@@ -7,21 +7,17 @@ struct AlarmExitPointDraft {
         let value: String
     }
 
-    var name = ""
+    var selection: AlarmExitPoint = .normal
     var scannedCode: ScannedCode?
-    var savedTarget: AlarmStopTarget?
 
-    var usesAnyScan: Bool { scannedCode == nil && savedTarget == nil }
+    mutating func select(_ selection: AlarmExitPoint) {
+        guard self.selection != selection else { return }
+        self = AlarmExitPointDraft(selection: selection)
+    }
 
     func makeStopTarget() throws -> AlarmStopTarget? {
-        if let scannedCode {
-            let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return try AlarmStopTarget(
-                name: trimmedName.isEmpty ? (scannedCode.kind == .nfc ? "NFC tag" : "QR code") : trimmedName,
-                kind: scannedCode.kind, codeValue: scannedCode.value
-            )
-        }
-        if let savedTarget { try savedTarget.validate() }
-        return savedTarget
+        guard let scannedCode else { return nil }
+        guard scannedCode.kind == selection.scanKind else { throw AlarmValidationError.invalidScanTarget }
+        return try AlarmStopTarget(name: selection.title, kind: scannedCode.kind, codeValue: scannedCode.value)
     }
 }

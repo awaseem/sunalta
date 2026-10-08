@@ -27,11 +27,9 @@ struct AlarmRow: View {
             Text(repeatDescription)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            if alarm.requiresScanToStop {
-                Label(alarm.exitPointSummary, systemImage: "qrcode.viewfinder")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Label(alarm.exitPointSummary, systemImage: alarm.exitPoint.symbol)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -5,8 +5,9 @@ import SwiftData
 struct ClockApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeScreen()
+            AlarmRootView()
+                .environment(AlarmRuntime.shared)
         }
-        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self])
+        .modelContainer(AlarmStore.container)
     }
 }

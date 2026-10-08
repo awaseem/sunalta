@@ -7,14 +7,48 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1A100000000000000000001 /* ClockAlarmWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A1A100000000000000000002 /* ClockAlarmWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C10C00000000000000000001 /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = C10C00000000000000000003 /* CodeScanner */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A1A100000000000000000003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 80EED26E3069B7BE006EC23D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1A100000000000000000008;
+			remoteInfo = ClockAlarmWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1A100000000000000000004 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (A1A100000000000000000001 /* ClockAlarmWidgets.appex in Embed App Extensions */, );
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		A1A100000000000000000002 /* ClockAlarmWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClockAlarmWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		80EED2763069B7BE006EC23D /* clock-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "clock-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A1A100000000000000000005 /* AlarmShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AlarmShared;
+			sourceTree = "<group>";
+		};
+		A1A100000000000000000006 /* ClockAlarmWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ClockAlarmWidgets;
+			sourceTree = "<group>";
+		};
 		80EED2783069B7BE006EC23D /* clock-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "clock-app";
@@ -28,6 +62,7 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A1A100000000000000000007 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; files = (); };
 		80EED2733069B7BE006EC23D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -41,6 +76,8 @@
 			isa = PBXGroup;
 			children = (
 				80EED2783069B7BE006EC23D /* clock-app */,
+				A1A100000000000000000005 /* AlarmShared */,
+				A1A100000000000000000006 /* ClockAlarmWidgets */,
 				B04D834BF17D4B51B4732C01 /* AssetFactory */,
 				80EED2773069B7BE006EC23D /* Products */,
 			);
@@ -50,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				80EED2763069B7BE006EC23D /* clock-app.app */,
+				A1A100000000000000000002 /* ClockAlarmWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -57,6 +95,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		A1A100000000000000000008 /* ClockAlarmWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1A10000000000000000000E /* Build configuration list for ClockAlarmWidgets */;
+			buildPhases = (
+				A1A10000000000000000000A /* Sources */,
+				A1A100000000000000000007 /* Frameworks */,
+				A1A100000000000000000009 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = (
+				A1A100000000000000000005 /* AlarmShared */,
+				A1A100000000000000000006 /* ClockAlarmWidgets */,
+			);
+			name = ClockAlarmWidgets;
+			productName = ClockAlarmWidgets;
+			productReference = A1A100000000000000000002 /* ClockAlarmWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		80EED2753069B7BE006EC23D /* clock-app */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 80EED2833069B7BE006EC23D /* Build configuration list for PBXNativeTarget "clock-app" */;
@@ -64,11 +121,14 @@
 				80EED2723069B7BE006EC23D /* Sources */,
 				80EED2733069B7BE006EC23D /* Frameworks */,
 				80EED2743069B7BE006EC23D /* Resources */,
+				A1A100000000000000000004 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
+			dependencies = (A1A10000000000000000000B /* PBXTargetDependency */, );
 			fileSystemSynchronizedGroups = (
 				80EED2783069B7BE006EC23D /* clock-app */,
+				A1A100000000000000000005 /* AlarmShared */,
 			);
 			name = "clock-app";
 			packageProductDependencies = (
@@ -91,6 +151,7 @@
 					80EED2753069B7BE006EC23D = {
 						CreatedOnToolsVersion = 27.1;
 					};
+					A1A100000000000000000008 = {CreatedOnToolsVersion = 27.1; };
 				};
 			};
 			buildConfigurationList = 80EED2713069B7BE006EC23D /* Build configuration list for PBXProject "clock-app" */;
@@ -111,11 +172,13 @@
 			projectRoot = "";
 			targets = (
 				80EED2753069B7BE006EC23D /* clock-app */,
+				A1A100000000000000000008 /* ClockAlarmWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A1A100000000000000000009 /* Resources */ = {isa = PBXResourcesBuildPhase; files = (); };
 		80EED2743069B7BE006EC23D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
@@ -124,6 +187,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A1A10000000000000000000A /* Sources */ = {isa = PBXSourcesBuildPhase; files = (); };
 		80EED2723069B7BE006EC23D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -131,7 +195,73 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A1A10000000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1A100000000000000000008 /* ClockAlarmWidgets */;
+			targetProxy = A1A100000000000000000003 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		A1A10000000000000000000C /* Debug configuration for ClockAlarmWidgets */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/ClockAlarmWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Clock;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.ambitionsoftware.clock-app.ClockAlarmWidgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) CLOCK_WIDGET_EXTENSION";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A1A10000000000000000000D /* Release configuration for ClockAlarmWidgets */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/ClockAlarmWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Clock;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.ambitionsoftware.clock-app.ClockAlarmWidgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) CLOCK_WIDGET_EXTENSION";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		80EED2813069B7BE006EC23D /* Debug configuration for PBXProject "clock-app" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -341,6 +471,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A1A10000000000000000000E /* Build configuration list for ClockAlarmWidgets */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1A10000000000000000000C /* Debug configuration for ClockAlarmWidgets */,
+				A1A10000000000000000000D /* Release configuration for ClockAlarmWidgets */,
+			);
+			defaultConfigurationName = Release;
+		};
 		80EED2713069B7BE006EC23D /* Build configuration list for PBXProject "clock-app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
