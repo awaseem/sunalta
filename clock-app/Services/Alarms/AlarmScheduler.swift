@@ -32,7 +32,7 @@ enum AlarmScheduler {
 
     private static func configuration(_ alarm: AlarmRecord, id: UUID, schedule: Alarm.Schedule?,
                                       duration: Alarm.CountdownDuration?, kind: ClockAlarmMetadata.CountdownKind)
-        -> AlarmManager.AlarmConfiguration<ClockAlarmMetadata> {
+        -> sending AlarmManager.AlarmConfiguration<ClockAlarmMetadata> {
         let title = alarm.label.isEmpty ? "Alarm" : alarm.label
         let needsScan = alarm.exitPoint != .normal
         let token = alarm.scheduleToken ?? ""
@@ -80,11 +80,4 @@ enum AlarmScheduler {
         }
     }
 
-    enum SchedulingError: LocalizedError {
-        case permissionDenied
-
-        var errorDescription: String? {
-            "Allow alarms for Clock in Settings before turning this alarm on."
-        }
-    }
 }

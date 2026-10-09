@@ -5,17 +5,14 @@ import UIKit
 struct ClockAppearance {
     let numeralColor: UIColor
     let ambientIntensityExponent: Float
-    let usesSandpaper: Bool
 
     init(colorScheme: ColorScheme) {
         switch colorScheme {
         case .dark:
-            numeralColor = UIColor(white: 0.92, alpha: 1)
-            usesSandpaper = false
+            numeralColor = UIColor(red: 234 / 255, green: 231 / 255, blue: 225 / 255, alpha: 1)
             ambientIntensityExponent = -2
         default:
             numeralColor = UIColor(white: 0.16, alpha: 1)
-            usesSandpaper = true
             ambientIntensityExponent = -1
         }
     }
@@ -25,15 +22,10 @@ struct ClockAppearance {
         material.baseColor = .init(tint: numeralColor)
         material.metallic = .init(floatLiteral: 0)
         let amount = Float(min(max(shimmer, 0), 1))
-        material.roughness = .init(floatLiteral: usesSandpaper ? 0.85 - amount * 0.75 : 0.65 - amount * 0.55)
-        return material
-    }
-
-    func texturedNumeralMaterial(textures: ClockSurfaceTextures, shimmer: Double) -> PhysicallyBasedMaterial {
-        var material = numeralMaterial(shimmer: shimmer)
-        guard usesSandpaper else { return material }
-        material.baseColor = .init(tint: .white, texture: .init(textures.color))
-        material.normal = .init(texture: .init(textures.normal))
+        // Match the sharp model's glossy plastic at the default shimmer (0.6).
+        material.roughness = .init(floatLiteral: max(0.04, 0.4 - amount * 0.4))
+        material.clearcoat = .init(floatLiteral: 0.8)
+        material.clearcoatRoughness = .init(floatLiteral: 0.08)
         return material
     }
 

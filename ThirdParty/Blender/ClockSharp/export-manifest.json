@@ -1,0 +1,55 @@
+{
+  "source": "ThirdParty/Blender/ClockSharp/clock-sharp.blend",
+  "sourceSHA256": "2d942edb3875bc58097bc2928545cb86aae56666f7aa795909b6de0f3c70d24d",
+  "blenderVersion": "5.2.2 LTS",
+  "resource": "clock-app/Resources/SharpNumerals.clockmesh",
+  "resourceSHA256": "3c806ef558de2c3a6d0f5aee80c24906fee2621bbcd5bdae47db079f47a58c86",
+  "format": "CLKMESH2",
+  "centerYOffset": 1.855999945,
+  "glyphs": {
+    "0": {
+      "vertices": 18984,
+      "triangles": 32944
+    },
+    "1": {
+      "vertices": 3350,
+      "triangles": 5860
+    },
+    "2": {
+      "vertices": 14783,
+      "triangles": 21908
+    },
+    "3": {
+      "vertices": 23748,
+      "triangles": 41320
+    },
+    "4": {
+      "vertices": 5171,
+      "triangles": 2580
+    },
+    "5": {
+      "vertices": 17088,
+      "triangles": 29760
+    },
+    "6": {
+      "vertices": 28568,
+      "triangles": 49636
+    },
+    "7": {
+      "vertices": 2771,
+      "triangles": 5410
+    },
+    "8": {
+      "vertices": 27814,
+      "triangles": 48304
+    },
+    "9": {
+      "vertices": 28568,
+      "triangles": 49636
+    },
+    ":": {
+      "vertices": 820,
+      "triangles": 1528
+    }
+  }
+}

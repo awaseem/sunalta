@@ -4,27 +4,24 @@ struct AlarmExitPointOptions: View {
     @Binding var draft: AlarmExitPointDraft
     @State private var nfcScanner = NFCScannerUtil()
     @State private var scanError: String?
-    @State private var scannerSheet: ScannerSheet?
-
-    private enum ScannerSheet: String, Identifiable {
-        case qrCode
-        var id: String { rawValue }
-    }
+    @State private var showsQRSetup = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(spacing: 12) {
                 ForEach(AlarmExitPoint.allCases) { option in
-                    optionCard(option)
+                    AlarmExitPointOptionButton(option: option, isSelected: draft.selection == option) {
+                        select(option)
+                    }
                 }
             }
-            .accessibilityLabel("Exit point")
 
             if draft.selection != .normal {
-                scanSetup
+                AlarmScanSetup(selection: draft.selection, isConfigured: draft.scannedCode != nil,
+                               onScan: startScan, onClear: { draft.scannedCode = nil })
             }
         }
-        .sheet(item: $scannerSheet) { _ in
+        .sheet(isPresented: $showsQRSetup) {
             AlarmQRSetupView(draft: $draft)
         }
         .alert("Couldn't scan NFC tag", isPresented: Binding(
@@ -37,66 +34,15 @@ struct AlarmExitPointOptions: View {
         .onDisappear { cancelNFC() }
     }
 
-    private func optionCard(_ option: AlarmExitPoint) -> some View {
-        let selected = draft.selection == option
-        return Button {
-            if !selected {
-                cancelNFC()
-                draft.select(option)
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: option.symbol).font(.title3).frame(width: 28)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(option.title).font(.body.weight(.semibold))
-                    Text(option.detail).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                    .font(.title3)
-                    .accessibilityHidden(true)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-            .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(selected ? Color.primary : .clear, lineWidth: 2)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityIdentifier("exit-point-\(option.rawValue)")
+    private func select(_ option: AlarmExitPoint) {
+        guard draft.selection != option else { return }
+        cancelNFC()
+        draft.select(option)
     }
 
-    private var scanSetup: some View {
-        let isNFC = draft.selection == .nfc
-        let type = isNFC ? "NFC tag" : "QR code"
-        let configured = draft.scannedCode != nil
-        return VStack(alignment: .leading, spacing: 12) {
-            Label(configured ? "Specific \(type) set" : "Any \(type)",
-                  systemImage: configured ? "checkmark.circle.fill" : draft.selection.symbol)
-                .font(.headline)
-            Text(configured
-                 ? "Only this \(isNFC ? "tag" : "code") will be accepted."
-                 : "Setup is optional. Leave it empty to accept any \(type).")
-                .font(.subheadline).foregroundStyle(.secondary)
-            Button {
-                if isNFC { scanNFC() }
-                else { scannerSheet = .qrCode }
-            } label: {
-                Label(configured ? "Replace \(type)" : "Scan a specific \(type)", systemImage: draft.selection.symbol)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .buttonStyle(.bordered)
-            .tint(.primary)
-            if configured {
-                Button("Use any \(type)") { draft.scannedCode = nil }
-                    .buttonStyle(.plain)
-                    .font(.subheadline)
-                    .frame(minHeight: 44)
-            }
-        }
+    private func startScan() {
+        if draft.selection == .nfc { scanNFC() }
+        else { showsQRSetup = true }
     }
 
     private func scanNFC() {

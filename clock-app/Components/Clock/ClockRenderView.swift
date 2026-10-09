@@ -1,14 +1,10 @@
 import RealityKit
-import OSLog
 import SwiftUI
 import UIKit
 
 final class ClockRenderView: ARView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
-    var onMaterialChanged: (() -> Void)?
-    private var sandpaperTextures: ClockSurfaceTextures?
-    private var requestedTextures = false
     var previewHeight: CGFloat = 240 {
         didSet { if oldValue != previewHeight { setNeedsLayout() } }
     }
@@ -100,11 +96,9 @@ final class ClockRenderView: ARView {
     func applyAppearance(_ colorScheme: ColorScheme) {
         guard appliedColorScheme != colorScheme else { return }
         appliedColorScheme = colorScheme
-        let appearance = ClockAppearance(colorScheme: colorScheme)
         applyLighting(lighting)
 
         applyNumeralMaterials()
-        if appearance.usesSandpaper { loadTexturesIfNeeded() }
     }
 
     func applyLighting(_ settings: ClockLightingSettings) {
@@ -123,31 +117,9 @@ final class ClockRenderView: ARView {
 
     private func applyNumeralMaterials() {
         let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
-        let material = sandpaperTextures.map {
-            appearance.texturedNumeralMaterial(textures: $0, shimmer: lighting.shimmer)
-        } ?? appearance.numeralMaterial(shimmer: lighting.shimmer)
+        let material = appearance.numeralMaterial(shimmer: lighting.shimmer)
         for glyph in glyphs.values { glyph.model?.materials = [material] }
         for case let glyph as ModelEntity in clock.children { glyph.model?.materials = [material] }
-    }
-
-    private func loadTexturesIfNeeded() {
-        guard !requestedTextures else { return }
-        requestedTextures = true
-        Task { [weak self] in
-            do {
-                let textures = try await ClockSurfaceTextures.load()
-                guard let self else { return }
-                sandpaperTextures = textures
-                guard let currentScheme = appliedColorScheme,
-                      ClockAppearance(colorScheme: currentScheme).usesSandpaper else { return }
-                appliedColorScheme = nil
-                applyAppearance(currentScheme)
-                onMaterialChanged?()
-            } catch {
-                Logger(subsystem: "dev.ambitionsoftware.clock-app", category: "Textures")
-                    .error("Sandpaper finish failed to load: \(error.localizedDescription)")
-            }
-        }
     }
 
     override func layoutSubviews() {
@@ -272,7 +244,7 @@ final class ClockRenderView: ARView {
 
     func show(date: Date) {
         let components = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
-        let time = String(format: "%02d:%02d", components.hour ?? 0, components.minute ?? 0)
+        let time = AlarmTimeText.text(hour: components.hour ?? 0, minute: components.minute ?? 0)
         accessibilityLabel = "Time, \(time)"
         show(time: time)
     }

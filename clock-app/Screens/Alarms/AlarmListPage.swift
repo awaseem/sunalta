@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
-    @Environment(\.openURL) private var openURL
+    @Environment(AlarmRuntime.self) private var runtime
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var showingNewAlarm = false
@@ -26,13 +26,10 @@ struct AlarmListPage: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 12)
-                Button {
-                    showingNewAlarm = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.title3.weight(.semibold))
-                        .frame(width: 44, height: 44)
-                }
+                Button("Add alarm", systemImage: "plus") { showingNewAlarm = true }
+                .labelStyle(.iconOnly)
+                .font(.title3.weight(.semibold))
+                .frame(minWidth: 44, minHeight: 44)
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
                 .tint(.primary)
@@ -73,9 +70,7 @@ struct AlarmListPage: View {
             get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
         )) {
             if AlarmManager.shared.authorizationState == .denied {
-                Button("Open Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                }
+                AppSettingsButton()
             }
             Button("OK", role: .cancel) { schedulingError = nil }
         } message: {
@@ -88,7 +83,7 @@ struct AlarmListPage: View {
         updatingAlarmID = alarm.id
         defer { updatingAlarmID = nil }
         do {
-            try await AlarmRuntime.shared.setEnabled(enabled, for: alarm)
+            try await runtime.setEnabled(enabled, for: alarm)
         } catch {
             schedulingError = error.localizedDescription
         }
@@ -97,21 +92,8 @@ struct AlarmListPage: View {
 }
 
 #Preview("Saved alarms") {
-    let container = try! ModelContainer(
-        for: AlarmRecord.self, AlarmStopTarget.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-    let _ = container.mainContext.insert(try! AlarmRecord(
-        hour: 7, minute: 0, label: "Early start",
-        repeatDays: [.monday, .tuesday, .wednesday, .thursday, .friday]
-    ))
-    let _ = container.mainContext.insert(try! AlarmRecord(
-        hour: 9, minute: 30, label: "Slow morning", isEnabled: false,
-        repeatDays: [.saturday, .sunday]
-    ))
-    ScrollView {
-        AlarmListPage()
+    AlarmPreviewContainer {
+        ScrollView { AlarmListPage() }
+            .background(Color.primary.opacity(0.04))
     }
-    .background(Color(uiColor: .systemGroupedBackground))
-    .modelContainer(container)
 }

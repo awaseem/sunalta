@@ -2,14 +2,10 @@ import SwiftUI
 
 struct ClockLightingPanel: View {
     @Environment(\.colorScheme) private var colorScheme
-    @State private var section = Section.finish
+    @State private var section = ClockAppearanceSection.finish
     @Binding var settings: ClockLightingSettings
     @Binding var isEditing: Bool
     var onClose: () -> Void
-
-    private enum Section: String, CaseIterable {
-        case background = "Background", lighting = "Lighting", finish = "Finish"
-    }
 
     private var backgroundColor: Binding<Color> {
         Binding {
@@ -27,15 +23,14 @@ struct ClockLightingPanel: View {
                 Spacer()
                 Button("Reset") { settings = ClockLightingSettings() }
                     .font(.subheadline)
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
+                Button("Close appearance controls", systemImage: "xmark.circle.fill", action: onClose)
+                    .labelStyle(.iconOnly)
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
                 .accessibilityLabel("Close appearance controls")
             }
             Picker("Appearance controls", selection: $section) {
-                ForEach(Section.allCases, id: \.self) { section in
+                ForEach(ClockAppearanceSection.allCases, id: \.self) { section in
                     Text(section.rawValue).tag(section)
                 }
             }
@@ -47,38 +42,29 @@ struct ClockLightingPanel: View {
                 Text("Stays fixed as you adjust the lighting. Each mode has its own color.")
                     .font(.caption).foregroundStyle(.secondary)
             case .lighting:
-                slider("Brightness", value: $settings.strength, range: 0...6000,
-                       display: "\(Int(settings.strength / 2600 * 100))%")
-                slider("Ambient light", value: $settings.fill, range: -3...3,
-                       display: String(format: "%+.1f", settings.fill))
-                slider("Direction", value: $settings.direction, range: -180...180,
-                       display: "\(Int(settings.direction))°")
-                slider("Light angle", value: $settings.tilt, range: 5...75,
-                       display: "\(Int(settings.tilt))°")
+                ClockLightingSlider(title: "Brightness", range: 0...6000,
+                                    display: "\(Int(settings.strength / 2600 * 100))%",
+                                    value: $settings.strength, isEditing: $isEditing)
+                ClockLightingSlider(title: "Ambient light", range: -3...3,
+                                    display: settings.fill.formatted(.number.precision(.fractionLength(1)).sign(strategy: .always())),
+                                    value: $settings.fill, isEditing: $isEditing)
+                ClockLightingSlider(title: "Direction", range: -180...180,
+                                    display: "\(Int(settings.direction))°",
+                                    value: $settings.direction, isEditing: $isEditing)
+                ClockLightingSlider(title: "Light angle", range: 5...75,
+                                    display: "\(Int(settings.tilt))°",
+                                    value: $settings.tilt, isEditing: $isEditing)
             case .finish:
-                slider("Shimmer", value: $settings.shimmer, range: 0...1,
-                       display: "\(Int(settings.shimmer * 100))%")
+                ClockLightingSlider(title: "Shimmer", range: 0...1,
+                                    display: "\(Int(settings.shimmer * 100))%",
+                                    value: $settings.shimmer, isEditing: $isEditing)
                 Text("Drag across the numbers to catch the light.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24))
+        .background(.regularMaterial, in: .rect(cornerRadius: 24))
         .onDisappear { isEditing = false }
     }
 
-    private func slider(_ title: String, value: Binding<Double>,
-                        range: ClosedRange<Double>, display: String) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(title)
-                Spacer()
-                Text(display).monospacedDigit().foregroundStyle(.secondary)
-            }
-            .font(.caption)
-            Slider(value: value, in: range, onEditingChanged: { isEditing = $0 })
-                .accessibilityLabel(title)
-                .accessibilityValue(display)
-        }
-    }
 }

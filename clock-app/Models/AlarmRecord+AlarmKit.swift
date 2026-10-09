@@ -12,7 +12,7 @@ extension AlarmRecord {
     }
 }
 
-private extension ClockWeekday {
+private nonisolated extension ClockWeekday {
     var alarmKitWeekday: Locale.Weekday {
         switch self {
         case .sunday: .sunday

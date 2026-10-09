@@ -6,7 +6,6 @@ import SwiftData
 @MainActor
 @Observable
 final class AlarmRuntime {
-    static let shared = AlarmRuntime()
     nonisolated static let retryInterval: TimeInterval = 30
     private static let configurationVersion = 1
 
@@ -14,8 +13,12 @@ final class AlarmRuntime {
     private(set) var scanRequestID: UUID?
     var errorMessage: String?
 
-    private var context: ModelContext { AlarmStore.container.mainContext }
+    private let context: ModelContext
     private var operations: [UUID: (id: UUID, task: Task<Void, Error>)] = [:]
+
+    init(context: ModelContext) {
+        self.context = context
+    }
 
     func observe() async {
         await refresh()
@@ -58,7 +61,7 @@ final class AlarmRuntime {
                 }
             }
             try context.save()
-            showPendingAlarm()
+            try showPendingAlarm()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -83,8 +86,7 @@ final class AlarmRuntime {
                     alarm.scheduleToken = oldToken
                     alarm.lastCompletedAt = oldDate
                     alarm.configurationVersion = oldVersion
-                    try? self.context.save()
-                    throw error
+                    try self.saveRestoredState(after: error)
                 }
             } else {
                 try AlarmScheduler.cancel(id: alarm.id)
@@ -161,7 +163,7 @@ final class AlarmRuntime {
             alarm.snoozedUntil = alarm.nextRetryAt
         }
         try context.save()
-        showPendingAlarm()
+        try showPendingAlarm()
     }
 
     func finish(_ alarm: AlarmRecord, code: String? = nil, kind: AlarmStopTarget.Kind? = nil) async throws {
@@ -207,8 +209,7 @@ final class AlarmRuntime {
         } catch {
             alarm.retryAlarmIDs = oldIDs
             alarm.nextRetryAt = oldDate
-            try? context.save()
-            throw error
+            try saveRestoredState(after: error)
         }
         for oldID in oldIDs {
             try AlarmScheduler.cancel(id: oldID)
@@ -231,7 +232,7 @@ final class AlarmRuntime {
         alarm.snoozedUntil = nil
         alarm.lastCompletedAt = .now
         try context.save()
-        showPendingAlarm()
+        try showPendingAlarm()
     }
 
     private func cancelRetries(_ alarm: AlarmRecord) throws {
@@ -262,16 +263,21 @@ final class AlarmRuntime {
     }
 
     private func alarm(_ id: UUID) throws -> AlarmRecord? {
-        try context.fetch(FetchDescriptor<AlarmRecord>(predicate: #Predicate { $0.id == id })).first
+        var descriptor = FetchDescriptor<AlarmRecord>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
-    private func showPendingAlarm() {
+    private func showPendingAlarm() throws {
         if let activeAlarm, activeAlarm.pendingSince != nil,
            activeAlarm.snoozedUntil.map({ $0 > .now }) != true { return }
-        activeAlarm = try? context.fetch(FetchDescriptor<AlarmRecord>(
-            predicate: #Predicate { $0.pendingSince != nil },
+        let now = Date.now
+        var descriptor = FetchDescriptor<AlarmRecord>(
+            predicate: #Predicate { $0.pendingSince != nil && ($0.snoozedUntil ?? now) <= now },
             sortBy: [SortDescriptor(\AlarmRecord.pendingSince)]
-        )).first { $0.snoozedUntil.map { $0 > .now } != true }
+        )
+        descriptor.fetchLimit = 1
+        activeAlarm = try context.fetch(descriptor).first
         scanRequestID = nil
     }
 
@@ -281,22 +287,25 @@ final class AlarmRuntime {
         let previous = operations[id]?.task
         let operationID = UUID()
         let task = Task { @MainActor in
-            _ = try? await previous?.value
+            _ = await previous?.result
+            try Task.checkCancellation()
             try await action()
         }
         operations[id] = (operationID, task)
         defer { if operations[id]?.id == operationID { operations[id] = nil } }
-        try await task.value
+        try await withTaskCancellationHandler {
+            try await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
 
-    enum SessionError: LocalizedError {
-        case scanRequired, wrongScan
-
-        var errorDescription: String? {
-            switch self {
-            case .scanRequired: "Finish the active alarm before changing it."
-            case .wrongScan: "That isn't the exit point for this alarm. Scan the configured code or tag."
-            }
+    private func saveRestoredState(after operationError: Error) throws -> Never {
+        do {
+            try context.save()
+        } catch {
+            throw AlarmRecoveryError(operationError: operationError, persistenceError: error)
         }
+        throw operationError
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-enum AlarmExitPoint: String, CaseIterable, Identifiable {
+nonisolated enum AlarmExitPoint: String, CaseIterable, Identifiable {
     case normal, nfc, qrCode
 
     var id: String { rawValue }

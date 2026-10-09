@@ -25,7 +25,7 @@ struct ClockAlarmLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Text(status(context.attributes.metadata))
+                        Text(context.attributes.metadata?.statusText ?? "Snoozed")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -50,74 +50,8 @@ struct ClockAlarmLiveActivity: Widget {
     }
 }
 
-private func status(_ metadata: ClockAlarmMetadata?) -> String {
-    metadata?.countdownKind == .scanReminder ? "Scan to end the alarm" : "Snoozed"
-}
 
-private struct AlarmCountdownContent: View {
-    let metadata: ClockAlarmMetadata?
-    let state: AlarmPresentationState
 
-    var body: some View {
-        HStack(spacing: 20) {
-            VStack(alignment: .leading, spacing: 6) {
-                Label(metadata?.title ?? "Alarm", systemImage: metadata?.scanSymbol ?? "alarm")
-                    .font(.headline)
-                    .lineLimit(1)
-                Text(status(metadata)).font(.subheadline).foregroundStyle(.secondary)
-                AlarmCountdownTime(mode: state.mode)
-                    .font(.system(.largeTitle, design: .rounded, weight: .semibold))
-            }
-            Spacer(minLength: 0)
-            AlarmCountdownAction(metadata: metadata, systemID: state.alarmID)
-        }
-        .foregroundStyle(.white)
-    }
-}
-
-private struct AlarmCountdownTime: View {
-    let mode: AlarmPresentationState.Mode
-
-    var body: some View {
-        switch mode {
-        case .countdown(let countdown):
-            Text(timerInterval: countdown.startDate...countdown.fireDate, countsDown: true)
-                .monospacedDigit()
-                .accessibilityLabel("Time until the alarm rings")
-        case .paused(let paused):
-            let remaining = Int(max(0, paused.totalCountdownDuration - paused.previouslyElapsedDuration))
-            Text(String(format: "%d:%02d", remaining / 60, remaining % 60)).monospacedDigit()
-        case .alert:
-            Text("Ringing")
-        @unknown default:
-            Text("Alarm")
-        }
-    }
-}
-
-private struct AlarmCountdownAction: View {
-    let metadata: ClockAlarmMetadata?
-    let systemID: UUID
-
-    var body: some View {
-        if let metadata {
-            Group {
-                if let symbol = metadata.scanSymbol {
-                    Button(intent: ScanClockAlarmIntent(alarmID: metadata.alarmID, systemID: systemID, token: metadata.token)) {
-                        Label(metadata.actionTitle, systemImage: symbol)
-                    }
-                } else {
-                    Button(intent: StopClockAlarmIntent(alarmID: metadata.alarmID, systemID: systemID, token: metadata.token)) {
-                        Label("Stop", systemImage: "stop.fill")
-                    }
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .foregroundStyle(.black)
-        }
-    }
-}
 
 #Preview("NFC scan reminder") {
     AlarmCountdownContent(

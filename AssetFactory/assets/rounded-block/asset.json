@@ -1,5 +1,0 @@
-{
-  "label": "Rounded block",
-  "description": "Procedural Three.js model. Edit asset.mjs to shape it.",
-  "module": "asset.mjs"
-}

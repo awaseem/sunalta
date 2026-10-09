@@ -8,61 +8,15 @@ struct AlarmRingingScreen: View {
     @State private var isWorking = false
     @State private var scanError: String?
 
-    private var actionTitle: String {
-        switch alarm.exitPoint {
-        case .normal: "Stop"
-        case .nfc: "Scan NFC to stop"
-        case .qrCode: "Scan QR to stop"
-        }
-    }
-
     var body: some View {
         VStack(spacing: 24) {
             Spacer(minLength: 16)
-            VStack(spacing: 12) {
-                Text("ALARM")
-                    .font(.caption.weight(.semibold))
-                    .tracking(3)
-                    .foregroundStyle(.secondary)
-                Text(String(format: "%02d:%02d", alarm.hour, alarm.minute))
-                    .font(.system(size: 84, weight: .light, design: .rounded))
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                Text(alarm.label.isEmpty ? "Time to get up" : alarm.label)
-                    .font(.title2.weight(.medium))
-                    .multilineTextAlignment(.center)
-            }
-
+            AlarmRingingHeader(alarm: alarm)
             Spacer(minLength: 16)
-            Button(action: startAction) {
-                VStack(spacing: 20) {
-                    Image(systemName: alarm.exitPoint == .normal ? "stop.fill" : alarm.exitPoint.symbol)
-                        .font(.system(size: 64, weight: .medium))
-                        .accessibilityHidden(true)
-                    Text(actionTitle)
-                        .font(.title3.weight(.semibold))
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 240)
-                .background(.orange, in: .rect(cornerRadius: 48))
-                .foregroundStyle(.black)
-            }
-            .buttonStyle(.plain)
-            .disabled(isWorking)
-            .accessibilityHint(alarm.exitPoint == .normal ? "Ends this alarm" : "Opens the scanner for this alarm")
+            AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
 
             if alarm.snoozeEnabled {
-                Button("Snooze for \(alarm.snoozeDurationMinutes) min") {
-                    guard !isWorking else { return }
-                    isWorking = true
-                    Task {
-                        defer { isWorking = false }
-                        do { try await runtime.snooze(alarm) }
-                        catch { scanError = error.localizedDescription }
-                    }
-                }
+                Button("Snooze for \(alarm.snoozeDurationMinutes) min", action: snooze)
                 .font(.headline)
                 .buttonStyle(.bordered)
                 .disabled(isWorking)
@@ -91,7 +45,7 @@ struct AlarmRingingScreen: View {
         .padding(.horizontal, 32)
         .frame(maxWidth: 480)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+        .background(Color.primary.opacity(0.04).ignoresSafeArea())
         .sheet(isPresented: $showsQRScanner) {
             AlarmQRDismissalScanner(alarm: alarm)
         }
@@ -99,6 +53,16 @@ struct AlarmRingingScreen: View {
             if runtime.scanRequestID != nil { startAction() }
         }
         .onDisappear { nfcScanner.cancel() }
+    }
+
+    private func snooze() {
+        guard !isWorking else { return }
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            do { try await runtime.snooze(alarm) }
+            catch { scanError = error.localizedDescription }
+        }
     }
 
     private func startAction() {
@@ -132,12 +96,5 @@ struct AlarmRingingScreen: View {
     }
 }
 
-#Preview("QR alarm") {
-    AlarmRingingScreen(alarm: try! AlarmRecord(hour: 7, minute: 0, label: "Morning", exitPoint: .qrCode))
-        .environment(AlarmRuntime.shared)
-}
-
-#Preview("Normal alarm") {
-    AlarmRingingScreen(alarm: try! AlarmRecord(hour: 7, minute: 0))
-        .environment(AlarmRuntime.shared)
-}
+#Preview("QR alarm") { AlarmRingingPreview(exitPoint: .qrCode) }
+#Preview("Normal alarm") { AlarmRingingPreview(exitPoint: .normal) }

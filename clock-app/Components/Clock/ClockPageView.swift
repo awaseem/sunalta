@@ -30,11 +30,6 @@ final class ClockPageView: UIView {
         accessibilityTraits = .staticText
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
-        renderer.onMaterialChanged = { [weak self] in
-            guard let self else { return }
-            invalidateSnapshot()
-            updatePresentation()
-        }
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true

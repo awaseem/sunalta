@@ -9,9 +9,6 @@ final class AlarmStopTarget {
     private(set) var codeValue: String
     var alarms: [AlarmRecord] = []
 
-    enum Kind: String {
-        case nfc, qrCode
-    }
 
     var kind: Kind? { Kind(rawValue: kindValue) }
 
@@ -39,7 +36,10 @@ final class AlarmStopTarget {
     }
 
     static func nfcIdentifier(from data: Data) -> String {
-        data.map { String(format: "%02hhX", $0) }.joined()
+        data.map { byte in
+            let hex = String(byte, radix: 16, uppercase: true)
+            return hex.count == 1 ? "0" + hex : hex
+        }.joined()
     }
 
     private static func normalizedCodeValue(_ value: String, kind: Kind) -> String {

@@ -1,13 +1,6 @@
 import Foundation
 import SwiftData
 
-enum AlarmValidationError: Error, Equatable {
-    case invalidTime
-    case invalidSnoozeDuration
-    case invalidSoundName
-    case invalidScanTarget
-}
-
 @Model
 final class AlarmRecord {
     @Attribute(.unique) private(set) var id: UUID
@@ -119,17 +112,8 @@ final class AlarmRecord {
         }
     }
 
-    func latestOccurrence(before date: Date = .now) -> Date? {
-        let calendar = Calendar.autoupdatingCurrent
-        let weekdays: [Int?] = repeatDays.isEmpty ? [nil] : repeatDays.map { $0.rawValue }
-        return weekdays.compactMap { weekday in
-            var components = DateComponents()
-            components.hour = hour
-            components.minute = minute
-            components.second = 0
-            components.weekday = weekday
-            return calendar.nextDate(after: date, matching: components,
-                                     matchingPolicy: .nextTime, direction: .backward)
-        }.max()
+    func latestOccurrence(before date: Date = .now, calendar: Calendar = .autoupdatingCurrent) -> Date? {
+        AlarmOccurrence.latest(hour: hour, minute: minute, repeatDays: repeatDays,
+                               before: date, calendar: calendar)
     }
 }

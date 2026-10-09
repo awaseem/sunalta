@@ -23,7 +23,7 @@ struct AlarmRepeatPicker: View {
                             ? (colorScheme == .dark ? Color.white : Color.black)
                             : Color.primary.opacity(0.08), in: .circle)
                         .frame(minHeight: 44)
-                        .contentShape(Rectangle())
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(day.name)

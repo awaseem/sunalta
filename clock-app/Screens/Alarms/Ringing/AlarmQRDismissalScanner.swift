@@ -5,7 +5,6 @@ import SwiftUI
 struct AlarmQRDismissalScanner: View {
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     let alarm: AlarmRecord
     @State private var scanError: String?
     @State private var scannerID = UUID()
@@ -22,17 +21,13 @@ struct AlarmQRDismissalScanner: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                #if targetEnvironment(simulator)
-                ContentUnavailableView("Use your iPhone's camera", systemImage: "qrcode.viewfinder")
-                #else
-                camera
-                #endif
+                AlarmQRCamera(scannerID: scannerID, isPaused: isFinishing || scanError != nil,
+                              simulatorDescription: "Scan your alarm's QR code using your iPhone's camera.",
+                              onScan: handleScan)
                 if let message = scanError {
                     Text(message).font(.subheadline).foregroundStyle(.red)
                     if cameraDenied {
-                        Button("Open Camera Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                        }
+                        AppSettingsButton(title: "Open Camera Settings")
                     } else {
                         Button("Scan again") {
                             scanError = nil
@@ -52,27 +47,24 @@ struct AlarmQRDismissalScanner: View {
         }
     }
 
-    private var camera: some View {
-        CodeScannerView(codeTypes: [.qr], scanMode: .once, showViewfinder: true,
-                        requiresPhotoOutput: false, isPaused: isFinishing || scanError != nil) { result in
-            switch result {
-            case .success(let scan):
-                guard !isFinishing, scan.type == .qr else { return }
-                isFinishing = true
-                Task {
-                    defer { isFinishing = false }
-                    do {
-                        try await runtime.finish(alarm, code: scan.string, kind: .qrCode)
-                        dismiss()
-                    } catch { scanError = error.localizedDescription }
-                }
-            case .failure:
-                scanError = cameraDenied
-                    ? "Allow camera access in Settings to scan your QR code."
-                    : "The camera couldn't read this code. Try again."
-            }
+    private func handleScan(_ result: Result<ScanResult, ScanError>) {
+        switch result {
+        case .success(let scan):
+            guard !isFinishing, scan.type == .qr else { return }
+            isFinishing = true
+            Task { await finishScan(scan.string) }
+        case .failure:
+            scanError = cameraDenied
+                ? "Allow camera access in Settings to scan your QR code."
+                : "The camera couldn't read this code. Try again."
         }
-        .id(scannerID)
-        .clipShape(.rect(cornerRadius: 24))
+    }
+
+    private func finishScan(_ code: String) async {
+        defer { isFinishing = false }
+        do {
+            try await runtime.finish(alarm, code: code, kind: .qrCode)
+            dismiss()
+        } catch { scanError = error.localizedDescription }
     }
 }

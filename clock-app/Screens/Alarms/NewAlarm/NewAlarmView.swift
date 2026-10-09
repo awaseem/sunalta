@@ -2,42 +2,23 @@ import SwiftData
 import SwiftUI
 
 struct NewAlarmView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let titles = ["Time", "Repeat", "Snooze", "Exit point"]
-    private let subtitles = ["24-hour time", "Choose the days. Leave empty for a one-time alarm.",
-                             "Choose how long to snooze.",
-                             "Choose how you'll stop your alarm."]
-
-    @State private var step = 0
-    @State private var time = Calendar.autoupdatingCurrent.date(
-        from: DateComponents(year: 2001, month: 1, day: 1, hour: 7, minute: 0)
-    ) ?? .now
-    @State private var repeatDays: Set<ClockWeekday> = []
-    @State private var snoozeEnabled = true
-    @State private var snoozeMinutes = 10
-    @State private var exitPoint = AlarmExitPointDraft()
+    @State private var step = NewAlarmStep.time
+    @State private var draft = NewAlarmDraft()
     @State private var saveError: String?
 
-    private var timeComponents: DateComponents {
-        Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: time)
-    }
-
-    private var displayTime: String {
-        String(format: "%02d:%02d", timeComponents.hour ?? 7, timeComponents.minute ?? 0)
-    }
-
     var body: some View {
+        // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
         GeometryReader { geometry in
-            let previewHeight = step == titles.count - 1
+            let previewHeight = step == .exitPoint
                 ? min(220, max(120, geometry.size.height * 0.24))
                 : min(340, max(160, geometry.size.height * 0.40))
             ZStack {
                 AlarmClockPreview(
-                    time: displayTime,
+                    time: draft.displayTime,
                     previewHeight: previewHeight,
                     contentSafeAreaInsets: UIEdgeInsets(
                         top: geometry.safeAreaInsets.top, left: 0,
@@ -48,25 +29,15 @@ struct NewAlarmView: View {
                 .accessibilityHidden(true)
 
                 VStack(spacing: 0) {
-                    NewAlarmHeader(step: step, stepCount: titles.count, onBack: goBack, onCancel: { dismiss() })
+                    NewAlarmHeader(step: step.rawValue, stepCount: NewAlarmStep.allCases.count, onBack: goBack, onCancel: { dismiss() })
                     Color.clear
                         .frame(height: previewHeight)
                         .allowsHitTesting(false)
                         .accessibilityElement()
-                        .accessibilityLabel("Alarm preview, \(displayTime), \(AlarmRepeatSummary.text(for: repeatDays))")
+                        .accessibilityLabel("Alarm preview, \(draft.displayTime), \(AlarmRepeatSummary.text(for: draft.repeatDays))")
                         .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
-                    if step == 0 {
-                        // Keep the native wheels outside a scrolling container when space permits.
-                        ViewThatFits(in: .vertical) {
-                            stepContent.fixedSize(horizontal: false, vertical: true)
-                            ScrollView { stepContent }
-                        }
-                        Spacer(minLength: 0)
-                    } else {
-                        ScrollView { stepContent }
-                            .id(step)
-                    }
-                    footer
+                    NewAlarmStepContainer(step: step, draft: $draft)
+                    NewAlarmContinueButton(isFinalStep: step == .exitPoint, onContinue: continueStep)
                 }
             }
         }
@@ -79,86 +50,23 @@ struct NewAlarmView: View {
         }
     }
 
-    private var stepContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(titles[step]).font(.title2.bold()).accessibilityAddTraits(.isHeader)
-                if step == 0 {
-                    Spacer()
-                    Text("24 H").font(.caption.weight(.medium)).foregroundStyle(.secondary)
-                }
-            }
-            if step > 0 {
-                Text(subtitles[step]).font(.subheadline).foregroundStyle(.secondary)
-            }
-            switch step {
-            case 0: timePicker
-            case 1: AlarmRepeatPicker(repeatDays: $repeatDays)
-            case 2: AlarmSnoozeOptions(snoozeEnabled: $snoozeEnabled, snoozeMinutes: $snoozeMinutes)
-            default: AlarmExitPointOptions(draft: $exitPoint)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .frame(maxWidth: 560)
-        .frame(maxWidth: .infinity)
-    }
-
-    private var timePicker: some View {
-        DatePicker("Alarm time", selection: $time, displayedComponents: .hourAndMinute)
-            .datePickerStyle(.wheel)
-            .labelsHidden()
-            .environment(\.locale, Locale(identifier: "en_GB"))
-            .frame(maxWidth: .infinity)
-    }
-
-    private var footer: some View {
-        Button {
-            if step < titles.count - 1 { changeStep(to: step + 1) }
-            else { save() }
-        } label: {
-            Text(step == titles.count - 1 ? "Create alarm" : "Continue")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
-            .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
-        }
-        .buttonStyle(.glassProminent)
-        .buttonBorderShape(.capsule)
-        .controlSize(.large)
-        .tint(colorScheme == .dark ? Color.white : Color.black)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .frame(maxWidth: 560)
-    }
-
     private func goBack() {
-        if step > 0 { changeStep(to: step - 1) }
+        if let previous = step.previous { changeStep(to: previous) }
         else { dismiss() }
     }
 
-    private func changeStep(to next: Int) {
+    private func changeStep(to next: NewAlarmStep) {
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { step = next }
+    }
+
+    private func continueStep() {
+        if let next = step.next { changeStep(to: next) }
+        else { save() }
     }
 
     private func save() {
         do {
-            let target = try exitPoint.makeStopTarget()
-            let alarm = try AlarmRecord(
-                hour: timeComponents.hour ?? 7, minute: timeComponents.minute ?? 0, isEnabled: false,
-                repeatDays: repeatDays, snoozeEnabled: snoozeEnabled,
-                snoozeDurationMinutes: snoozeMinutes,
-                exitPoint: exitPoint.selection, stopTargets: target.map { [$0] } ?? []
-            )
-            if let target { modelContext.insert(target) }
-            modelContext.insert(alarm)
-            do { try modelContext.save() }
-            catch {
-                modelContext.delete(alarm)
-                if let target { modelContext.delete(target) }
-                throw error
-            }
+            try AlarmCreationService(context: modelContext).create(draft)
             dismiss()
         } catch { saveError = error.localizedDescription }
     }

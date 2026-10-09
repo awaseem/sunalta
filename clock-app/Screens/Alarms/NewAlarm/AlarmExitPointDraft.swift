@@ -2,10 +2,6 @@ import Foundation
 
 /// Scan setup stays in the draft until the user creates the alarm.
 struct AlarmExitPointDraft {
-    struct ScannedCode: Equatable {
-        let kind: AlarmStopTarget.Kind
-        let value: String
-    }
 
     var selection: AlarmExitPoint = .normal
     var scannedCode: ScannedCode?

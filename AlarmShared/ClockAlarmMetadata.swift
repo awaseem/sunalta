@@ -2,15 +2,16 @@ import AlarmKit
 import Foundation
 
 nonisolated struct ClockAlarmMetadata: AlarmMetadata {
-    enum CountdownKind: String, Codable, Sendable {
-        case snooze, scanReminder
-    }
 
     let alarmID: UUID
     let token: String
     let title: String
     let scanSymbol: String?
     let countdownKind: CountdownKind
+
+    var statusText: String {
+        countdownKind == .scanReminder ? "Scan to end the alarm" : "Snoozed"
+    }
 
     var actionTitle: String {
         switch scanSymbol {

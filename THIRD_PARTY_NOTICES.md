@@ -18,15 +18,21 @@ License: MIT, copyright (c) 2021 Paul Hudson.
 
 CodeScanner is linked through Swift Package Manager. The complete notice is in `clock-app/Licenses/CodeScanner-MIT.txt` and is included in the app bundle.
 
-## Three.js
+## Sharp Blender numerals
 
-The offline asset preview vendors Three.js 0.186.1, OrbitControls, FontLoader, and GLTFExporter from the supplied clock handoff. These are development assets in `AssetFactory/vendor`; the app uses imported mesh buffers rather than shipping the JavaScript renderer.
+Editable source: `ThirdParty/Blender/ClockSharp/clock-sharp.blend`.
+Source reference and export instructions: `ThirdParty/Blender/ClockSharp/README.md`.
+Source and native-resource hashes: `ThirdParty/Blender/ClockSharp/export-manifest.json`.
 
-The complete MIT notice is in `AssetFactory/vendor/THREE-LICENSE.txt`.
+The saved scene was supplied in the project's sharp Blender asset set. The app
+uses its evaluated meshes, bevels, and corner normals, exported directly to
+`clock-app/Resources/SharpNumerals.clockmesh`. The `.blend` remains a development
+source and is excluded from the iOS bundle. No Three.js code is retained or shipped.
 
-## Clock font outlines
-
-`AssetFactory/assets/clock/font.json` contains the project-local converted Impact outlines supplied in the handoff. The sculpted numerals are an Impact approximation, not Obviously Condensed Black. Font use and redistribution remain subject to the original font license; the Three.js MIT license does not license the font.
+The numeral outlines derive from the Impact outlines supplied in the original
+handoff. They are an Impact approximation, not Obviously Condensed Black. Font
+use and redistribution remain subject to the original font license; no external
+model author or separate model license was provided with the supplied scene.
 
 # Scanner integration
 

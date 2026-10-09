@@ -10,6 +10,7 @@ struct HomeScreen: View {
     @State private var isEditingLighting = false
 
     var body: some View {
+        // RealityKit needs both the viewport height and safe-area insets for its camera placement.
         GeometryReader { geometry in
             let pageHeight = geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom
             ScrollView(.vertical) {
@@ -49,7 +50,7 @@ struct HomeScreen: View {
                                         .font(.subheadline.weight(.medium))
                                         .padding(.horizontal, 18)
                                         .padding(.vertical, 12)
-                                        .background(.regularMaterial, in: Capsule())
+                                        .background(.regularMaterial, in: .capsule)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -78,18 +79,14 @@ struct HomeScreen: View {
             .frame(height: pageHeight)
             .ignoresSafeArea()
         }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(Color.primary.opacity(0.04))
     }
 }
 
 #Preview("Light") {
-    HomeScreen()
-        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
-        .preferredColorScheme(.light)
+    AlarmPreviewContainer { HomeScreen() }.preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    HomeScreen()
-        .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
-        .preferredColorScheme(.dark)
+    AlarmPreviewContainer { HomeScreen() }.preferredColorScheme(.dark)
 }

@@ -2,11 +2,6 @@
 @preconcurrency import CoreNFC
 import Foundation
 
-struct NFCResult: Equatable {
-    let id: String
-    let dateScanned: Date
-}
-
 @MainActor
 final class NFCScannerUtil: NSObject {
     var onTagScanned: ((NFCResult) -> Void)?
@@ -68,22 +63,31 @@ extension NFCScannerUtil: @preconcurrency NFCTagReaderSessionDelegate {
             session.invalidate(errorMessage: "This tag has no identifier.")
             return
         }
-        let sessionID = ObjectIdentifier(session)
-        session.connect(to: tag) { [weak self] error in
-            DispatchQueue.main.async {
-                guard let self, let session = self.nfcSession,
-                      ObjectIdentifier(session) == sessionID else { return }
-                if let error {
-                    session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
-                    return
-                }
+        Task { [weak self] in
+            do {
+                try await Self.connect(session, to: tag)
+                guard let self, nfcSession === session, !Task.isCancelled else { return }
                 let result = NFCResult(
-                    id: AlarmStopTarget.nfcIdentifier(from: identifier), dateScanned: Date()
+                    id: AlarmStopTarget.nfcIdentifier(from: identifier), dateScanned: .now
                 )
-                self.nfcSession = nil
+                nfcSession = nil
                 session.alertMessage = "Tag scanned."
                 session.invalidate()
-                self.onTagScanned?(result)
+                onTagScanned?(result)
+            } catch {
+                guard let self, nfcSession === session else { return }
+                session.invalidate(errorMessage: "Connection error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private static func connect(_ session: NFCTagReaderSession, to tag: NFCTag) async throws {
+        // The SDK's async overlay sends non-Sendable NFC objects off this actor.
+        // Start the connection on the delegate's main queue; only the continuation crosses it.
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            session.connect(to: tag) { error in
+                if let error { continuation.resume(throwing: error) }
+                else { continuation.resume() }
             }
         }
     }

@@ -1,6 +1,5 @@
-# Generated asset previews and export manifests
-AssetFactory/assets/*/png/
-AssetFactory/assets/*/manifest.json
+# Blender backup files
+*.blend[0-9]
 # Python caches
 __pycache__/
 *.pyc
