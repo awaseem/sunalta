@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmEnabledToggle: View {
+    @Environment(\.appTheme) private var theme
     let alarm: AlarmRecord
     let isUpdating: Bool
     let onEnabledChange: @MainActor @Sendable (Bool) -> Void
@@ -14,7 +15,7 @@ struct AlarmEnabledToggle: View {
                 get: { alarm.isEnabled }, set: onEnabledChange
             ))
             .labelsHidden()
-            .tint(.primary)
+            .tint(theme.palette.control)
             .accessibilityLabel("Alarm at \(AlarmTimeText.text(hour: alarm.hour, minute: alarm.minute))")
             .accessibilityValue(alarm.isEnabled ? "On" : "Off")
         }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmExitPointOptionButton: View {
+    @Environment(\.appTheme) private var theme
     let option: AlarmExitPoint
     let isSelected: Bool
     let onSelect: () -> Void
@@ -11,19 +12,20 @@ struct AlarmExitPointOptionButton: View {
                 Image(systemName: option.symbol).font(.title3).frame(width: 28)
                 VStack(alignment: .leading) {
                     Text(option.title).font(.body.weight(.semibold))
-                    Text(option.detail).font(.caption).foregroundStyle(.secondary)
+                    Text(option.detail).font(.caption).foregroundStyle(theme.palette.secondaryForeground)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
                     .font(.title3)
+                    .foregroundStyle(theme.palette.selection)
                     .accessibilityHidden(true)
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-            .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 16))
+            .background(theme.palette.surface, in: .rect(cornerRadius: 16))
             .overlay {
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? Color.primary : .clear, lineWidth: 2)
+                    .stroke(isSelected ? theme.palette.selection : .clear, lineWidth: 2)
             }
         }
         .buttonStyle(.plain)

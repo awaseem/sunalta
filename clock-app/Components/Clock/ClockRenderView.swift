@@ -21,7 +21,7 @@ final class ClockRenderView: ARView {
     }
     private let clock = Entity()
     private let backdrop = ModelEntity()
-    private var appliedColorScheme: ColorScheme?
+    private var theme: AppTheme
     private let placement = Entity()
     private var cameraRestOffset = SIMD3<Float>.zero
     private var angles = SIMD2<Float>.zero
@@ -32,11 +32,12 @@ final class ClockRenderView: ARView {
     private var lastFrame: CFTimeInterval = 0
     private let camera = PerspectiveCamera()
     private let keyLight = DirectionalLight()
-    private var lighting = ClockLightingSettings()
+    private var lighting: ClockLightingSettings { theme.clock.lighting }
     private var glyphs: [String: ModelEntity] = [:]
     private var displayedTime: String?
 
-    init(colorScheme: ColorScheme, isAlarmPreview: Bool = false) {
+    init(theme: AppTheme, isAlarmPreview: Bool = false) {
+        self.theme = theme
         self.isAlarmPreview = isAlarmPreview
         super.init(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
         renderOptions = [.disableMotionBlur, .disableDepthOfField, .disableCameraGrain]
@@ -56,7 +57,6 @@ final class ClockRenderView: ARView {
             : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
 
-        keyLight.light.color = .white
         placement.addChild(keyLight)
         backdrop.model = ModelComponent(
             mesh: .generatePlane(width: 200, height: 200),
@@ -72,7 +72,7 @@ final class ClockRenderView: ARView {
         } catch {
             let message = UILabel()
             message.text = "Unable to load sculpted clock assets"
-            message.textColor = .label
+            message.textColor = UIColor(theme.palette.foreground)
             message.textAlignment = .center
             message.numberOfLines = 0
             message.translatesAutoresizingMaskIntoConstraints = false
@@ -84,40 +84,43 @@ final class ClockRenderView: ARView {
             ])
             assertionFailure("Numeral asset failed to load: \(error)")
         }
-        applyAppearance(colorScheme)
-    }
-
-    @available(*, unavailable)
-    required init(frame frameRect: CGRect) { fatalError("Use init(colorScheme:)") }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("Use init(colorScheme:)") }
-
-    func applyAppearance(_ colorScheme: ColorScheme) {
-        guard appliedColorScheme != colorScheme else { return }
-        appliedColorScheme = colorScheme
-        applyLighting(lighting)
-
+        applyLighting()
         applyNumeralMaterials()
     }
 
-    func applyLighting(_ settings: ClockLightingSettings) {
-        let finishChanged = lighting.shimmer != settings.shimmer
-        lighting = settings
+    @available(*, unavailable)
+    required init(frame frameRect: CGRect) { fatalError("Use init(theme:)") }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
+
+    func applyTheme(_ theme: AppTheme) {
+        guard self.theme != theme else { return }
+        self.theme = theme
+        applyLighting()
+        applyNumeralMaterials()
+    }
+
+    private func applyLighting() {
+        let settings = theme.clock.lighting
+        keyLight.light.color = UIColor(theme.clock.lightColor)
         keyLight.light.intensity = Float(settings.strength)
-        keyLight.shadow = nil
-        let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
+        keyLight.shadow = theme.clock.shadow.map {
+            DirectionalLightComponent.Shadow(
+                shadowProjection: .automatic(maximumDistance: $0.maximumDistance), depthBias: $0.depthBias
+            )
+        }
+        let appearance = theme.clock
         environment.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
-        let background = UIColor(settings.backgroundColor(for: appliedColorScheme ?? .light))
+        let background = UIColor(theme.palette.background)
         environment.background = .color(background)
         backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
-        if finishChanged { applyNumeralMaterials() }
         applyInteractionLighting()
     }
 
     private func applyNumeralMaterials() {
-        let appearance = ClockAppearance(colorScheme: appliedColorScheme ?? .light)
-        let material = appearance.numeralMaterial(shimmer: lighting.shimmer)
+        let appearance = theme.clock
+        let material = appearance.numeralMaterial()
         for glyph in glyphs.values { glyph.model?.materials = [material] }
         for case let glyph as ModelEntity in clock.children { glyph.model?.materials = [material] }
     }

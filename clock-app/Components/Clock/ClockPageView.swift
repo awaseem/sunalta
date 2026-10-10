@@ -13,15 +13,14 @@ final class ClockPageView: UIView {
     private var isScrolling = false
     private var isPageVisible = true
     private var isOrbiting = false
-    private var isEditingLighting = false
-    private var lighting = ClockLightingSettings()
+    private var isEditingAppearance = false
     private var minute: Int?
-    private var appearance: ColorScheme?
+    private var appearance: AppTheme?
     private var insets: UIEdgeInsets = .zero
     private var renderedSize: CGSize = .zero
 
-    init(colorScheme: ColorScheme) {
-        renderer = ClockRenderView(colorScheme: colorScheme)
+    init(theme: AppTheme) {
+        renderer = ClockRenderView(theme: theme)
         super.init(frame: .zero)
         still.contentMode = .scaleToFill
         still.isUserInteractionEnabled = false
@@ -46,32 +45,27 @@ final class ClockPageView: UIView {
     }
 
     @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("Use init(colorScheme:)") }
+    required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
 
-    func update(date: Date, colorScheme: ColorScheme, insets: UIEdgeInsets,
-                isScrolling: Bool, isVisible: Bool,
-                lighting: ClockLightingSettings, isEditingLighting: Bool) {
+    func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
+                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool) {
         self.isScrolling = isScrolling
         isPageVisible = isVisible
-        self.isEditingLighting = isEditingLighting
-        if self.lighting != lighting {
-            self.lighting = lighting
-            invalidateSnapshot()
-            renderer.applyLighting(lighting)
-            still.isHidden = true
-        }
-        if isEditingLighting {
+        self.isEditingAppearance = isEditingAppearance
+        if isEditingAppearance {
             invalidateSnapshot()
             still.isHidden = true
         }
         let minute = Int(date.timeIntervalSince1970 / 60)
-        if self.minute != minute || appearance != colorScheme || self.insets != insets {
+        if self.minute != minute || appearance != theme || self.insets != insets {
             self.minute = minute
-            appearance = colorScheme
+            appearance = theme
             self.insets = insets
             invalidateSnapshot()
             renderer.contentSafeAreaInsets = insets
-            renderer.applyAppearance(colorScheme)
+            renderer.applyTheme(theme)
+            still.image = nil
+            still.isHidden = true
             renderer.show(date: date)
             accessibilityLabel = renderer.accessibilityLabel
         }
@@ -129,7 +123,7 @@ final class ClockPageView: UIView {
     }
 
     private func scheduleSnapshot() {
-        guard !hasCurrentSnapshot, snapshotTask == nil, !isOrbiting, !isEditingLighting,
+        guard !hasCurrentSnapshot, snapshotTask == nil, !isOrbiting, !isEditingAppearance,
               !isScrolling, isPageVisible, window != nil,
               renderer.superview != nil, bounds.width > 0, bounds.height > 0 else { return }
         let requestedRevision = revision

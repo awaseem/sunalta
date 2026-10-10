@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmScanSetup: View {
+    @Environment(\.appTheme) private var theme
     let selection: AlarmExitPoint
     let isConfigured: Bool
     let onScan: () -> Void
@@ -17,13 +18,13 @@ struct AlarmScanSetup: View {
             Text(isConfigured
                  ? "Only this \(isNFC ? "tag" : "code") will be accepted."
                  : "Setup is optional. Leave it empty to accept any \(scanType).")
-                .font(.subheadline).foregroundStyle(.secondary)
+                .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
             Button(action: onScan) {
                 Label(isConfigured ? "Replace \(scanType)" : "Scan a specific \(scanType)", systemImage: selection.symbol)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.bordered)
-            .tint(.primary)
+            .tint(theme.palette.control)
             if isConfigured {
                 Button("Use any \(scanType)", action: onClear)
                     .buttonStyle(.plain)

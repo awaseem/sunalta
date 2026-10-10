@@ -1,3 +1,6 @@
 enum ClockAppearanceSection: String, CaseIterable {
-    case background = "Background", lighting = "Lighting", finish = "Finish"
+    case theme = "Theme"
+    case background = "Background"
+    case lighting = "Lighting"
+    case finish = "Finish"
 }

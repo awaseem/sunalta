@@ -3,6 +3,7 @@ import CodeScanner
 import SwiftUI
 
 struct AlarmQRDismissalScanner: View {
+    @Environment(\.appTheme) private var theme
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(\.dismiss) private var dismiss
     let alarm: AlarmRecord
@@ -19,13 +20,13 @@ struct AlarmQRDismissalScanner: View {
             VStack(spacing: 20) {
                 Text(alarm.stopTargets.isEmpty ? "Scan any QR code to end this alarm." : "Scan the QR code you chose for this alarm.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.palette.secondaryForeground)
                     .multilineTextAlignment(.center)
                 AlarmQRCamera(scannerID: scannerID, isPaused: isFinishing || scanError != nil,
                               simulatorDescription: "Scan your alarm's QR code using your iPhone's camera.",
                               onScan: handleScan)
                 if let message = scanError {
-                    Text(message).font(.subheadline).foregroundStyle(.red)
+                    Text(message).font(.subheadline).foregroundStyle(theme.palette.error)
                     if cameraDenied {
                         AppSettingsButton(title: "Open Camera Settings")
                     } else {
@@ -37,6 +38,8 @@ struct AlarmQRDismissalScanner: View {
                 }
             }
             .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(theme.palette.background)
             .navigationTitle("Scan to stop")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

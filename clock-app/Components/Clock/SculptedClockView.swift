@@ -2,22 +2,21 @@ import SwiftUI
 import UIKit
 
 struct SculptedClockView: UIViewRepresentable {
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
     let date: Date
     var isScrolling = false
     var isVisible = true
-    var lighting = ClockLightingSettings()
-    var isEditingLighting = false
+    var isEditingAppearance = false
     var contentSafeAreaInsets: UIEdgeInsets = .zero
 
     func makeUIView(context: Context) -> ClockPageView {
-        ClockPageView(colorScheme: colorScheme)
+        ClockPageView(theme: theme)
     }
 
     func updateUIView(_ view: ClockPageView, context: Context) {
-        view.update(date: date, colorScheme: colorScheme, insets: contentSafeAreaInsets,
+        view.update(date: date, theme: theme, insets: contentSafeAreaInsets,
                     isScrolling: isScrolling, isVisible: isVisible,
-                    lighting: lighting, isEditingLighting: isEditingLighting)
+                    isEditingAppearance: isEditingAppearance)
     }
 
     static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {

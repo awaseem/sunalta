@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmRow: View {
+    @Environment(\.appTheme) private var theme
     let alarm: AlarmRecord
     var isUpdating = false
     var onEnabledChange: @MainActor @Sendable (Bool) -> Void = { _ in }
@@ -26,14 +27,14 @@ struct AlarmRow: View {
                 .font(.headline)
             Text(repeatDescription)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.palette.secondaryForeground)
             Label(alarm.exitPointSummary, systemImage: alarm.exitPoint.symbol)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.palette.secondaryForeground)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 24))
+        .background(theme.palette.surface, in: .rect(cornerRadius: 24))
         .accessibilityElement(children: .contain)
     }
 

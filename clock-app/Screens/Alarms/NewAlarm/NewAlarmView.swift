@@ -75,4 +75,5 @@ struct NewAlarmView: View {
 #Preview("New alarm") {
     NewAlarmView()
         .modelContainer(for: [AlarmRecord.self, AlarmStopTarget.self], inMemory: true)
+        .appTheme(.white)
 }

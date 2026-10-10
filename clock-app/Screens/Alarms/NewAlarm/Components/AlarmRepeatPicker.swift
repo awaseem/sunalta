@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AlarmRepeatPicker: View {
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
     @Binding var repeatDays: Set<ClockWeekday>
 
     var body: some View {
@@ -17,11 +17,11 @@ struct AlarmRepeatPicker: View {
                         .frame(maxWidth: .infinity)
                         .aspectRatio(1, contentMode: .fit)
                         .foregroundStyle(repeatDays.contains(day)
-                            ? (colorScheme == .dark ? Color.black : Color.white)
-                            : Color.primary)
+                            ? theme.palette.onControl
+                            : theme.palette.foreground)
                         .background(repeatDays.contains(day)
-                            ? (colorScheme == .dark ? Color.white : Color.black)
-                            : Color.primary.opacity(0.08), in: .circle)
+                            ? theme.palette.control
+                            : theme.palette.surface, in: .circle)
                         .frame(minHeight: 44)
                         .contentShape(.rect)
                 }

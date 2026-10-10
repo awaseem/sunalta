@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct NewAlarmStepContent: View {
+    @Environment(\.appTheme) private var theme
     let step: NewAlarmStep
     @Binding var draft: NewAlarmDraft
 
@@ -10,11 +11,11 @@ struct NewAlarmStepContent: View {
                 Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
                 if step == .time {
                     Spacer()
-                    Text("24 H").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                    Text("24 H").font(.caption.weight(.medium)).foregroundStyle(theme.palette.secondaryForeground)
                 }
             }
             if step != .time {
-                Text(step.subtitle).font(.subheadline).foregroundStyle(.secondary)
+                Text(step.subtitle).font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
             }
             switch step {
             case .time:

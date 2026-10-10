@@ -3,11 +3,11 @@ import SwiftUI
 
 struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var theme
     @State private var isScrolling = false
     @State private var isClockVisible = true
-    @State private var lighting = ClockLightingSettings()
-    @State private var showsLighting = false
-    @State private var isEditingLighting = false
+    @State private var showsAppearance = false
+    @State private var isEditingAppearance = false
 
     var body: some View {
         // RealityKit needs both the viewport height and safe-area insets for its camera placement.
@@ -18,7 +18,7 @@ struct HomeScreen: View {
                     TimelineView(.everyMinute) { context in
                         SculptedClockView(date: context.date, isScrolling: isScrolling,
                                          isVisible: isClockVisible && scenePhase == .active,
-                                         lighting: lighting, isEditingLighting: isEditingLighting,
+                                         isEditingAppearance: isEditingAppearance,
                                          contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
                             bottom: geometry.safeAreaInsets.bottom, right: 0
@@ -37,26 +37,27 @@ struct HomeScreen: View {
                         .accessibilityLabel("Swipe up for alarms")
                     }
                     .overlay(alignment: .bottom) {
-                        Group {
-                            if showsLighting {
-                                ClockLightingPanel(settings: $lighting, isEditing: $isEditingLighting) {
-                                    showsLighting = false
-                                }
-                            } else {
-                                Button {
-                                    showsLighting = true
-                                } label: {
-                                    Label("Appearance", systemImage: "slider.horizontal.3")
-                                        .font(.subheadline.weight(.medium))
-                                        .padding(.horizontal, 18)
-                                        .padding(.vertical, 12)
-                                        .background(.regularMaterial, in: .capsule)
-                                }
-                                .buttonStyle(.plain)
+                        if showsAppearance {
+                            ThemePickerPanel(isEditing: $isEditingAppearance) {
+                                showsAppearance = false
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, geometry.safeAreaInsets.bottom + 100)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, geometry.safeAreaInsets.bottom + 100)
+                    }
+                    .overlay(alignment: .topLeading) {
+                        Button("Appearance", systemImage: "slider.horizontal.3") {
+                            showsAppearance.toggle()
+                        }
+                        .font(.subheadline)
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.circle)
+                        .foregroundStyle(theme.palette.onControl)
+                        .controlSize(.large)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .padding(.top, geometry.safeAreaInsets.top)
+                        .padding()
                     }
 
                     AlarmListPage()
@@ -79,14 +80,10 @@ struct HomeScreen: View {
             .frame(height: pageHeight)
             .ignoresSafeArea()
         }
-        .background(Color.primary.opacity(0.04))
+        .background(theme.palette.background)
     }
 }
 
-#Preview("Light") {
-    AlarmPreviewContainer { HomeScreen() }.preferredColorScheme(.light)
-}
-
-#Preview("Dark") {
-    AlarmPreviewContainer { HomeScreen() }.preferredColorScheme(.dark)
+#Preview("White theme") {
+    AlarmPreviewContainer { HomeScreen() }
 }

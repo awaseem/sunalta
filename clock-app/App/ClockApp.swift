@@ -6,6 +6,7 @@ import AppIntents
 struct ClockApp: App {
     private let container: ModelContainer
     @State private var runtime: AlarmRuntime
+    @State private var themeSettings = ThemeSettings()
 
     init() {
         do {
@@ -25,6 +26,8 @@ struct ClockApp: App {
         WindowGroup {
             AlarmRootView()
                 .environment(runtime)
+                .environment(themeSettings)
+                .appTheme(themeSettings.theme)
         }
         .modelContainer(container)
     }

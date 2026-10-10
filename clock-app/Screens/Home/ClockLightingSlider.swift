@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ClockLightingSlider: View {
+    @Environment(\.appTheme) private var theme
     let title: String
     let range: ClosedRange<Double>
     let display: String
@@ -8,11 +9,13 @@ struct ClockLightingSlider: View {
     @Binding var isEditing: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack {
             HStack {
                 Text(title)
                 Spacer()
-                Text(display).monospacedDigit().foregroundStyle(.secondary)
+                Text(display)
+                    .monospacedDigit()
+                    .foregroundStyle(theme.palette.secondaryForeground)
             }
             .font(.caption)
             Slider(value: $value, in: range, onEditingChanged: { isEditing = $0 })

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct NewAlarmContinueButton: View {
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
     let isFinalStep: Bool
     let onContinue: () -> Void
 
@@ -11,12 +11,12 @@ struct NewAlarmContinueButton: View {
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
+                .foregroundStyle(theme.palette.onControl)
         }
         .buttonStyle(.glassProminent)
         .buttonBorderShape(.capsule)
         .controlSize(.large)
-        .tint(colorScheme == .dark ? Color.white : Color.black)
+        .tint(theme.palette.control)
         .padding()
         .frame(maxWidth: 560)
     }

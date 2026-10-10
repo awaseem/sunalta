@@ -3,6 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
+    @Environment(\.appTheme) private var theme
     @Environment(AlarmRuntime.self) private var runtime
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
@@ -23,7 +24,7 @@ struct AlarmListPage: View {
                         .font(.largeTitle.bold())
                         .accessibilityAddTraits(.isHeader)
                     Text(alarms.isEmpty ? "Your mornings, at your pace." : "Your daily rhythm.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.palette.secondaryForeground)
                 }
                 Spacer(minLength: 12)
                 Button("Add alarm", systemImage: "plus") { showingNewAlarm = true }
@@ -32,7 +33,7 @@ struct AlarmListPage: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.circle)
-                .tint(.primary)
+                .tint(theme.palette.control)
                 .accessibilityLabel("Add alarm")
             }
 
@@ -46,7 +47,8 @@ struct AlarmListPage: View {
                         showingNewAlarm = true
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.primary)
+                    .tint(theme.palette.control)
+                    .foregroundStyle(theme.palette.onControl)
                 }
                 .padding(.top, 48)
             } else {
@@ -94,6 +96,6 @@ struct AlarmListPage: View {
 #Preview("Saved alarms") {
     AlarmPreviewContainer {
         ScrollView { AlarmListPage() }
-            .background(Color.primary.opacity(0.04))
+            .background(AppTheme.white.palette.background)
     }
 }

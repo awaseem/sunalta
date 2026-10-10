@@ -3,6 +3,7 @@ import CodeScanner
 import SwiftUI
 
 struct AlarmQRSetupView: View {
+    @Environment(\.appTheme) private var theme
     @Environment(\.dismiss) private var dismiss
     @Binding var draft: AlarmExitPointDraft
     @State private var scanError: String?
@@ -13,7 +14,7 @@ struct AlarmQRSetupView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 Text("Scan the specific QR code you'll use to stop your alarm.")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
                     .padding(.horizontal)
                 AlarmQRCamera(scannerID: scannerID, isPaused: scanError != nil,
                               simulatorDescription: "Scan a specific QR code on a device, or leave setup empty to use any QR code.",
@@ -22,6 +23,7 @@ struct AlarmQRSetupView: View {
                     .padding(.bottom)
                     .onAppear(perform: checkCameraRestriction)
             }
+            .background(theme.palette.background)
             .navigationTitle("Set up QR code")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmStopButton: View {
+    @Environment(\.appTheme) private var theme
     let exitPoint: AlarmExitPoint
     let isWorking: Bool
     let onStop: () -> Void
@@ -26,8 +27,8 @@ struct AlarmStopButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 240)
-            .background(.orange, in: .rect(cornerRadius: 48))
-            .foregroundStyle(.black)
+            .background(theme.palette.control, in: .rect(cornerRadius: 48))
+            .foregroundStyle(theme.palette.onControl)
         }
         .buttonStyle(.plain)
         .disabled(isWorking)

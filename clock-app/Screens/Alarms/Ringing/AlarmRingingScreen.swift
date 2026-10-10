@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlarmRingingScreen: View {
+    @Environment(\.appTheme) private var theme
     @Environment(AlarmRuntime.self) private var runtime
     let alarm: AlarmRecord
     @State private var nfcScanner = NFCScannerUtil()
@@ -28,13 +29,13 @@ struct AlarmRingingScreen: View {
                         .font(.headline)
                     Text("A scan ends this alarm. Stopping the ring gives you 30 seconds before it rings again.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.palette.secondaryForeground)
                 }
                 if isWorking { ProgressView() }
                 if let scanError {
                     Text(scanError)
                         .font(.subheadline)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(theme.palette.error)
                         .accessibilityAddTraits(.updatesFrequently)
                 }
             }
@@ -45,7 +46,7 @@ struct AlarmRingingScreen: View {
         .padding(.horizontal, 32)
         .frame(maxWidth: 480)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.primary.opacity(0.04).ignoresSafeArea())
+        .background(theme.palette.background.ignoresSafeArea())
         .sheet(isPresented: $showsQRScanner) {
             AlarmQRDismissalScanner(alarm: alarm)
         }
