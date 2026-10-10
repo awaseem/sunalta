@@ -5,6 +5,13 @@ import UIKit
 final class ClockRenderView: ARView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
+    var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    private var weekdayAnchor: CGPoint?
+    var weekdayFrame: CGRect = .zero {
+        didSet {
+            if oldValue != weekdayFrame { applyWeekdayLighting() }
+        }
+    }
     var previewHeight: CGFloat = 240 {
         didSet { if oldValue != previewHeight { setNeedsLayout() } }
     }
@@ -32,6 +39,7 @@ final class ClockRenderView: ARView {
     private var lastFrame: CFTimeInterval = 0
     private let camera = PerspectiveCamera()
     private let keyLight = DirectionalLight()
+    private let weekdayLight = SpotLight()
     private var lighting: ClockLightingSettings { theme.clock.lighting }
     private var glyphs: [String: ModelEntity] = [:]
     private var displayedTime: String?
@@ -56,6 +64,8 @@ final class ClockRenderView: ARView {
             ? "Drag to change the viewing angle. Release to return to the front view."
             : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
+        anchor.addChild(weekdayLight)
+        weekdayLight.isEnabled = false
 
         placement.addChild(keyLight)
         backdrop.model = ModelComponent(
@@ -116,6 +126,37 @@ final class ClockRenderView: ARView {
         environment.background = .color(background)
         backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
         applyInteractionLighting()
+        applyWeekdayLighting()
+    }
+
+    private func applyWeekdayLighting() {
+        guard !isAlarmPreview, !weekdayFrame.isEmpty, bounds.height > 0,
+              cameraRestOffset.z > 0, !timeSlots.isEmpty else {
+            weekdayLight.isEnabled = false
+            return
+        }
+        let glow = theme.weekday.glow
+        weekdayLight.isEnabled = glow.brightness > 0
+        weekdayLight.light = SpotLightComponent(
+            // The numeral meshes are several scene meters tall; scale the accent accordingly.
+            color: UIColor(Color(glow.color)), intensity: Float(glow.brightness * 500),
+            innerAngleInDegrees: Float(glow.spread * 0.35),
+            outerAngleInDegrees: Float(glow.spread), attenuationRadius: Float(glow.reach)
+        )
+
+        let clockBounds = clock.visualBounds(relativeTo: nil)
+        let depth = max(cameraRestOffset.z - clockBounds.max.z - 2, 0.1)
+        let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
+        let source = SIMD3<Float>(
+            Float(weekdayFrame.midX - bounds.midX) * depth / focalLength,
+            Float(bounds.midY - weekdayFrame.midY) * depth / focalLength,
+            -depth
+        )
+        let direction = Float(glow.direction * .pi / 180)
+        // Aim upward and back toward the numeral faces, with a soft cone falloff.
+        let target = source + SIMD3<Float>(sin(direction), cos(direction), -1.5)
+        weekdayLight.look(at: camera.convert(position: target, to: nil),
+                          from: camera.convert(position: source, to: nil), relativeTo: nil)
     }
 
     private func applyNumeralMaterials() {
@@ -144,6 +185,26 @@ final class ClockRenderView: ARView {
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
         applyViewingAngle()
+        updateWeekdayAnchor()
+        applyWeekdayLighting()
+    }
+
+    private func updateWeekdayAnchor() {
+        guard !isAlarmPreview, bounds.height > 0, cameraRestOffset.z > 0,
+              let firstDigit = timeSlots.first else { return }
+        let firstBounds = firstDigit.visualBounds(relativeTo: nil)
+        let clockBounds = clock.visualBounds(relativeTo: nil)
+        // Project from the resting camera, keeping the label fixed during an orbit.
+        let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
+        let leftScale = focalLength / (cameraRestOffset.z - firstBounds.max.z)
+        let bottomScale = focalLength / (cameraRestOffset.z - clockBounds.max.z)
+        let anchor = CGPoint(
+            x: bounds.midX + CGFloat(firstBounds.min.x * leftScale),
+            y: bounds.midY - CGFloat(clockBounds.min.y * bottomScale)
+        )
+        guard anchor != weekdayAnchor else { return }
+        weekdayAnchor = anchor
+        onWeekdayAnchorChange?(anchor)
     }
 
     private func applyViewingAngle() {
@@ -152,6 +213,7 @@ final class ClockRenderView: ARView {
         camera.orientation = orbit
         camera.position = placement.position + orbit.act(cameraRestOffset)
         applyInteractionLighting()
+        applyWeekdayLighting()
     }
 
     private func applyInteractionLighting() {
@@ -286,6 +348,8 @@ final class ClockRenderView: ARView {
                               rowCenter - bounds.center.y * digitHeightScale, 0]
         }
         clock.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
+        updateWeekdayAnchor()
+        applyWeekdayLighting()
     }
 
 }

@@ -5,6 +5,7 @@ struct ThemeAdjustments: Codable, Equatable {
     var background: Color.Resolved?
     var lighting: ClockLightingSettings?
     var shimmer: Double?
+    var weekday: ClockWeekdayAdjustments?
 
     func applying(to theme: AppTheme) -> AppTheme {
         var palette = theme.palette
@@ -15,6 +16,7 @@ struct ThemeAdjustments: Codable, Equatable {
             clock.roughness = max(0.04, 0.4 - Float(min(max(shimmer, 0), 1)) * 0.4)
         }
         return AppTheme(id: theme.id, name: theme.name, colorScheme: theme.colorScheme,
-                        palette: palette, clock: clock, panelShadow: theme.panelShadow)
+                        palette: palette, clock: clock, panelShadow: theme.panelShadow,
+                        weekday: weekday?.applying(to: theme.weekday) ?? theme.weekday)
     }
 }

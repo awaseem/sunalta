@@ -14,7 +14,9 @@ struct ClockAppearance: Equatable {
 
     func numeralMaterial() -> PhysicallyBasedMaterial {
         var material = PhysicallyBasedMaterial()
-        material.baseColor = .init(tint: UIColor(numeralColor))
+        // A small diffuse response lets black paint pick up colored light.
+        let materialColor = numeralColor == .black ? Color(white: 0.035) : numeralColor
+        material.baseColor = .init(tint: UIColor(materialColor))
         material.metallic = .init(floatLiteral: 0)
         material.roughness = .init(floatLiteral: roughness)
         material.clearcoat = .init(floatLiteral: clearcoat)

@@ -8,15 +8,22 @@ struct SculptedClockView: UIViewRepresentable {
     var isVisible = true
     var isEditingAppearance = false
     var contentSafeAreaInsets: UIEdgeInsets = .zero
+    var weekdayFrame: CGRect = .zero
+    var onWeekdayAnchorChange: ((CGPoint) -> Void)?
 
     func makeUIView(context: Context) -> ClockPageView {
         ClockPageView(theme: theme)
     }
 
     func updateUIView(_ view: ClockPageView, context: Context) {
+        view.onWeekdayAnchorChange = { anchor in
+            Task { @MainActor in
+                onWeekdayAnchorChange?(anchor)
+            }
+        }
         view.update(date: date, theme: theme, insets: contentSafeAreaInsets,
                     isScrolling: isScrolling, isVisible: isVisible,
-                    isEditingAppearance: isEditingAppearance)
+                    isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame)
     }
 
     static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {

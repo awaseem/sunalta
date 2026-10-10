@@ -29,6 +29,28 @@ final class ThemeSettings {
         set { update { $0.shimmer = min(max(newValue, 0), 1) } }
     }
 
+    var weekday: ClockWeekdayAppearance {
+        get { theme.weekday }
+        set {
+            var appearance = newValue
+            let range = ClockWeekdayAppearance.sizeRange
+            appearance.size = min(max(appearance.size, range.lowerBound), range.upperBound)
+            appearance.glow.halo = min(max(appearance.glow.halo, 0), 1)
+            appearance.glow.brightness = min(max(appearance.glow.brightness, 0), 12000)
+            appearance.glow.spread = min(max(appearance.glow.spread, 15), 85)
+            appearance.glow.direction = min(max(appearance.glow.direction, -90), 90)
+            appearance.glow.reach = min(max(appearance.glow.reach, 1), 10)
+            let current = weekday
+            update {
+                var adjustment = $0.weekday ?? ClockWeekdayAdjustments()
+                if appearance.size != current.size { adjustment.size = appearance.size }
+                if appearance.weight != current.weight { adjustment.weight = appearance.weight }
+                if appearance.glow != current.glow { adjustment.glow = appearance.glow }
+                $0.weekday = adjustment
+            }
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         baseTheme = AppTheme.resolve(id: defaults.string(forKey: Self.selectionKey))
@@ -48,6 +70,18 @@ final class ThemeSettings {
 
     func setBackground(_ color: Color.Resolved) {
         update { $0.background = color }
+    }
+
+    func exportText(in environment: EnvironmentValues) throws -> String {
+        let current = theme
+        let export = ThemeSettingsExport(
+            themeID: current.id, themeName: current.name,
+            background: current.palette.background.resolve(in: environment),
+            lighting: current.clock.lighting, shimmer: shimmer, weekday: current.weekday
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return String(decoding: try encoder.encode(export), as: UTF8.self)
     }
 
     func resetCurrentTheme() {

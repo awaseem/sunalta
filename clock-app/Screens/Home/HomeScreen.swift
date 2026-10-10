@@ -7,7 +7,10 @@ struct HomeScreen: View {
     @State private var isScrolling = false
     @State private var isClockVisible = true
     @State private var showsAppearance = false
+    @State private var appearanceAtTop = false
     @State private var isEditingAppearance = false
+    @State private var weekdayAnchor: CGPoint?
+    @State private var weekdayFrame: CGRect = .zero
 
     var body: some View {
         // RealityKit needs both the viewport height and safe-area insets for its camera placement.
@@ -22,7 +25,18 @@ struct HomeScreen: View {
                                          contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
                             bottom: geometry.safeAreaInsets.bottom, right: 0
-                        ))
+                        ), weekdayFrame: weekdayFrame, onWeekdayAnchorChange: { weekdayAnchor = $0 })
+                        .overlay(alignment: .topLeading) {
+                            if let weekdayAnchor {
+                                ClockWeekdayLabel(date: context.date)
+                                    .onGeometryChange(for: CGRect.self) { geometry in
+                                        geometry.frame(in: .named("clockFace"))
+                                    } action: { weekdayFrame = $0 }
+                                    .padding(.top, 8)
+                                    .offset(x: weekdayAnchor.x, y: weekdayAnchor.y)
+                            }
+                        }
+                        .coordinateSpace(name: "clockFace")
                     }
                     .frame(height: pageHeight)
                     .overlay(alignment: .bottom) {
@@ -36,13 +50,16 @@ struct HomeScreen: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel("Swipe up for alarms")
                     }
-                    .overlay(alignment: .bottom) {
+                    .overlay(alignment: appearanceAtTop ? .top : .bottom) {
                         if showsAppearance {
-                            ThemePickerPanel(isEditing: $isEditingAppearance) {
+                            ThemePickerPanel(isEditing: $isEditingAppearance,
+                                             isAtTop: $appearanceAtTop,
+                                             maximumControlsHeight: geometry.size.height * 0.24) {
                                 showsAppearance = false
                             }
                             .padding(.horizontal, 20)
-                            .padding(.bottom, geometry.safeAreaInsets.bottom + 100)
+                            .padding(.top, appearanceAtTop ? geometry.safeAreaInsets.top + 72 : 0)
+                            .padding(.bottom, appearanceAtTop ? 0 : geometry.safeAreaInsets.bottom + 16)
                         }
                     }
                     .overlay(alignment: .topLeading) {

@@ -24,11 +24,25 @@ extension AppTheme {
             roughness: 0.16,
             clearcoat: 0.8,
             clearcoatRoughness: 0.08,
-            lighting: ClockLightingSettings(),
+            lighting: ClockLightingSettings(
+                direction: 0.36364316940307617, tilt: 50.24, strength: 2600, fill: 0
+            ),
             // Preserve the current sculpted shading without casting a backdrop shadow.
             shadow: nil
         ),
-        panelShadow: ThemeShadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 6)
+        panelShadow: ThemeShadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 6),
+        weekday: ClockWeekdayAppearance(
+            size: 40.16969585418701,
+            weight: .medium,
+            glow: ClockWeekdayGlowSettings(
+                color: Color.Resolved(red: 1, green: 0.07999999, blue: 0.16),
+                halo: 0.09848485141992569,
+                brightness: 3012.121081352234,
+                spread: 60,
+                direction: 20.36363124847412,
+                reach: 5.518181622028351
+            )
+        )
     )
 
     static let available: [AppTheme] = [.white]

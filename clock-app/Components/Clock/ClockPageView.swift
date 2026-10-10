@@ -5,6 +5,7 @@ import UIKit
 /// Scroll a cached frame, keeping RealityKit's drawable out of the paging animation.
 /// The renderer and its meshes stay alive, so returning doesn't reload the scene.
 final class ClockPageView: UIView {
+    var onWeekdayAnchorChange: ((CGPoint) -> Void)?
     private let renderer: ClockRenderView
     private let still = UIImageView()
     private var snapshotTask: Task<Void, Never>?
@@ -17,6 +18,7 @@ final class ClockPageView: UIView {
     private var minute: Int?
     private var appearance: AppTheme?
     private var insets: UIEdgeInsets = .zero
+    private var weekdayFrame: CGRect = .zero
     private var renderedSize: CGSize = .zero
 
     init(theme: AppTheme) {
@@ -29,6 +31,9 @@ final class ClockPageView: UIView {
         accessibilityTraits = .staticText
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
+        renderer.onWeekdayAnchorChange = { [weak self] anchor in
+            self?.onWeekdayAnchorChange?(anchor)
+        }
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
@@ -48,7 +53,7 @@ final class ClockPageView: UIView {
     required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
 
     func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
-                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool) {
+                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect) {
         self.isScrolling = isScrolling
         isPageVisible = isVisible
         self.isEditingAppearance = isEditingAppearance
@@ -57,12 +62,15 @@ final class ClockPageView: UIView {
             still.isHidden = true
         }
         let minute = Int(date.timeIntervalSince1970 / 60)
-        if self.minute != minute || appearance != theme || self.insets != insets {
+        if self.minute != minute || appearance != theme || self.insets != insets
+            || self.weekdayFrame != weekdayFrame {
             self.minute = minute
             appearance = theme
             self.insets = insets
+            self.weekdayFrame = weekdayFrame
             invalidateSnapshot()
             renderer.contentSafeAreaInsets = insets
+            renderer.weekdayFrame = weekdayFrame
             renderer.applyTheme(theme)
             still.image = nil
             still.isHidden = true
