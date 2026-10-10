@@ -1,8 +1,7 @@
 import Foundation
 
 struct ClockLightingSettings: Codable, Equatable {
-    // Match the original light's direction from [4, 6, 6].
-    var direction = 56.31
+    var direction = 180.0
     var tilt = 50.24
     var strength = 2600.0
     var fill = 0.0
