@@ -4,6 +4,7 @@ import UIKit
 struct SculptedClockView: UIViewRepresentable {
     @Environment(\.appTheme) private var theme
     let date: Date
+    var scene: ClockScene = .numbers
     var isScrolling = false
     var isVisible = true
     var isEditingAppearance = false
@@ -12,7 +13,7 @@ struct SculptedClockView: UIViewRepresentable {
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
 
     func makeUIView(context: Context) -> ClockPageView {
-        ClockPageView(theme: theme)
+        ClockPageView(theme: theme, scene: scene)
     }
 
     func updateUIView(_ view: ClockPageView, context: Context) {

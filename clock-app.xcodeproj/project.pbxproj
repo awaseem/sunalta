@@ -19,8 +19,7 @@
 			remoteGlobalIDString = A1A100000000000000000008;
 			remoteInfo = ClockAlarmWidgets;
 		};
-
-		C10D00000000000000000001 /* Test host proxy */ = {
+		C10D00000000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 80EED26E3069B7BE006EC23D /* Project object */;
 			proxyType = 1;
@@ -44,7 +43,6 @@
 /* Begin PBXFileReference section */
 		80EED2763069B7BE006EC23D /* clock-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "clock-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1A100000000000000000002 /* ClockAlarmWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClockAlarmWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-
 		C10D00000000000000000002 /* ClockAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClockAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -64,13 +62,16 @@
 			path = ClockAlarmWidgets;
 			sourceTree = "<group>";
 		};
-		B04D834BF17D4B51B4732C01 /* ThirdParty */ = {
+		B04D834BF17D4B51B4732C01 /* Design */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ThirdParty;
+			path = Design;
 			sourceTree = "<group>";
 		};
-
-		C10D00000000000000000003 /* Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Tests; sourceTree = "<group>"; };
+		C10D00000000000000000003 /* Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,8 +86,11 @@
 			files = (
 			);
 		};
-
-		C10D00000000000000000004 /* Test frameworks */ = {isa = PBXFrameworksBuildPhase; files = (); };
+		C10D00000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,7 +100,7 @@
 				80EED2783069B7BE006EC23D /* clock-app */,
 				A1A100000000000000000005 /* AlarmShared */,
 				A1A100000000000000000006 /* ClockAlarmWidgets */,
-				B04D834BF17D4B51B4732C01 /* ThirdParty */,
+				B04D834BF17D4B51B4732C01 /* Design */,
 				C10D00000000000000000003 /* Tests */,
 				80EED2773069B7BE006EC23D /* Products */,
 			);
@@ -160,14 +164,21 @@
 			productReference = A1A100000000000000000002 /* ClockAlarmWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-
 		C10D00000000000000000005 /* ClockAppTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C10D00000000000000000006;
-			buildPhases = (C10D00000000000000000007, C10D00000000000000000004, );
-			buildRules = ();
-			dependencies = (C10D00000000000000000008, );
-			fileSystemSynchronizedGroups = (C10D00000000000000000003 /* Tests */, );
+			buildConfigurationList = C10D00000000000000000006 /* Build configuration list for PBXNativeTarget "ClockAppTests" */;
+			buildPhases = (
+				C10D00000000000000000007 /* Sources */,
+				C10D00000000000000000004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C10D00000000000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C10D00000000000000000003 /* Tests */,
+			);
 			name = ClockAppTests;
 			productName = ClockAppTests;
 			productReference = C10D00000000000000000002 /* ClockAppTests.xctest */;
@@ -183,12 +194,15 @@
 				LastSwiftUpdateCheck = 2710;
 				LastUpgradeCheck = 2710;
 				TargetAttributes = {
-					C10D00000000000000000005 = {CreatedOnToolsVersion = 27.1; TestTargetID = 80EED2753069B7BE006EC23D; };
 					80EED2753069B7BE006EC23D = {
 						CreatedOnToolsVersion = 27.1;
 					};
 					A1A100000000000000000008 = {
 						CreatedOnToolsVersion = 27.1;
+					};
+					C10D00000000000000000005 = {
+						CreatedOnToolsVersion = 27.1;
+						TestTargetID = 80EED2753069B7BE006EC23D;
 					};
 				};
 			};
@@ -240,8 +254,11 @@
 			files = (
 			);
 		};
-
-		C10D00000000000000000007 /* Test sources */ = {isa = PBXSourcesBuildPhase; files = (); };
+		C10D00000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -250,8 +267,11 @@
 			target = A1A100000000000000000008 /* ClockAlarmWidgets */;
 			targetProxy = A1A100000000000000000003 /* PBXContainerItemProxy */;
 		};
-
-		C10D00000000000000000008 /* Test host dependency */ = {isa = PBXTargetDependency; target = 80EED2753069B7BE006EC23D /* clock-app */; targetProxy = C10D00000000000000000001; };
+		C10D00000000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 80EED2753069B7BE006EC23D /* clock-app */;
+			targetProxy = C10D00000000000000000001 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -527,8 +547,7 @@
 			};
 			name = Release;
 		};
-
-		C10D00000000000000000009 /* Debug test configuration */ = {
+		C10D00000000000000000009 /* Debug configuration for PBXNativeTarget "ClockAppTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -536,21 +555,24 @@
 				DEVELOPMENT_TEAM = YR54789JNV;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "dev.ambitionsoftware.clock-app.tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 6.0;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/clock-app.app/clock-app";
 			};
 			name = Debug;
 		};
-
-		C10D0000000000000000000A /* Release test configuration */ = {
+		C10D0000000000000000000A /* Release configuration for PBXNativeTarget "ClockAppTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -558,14 +580,18 @@
 				DEVELOPMENT_TEAM = YR54789JNV;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "dev.ambitionsoftware.clock-app.tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_VERSION = 6.0;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/clock-app.app/clock-app";
 			};
@@ -598,10 +624,12 @@
 			);
 			defaultConfigurationName = Release;
 		};
-
-		C10D00000000000000000006 /* Test configurations */ = {
+		C10D00000000000000000006 /* Build configuration list for PBXNativeTarget "ClockAppTests" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (C10D00000000000000000009, C10D0000000000000000000A, );
+			buildConfigurations = (
+				C10D00000000000000000009 /* Debug configuration for PBXNativeTarget "ClockAppTests" */,
+				C10D0000000000000000000A /* Release configuration for PBXNativeTarget "ClockAppTests" */,
+			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

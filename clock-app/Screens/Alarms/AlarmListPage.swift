@@ -3,13 +3,13 @@ import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
-    @Environment(\.appTheme) private var theme
     @Environment(AlarmRuntime.self) private var runtime
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var showingNewAlarm = false
     @State private var updatingAlarmID: UUID?
     @State private var schedulingError: String?
+    var isScrolling = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
@@ -18,40 +18,12 @@ struct AlarmListPage: View {
                 .frame(minHeight: 44)
                 .accessibilityLabel("Swipe down to return to the clock")
 
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Alarms")
-                        .font(.largeTitle.bold())
-                        .accessibilityAddTraits(.isHeader)
-                    Text(alarms.isEmpty ? "Your mornings, at your pace." : "Your daily rhythm.")
-                        .foregroundStyle(theme.palette.secondaryForeground)
-                }
-                Spacer(minLength: 12)
-                Button("Add alarm", systemImage: "plus") { showingNewAlarm = true }
-                .labelStyle(.iconOnly)
-                .font(.title3.weight(.semibold))
-                .frame(minWidth: 44, minHeight: 44)
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .tint(theme.palette.control)
-                .accessibilityLabel("Add alarm")
-            }
-
             if alarms.isEmpty {
-                ContentUnavailableView {
-                    Label("No alarms yet", systemImage: "alarm")
-                } description: {
-                    Text("Give your next morning a time.")
-                } actions: {
-                    Button("Add your first alarm") {
-                        showingNewAlarm = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(theme.palette.control)
-                    .foregroundStyle(theme.palette.onControl)
+                AlarmEmptyState(isScrolling: isScrolling, isPresentingAlarm: showingNewAlarm) {
+                    showingNewAlarm = true
                 }
-                .padding(.top, 48)
             } else {
+                AlarmListHeader { showingNewAlarm = true }
                 LazyVStack(spacing: 12) {
                     ForEach(alarms) { alarm in
                         AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id) { enabled in

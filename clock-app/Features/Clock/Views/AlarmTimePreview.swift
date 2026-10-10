@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-struct AlarmClockPreview: UIViewRepresentable {
+struct AlarmTimePreview: UIViewRepresentable {
     @Environment(\.appTheme) private var theme
     let time: String
     let previewHeight: CGFloat
@@ -16,5 +16,9 @@ struct AlarmClockPreview: UIViewRepresentable {
         view.previewHeight = previewHeight
         view.applyTheme(theme)
         view.showAlarm(time: time)
+    }
+
+    static func dismantleUIView(_ view: ClockRenderView, coordinator: ()) {
+        view.stop()
     }
 }

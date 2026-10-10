@@ -5,7 +5,7 @@
 seven, narrow bevels, raised ridges, and per-corner shading normals.
 
 This file came from the project's supplied `clock-blender-sharp` asset set. It is
-stored under ThirdParty as a source asset reference; no external author or model
+stored under Design/Blender alongside the other source assets; no external author or model
 license is asserted. The source used the handoff's Impact-derived outlines. The
 original font's license still governs those outlines and derived geometry; see
 [`THIRD_PARTY_NOTICES.md`](../../../THIRD_PARTY_NOTICES.md).

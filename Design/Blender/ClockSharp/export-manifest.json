@@ -1,5 +1,5 @@
 {
-  "source": "ThirdParty/Blender/ClockSharp/clock-sharp.blend",
+  "source": "Design/Blender/ClockSharp/clock-sharp.blend",
   "sourceSHA256": "2d942edb3875bc58097bc2928545cb86aae56666f7aa795909b6de0f3c70d24d",
   "blenderVersion": "5.2.2 LTS",
   "resource": "clock-app/Resources/SharpNumerals.clockmesh",

@@ -17,7 +17,7 @@ struct NewAlarmView: View {
                 ? min(220, max(120, geometry.size.height * 0.24))
                 : min(340, max(160, geometry.size.height * 0.40))
             ZStack {
-                AlarmClockPreview(
+                AlarmTimePreview(
                     time: draft.displayTime,
                     previewHeight: previewHeight,
                     contentSafeAreaInsets: UIEdgeInsets(

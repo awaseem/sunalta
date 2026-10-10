@@ -15,7 +15,7 @@ import sys
 import bpy
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "ThirdParty/Blender/ClockSharp/clock-sharp.blend"
+SOURCE = ROOT / "Design/Blender/ClockSharp/clock-sharp.blend"
 DESTINATION = ROOT / "clock-app/Resources/SharpNumerals.clockmesh"
 MANIFEST = SOURCE.with_name("export-manifest.json")
 CHARACTERS = "0123456789:"

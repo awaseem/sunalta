@@ -20,9 +20,9 @@ CodeScanner is linked through Swift Package Manager. The complete notice is in `
 
 ## Sharp Blender numerals
 
-Editable source: `ThirdParty/Blender/ClockSharp/clock-sharp.blend`.
-Source reference and export instructions: `ThirdParty/Blender/ClockSharp/README.md`.
-Source and native-resource hashes: `ThirdParty/Blender/ClockSharp/export-manifest.json`.
+Editable source: `Design/Blender/ClockSharp/clock-sharp.blend`.
+Source reference and export instructions: `Design/Blender/ClockSharp/README.md`.
+Source and native-resource hashes: `Design/Blender/ClockSharp/export-manifest.json`.
 
 The saved scene was supplied in the project's sharp Blender asset set. The app
 uses its evaluated meshes, bevels, and corner normals, exported directly to

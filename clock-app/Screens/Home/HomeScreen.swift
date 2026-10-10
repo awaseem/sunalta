@@ -77,7 +77,7 @@ struct HomeScreen: View {
                         .padding()
                     }
 
-                    AlarmListPage()
+                    AlarmListPage(isScrolling: isScrolling)
                     .padding(.top, geometry.safeAreaInsets.top + 20)
                     .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
                     .frame(minHeight: pageHeight, alignment: .top)

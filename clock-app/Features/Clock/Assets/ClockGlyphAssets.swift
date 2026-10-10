@@ -1,7 +1,7 @@
 import Foundation
 import RealityKit
 
-/// Evaluated meshes from ThirdParty/Blender/ClockSharp/clock-sharp.blend.
+/// Evaluated meshes from Design/Blender/ClockSharp/clock-sharp.blend.
 /// Shared prototypes retain Blender's bevels and corner normals.
 @MainActor
 enum ClockGlyphAssets {
