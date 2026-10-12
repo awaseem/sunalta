@@ -40,6 +40,9 @@ final class ClockRenderView: ARView {
     private var cameraRestOffset = SIMD3<Float>.zero
     private var orbitInteraction: ClockOrbitInteraction?
     private var angles: SIMD2<Float> { orbitInteraction?.motion.offset ?? .zero }
+    var entranceAngles = SIMD2<Float>.zero {
+        didSet { if oldValue != entranceAngles { applyViewingAngle() } }
+    }
     private let camera = Entity()
     private let keyLight = DirectionalLight()
     private let weekdayLight = SpotLight()
@@ -117,6 +120,9 @@ final class ClockRenderView: ARView {
     }
 
     private func showLoadError(_ error: Error) {
+        // A failed initial load must still reveal its error while the clock is hidden.
+        alpha = 1
+        entranceAngles = .zero
         let message = UILabel()
         message.text = "Unable to load clock"
         message.textColor = UIColor(theme.palette.foreground)
@@ -304,8 +310,11 @@ final class ClockRenderView: ARView {
 
     private func applyViewingAngle() {
         let orbit = orbitInteraction?.motion.orientation ?? simd_quatf(angle: 0, axis: [0, 1, 0])
-        camera.orientation = orbit
-        camera.position = placement.position + orbit.act(cameraRestOffset)
+        let entrance = simd_quatf(angle: entranceAngles.x, axis: [0, 1, 0])
+            * simd_quatf(angle: entranceAngles.y, axis: [1, 0, 0])
+        let orientation = orbit * entrance
+        camera.orientation = orientation
+        camera.position = placement.position + orientation.act(cameraRestOffset)
         applyInteractionLighting()
         applyWeekdayLighting()
     }

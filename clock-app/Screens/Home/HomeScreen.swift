@@ -6,11 +6,16 @@ struct HomeScreen: View {
     @Environment(\.appTheme) private var theme
     @State private var isScrolling = false
     @State private var isClockVisible = true
+    #if DEBUG
+    // Set to true while tuning themes to show the appearance controls.
+    private static let enablesAppearanceControls = false
     @State private var showsAppearance = false
     @State private var appearanceAtTop = false
+    #endif
     @State private var isEditingAppearance = false
     @State private var weekdayAnchor: CGPoint?
     @State private var weekdayFrame: CGRect = .zero
+    @State private var hasRevealedClock = false
 
     var body: some View {
         // RealityKit needs both the viewport height and safe-area insets for its camera placement.
@@ -25,10 +30,14 @@ struct HomeScreen: View {
                                          contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
                             bottom: geometry.safeAreaInsets.bottom, right: 0
-                        ), weekdayFrame: weekdayFrame, onWeekdayAnchorChange: { weekdayAnchor = $0 })
+                        ), weekdayFrame: weekdayFrame, onWeekdayAnchorChange: { weekdayAnchor = $0 },
+                                         onContentRevealed: { hasRevealedClock = true })
                         .overlay(alignment: .topLeading) {
                             if let weekdayAnchor {
                                 ClockWeekdayLabel(date: context.date)
+                                    .opacity(hasRevealedClock ? 1 : 0)
+                                    .animation(.easeOut(duration: ClockEntranceAnimation.fadeDuration),
+                                               value: hasRevealedClock)
                                     .onGeometryChange(for: CGRect.self) { geometry in
                                         geometry.frame(in: .named("clockFace"))
                                     } action: { weekdayFrame = $0 }
@@ -40,18 +49,13 @@ struct HomeScreen: View {
                     }
                     .frame(height: pageHeight)
                     .overlay(alignment: .bottom) {
-                        VStack(spacing: 8) {
-                            Text("Alarms")
-                                .font(.subheadline.weight(.medium))
-                            Image(systemName: "chevron.down")
-                                .font(.caption.weight(.semibold))
-                        }
-                        .padding(.bottom, geometry.safeAreaInsets.bottom + 32)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("Swipe up for alarms")
+                        ClockAlarmHint(isActive: isClockVisible && !isScrolling && scenePhase == .active)
+                            .padding(.horizontal)
+                            .padding(.bottom, geometry.safeAreaInsets.bottom + 8)
                     }
+                    #if DEBUG
                     .overlay(alignment: appearanceAtTop ? .top : .bottom) {
-                        if showsAppearance {
+                        if Self.enablesAppearanceControls && showsAppearance {
                             ThemePickerPanel(isEditing: $isEditingAppearance,
                                              isAtTop: $appearanceAtTop,
                                              maximumControlsHeight: geometry.size.height * 0.24) {
@@ -63,19 +67,22 @@ struct HomeScreen: View {
                         }
                     }
                     .overlay(alignment: .topLeading) {
-                        Button("Appearance", systemImage: "slider.horizontal.3") {
-                            showsAppearance.toggle()
+                        if Self.enablesAppearanceControls {
+                            Button("Appearance", systemImage: "slider.horizontal.3") {
+                                showsAppearance.toggle()
+                            }
+                            .font(.subheadline)
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.glassProminent)
+                            .buttonBorderShape(.circle)
+                            .foregroundStyle(theme.palette.onControl)
+                            .controlSize(.large)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .padding(.top, geometry.safeAreaInsets.top)
+                            .padding()
                         }
-                        .font(.subheadline)
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.glassProminent)
-                        .buttonBorderShape(.circle)
-                        .foregroundStyle(theme.palette.onControl)
-                        .controlSize(.large)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .padding(.top, geometry.safeAreaInsets.top)
-                        .padding()
                     }
+                    #endif
 
                     AlarmListPage(isScrolling: isScrolling)
                     .padding(.top, geometry.safeAreaInsets.top + 20)

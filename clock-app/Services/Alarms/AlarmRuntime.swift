@@ -156,6 +156,7 @@ final class AlarmRuntime {
         if alarm.exitPoint == .normal {
             try AlarmScheduler.snooze(id: alarm.id)
             alarm.pendingSince = nil
+            alarm.snoozedUntil = .now.addingTimeInterval(duration)
         } else {
             try activate(alarm)
             try await ensureRetry(alarm, duration: duration, kind: .snooze, replace: true)

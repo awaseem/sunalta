@@ -6,6 +6,7 @@ import UIKit
 /// Offscreen pages retain only the cached frame; glyph assets are cached separately.
 final class ClockPageView: UIView {
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    var onContentRevealed: (() -> Void)?
     private let scene: ClockScene
     private var renderer: ClockRenderView?
     private let still = UIImageView()
@@ -17,6 +18,10 @@ final class ClockPageView: UIView {
     private var isOrbiting = false
     private var isEditingAppearance = false
     private var allowsFlybys = true
+    private var entrance: ClockEntranceAnimation?
+    private var entranceTask: Task<Void, Never>?
+    private var hasPreparedEntrance = false
+    private var hasRevealedContent = false
     private var minute: Int?
     private var displayedDate = Date.now
     private var appearance: AppTheme?
@@ -39,6 +44,22 @@ final class ClockPageView: UIView {
         let renderer = ClockRenderView(theme: theme, scene: scene)
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
+        if scene == .numbers && !hasPreparedEntrance {
+            // This page survives renderer recreation while scrolling and backgrounding.
+            hasPreparedEntrance = true
+            renderer.alpha = 0
+            let animation = ClockEntranceAnimation(reduceMotion: !allowsFlybys) { [weak renderer] opacity, angles in
+                renderer?.alpha = opacity
+                renderer?.entranceAngles = angles
+            } onCompletion: { [weak self] in
+                guard let self else { return }
+                entrance = nil
+                invalidateSnapshot()
+                updatePresentation()
+            }
+            renderer.entranceAngles = animation.initialAngles
+            entrance = animation
+        }
         renderer.onContentChanged = { [weak self] in
             guard let self else { return }
             invalidateSnapshot()
@@ -50,6 +71,10 @@ final class ClockPageView: UIView {
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
+            entranceTask?.cancel()
+            entranceTask = nil
+            entrance?.finish()
+            revealContent()
             self.renderer?.allowsAmbientAnimation = false
             invalidateSnapshot()
             // A front-facing cached image must never replace an ongoing orbit.
@@ -79,6 +104,7 @@ final class ClockPageView: UIView {
         displayedDate = date
         self.isEditingAppearance = isEditingAppearance
         self.allowsFlybys = allowsFlybys
+        entrance?.reduceMotion = !allowsFlybys
         if isEditingAppearance {
             invalidateSnapshot()
             still.isHidden = true
@@ -118,6 +144,10 @@ final class ClockPageView: UIView {
     }
 
     func stop() {
+        entranceTask?.cancel()
+        entranceTask = nil
+        entrance?.cancel()
+        entrance = nil
         invalidateSnapshot()
         renderer?.removeFromSuperview()
         renderer?.stop()
@@ -158,13 +188,43 @@ final class ClockPageView: UIView {
             invalidateSnapshot()
         }
         if still.image == nil { still.isHidden = true }
+        if entrance != nil {
+            renderer.allowsAmbientAnimation = false
+            scheduleEntrance()
+            return
+        }
+        if renderer.isReady { revealContent() }
         renderer.allowsAmbientAnimation = allowsFlybys && !isScrolling && !isOrbiting
             && !isEditingAppearance && snapshotTask == nil
         scheduleSnapshot()
     }
 
+    private func revealContent() {
+        guard !hasRevealedContent else { return }
+        hasRevealedContent = true
+        onContentRevealed?()
+    }
+
+    private func scheduleEntrance() {
+        guard let renderer, renderer.isReady, let entrance, !entrance.isRunning,
+              entranceTask == nil, !isScrolling, isPageVisible, window != nil,
+              bounds.width > 0, bounds.height > 0 else { return }
+        entranceTask = Task { @MainActor [weak self, weak renderer] in
+            // Keep the drawable invisible until geometry, materials and camera have a frame ready.
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled, let self, let renderer else { return }
+            entranceTask = nil
+            guard renderer.isReady, !isScrolling, isPageVisible, window != nil else { return }
+            still.image = nil
+            still.isHidden = true
+            revealContent()
+            entrance.start()
+        }
+    }
+
     private func scheduleSnapshot() {
         guard let renderer, renderer.isReady, !hasCurrentSnapshot, snapshotTask == nil,
+              entrance == nil,
               !isOrbiting, !isEditingAppearance,
               !isScrolling, isPageVisible, window != nil,
               renderer.superview != nil, bounds.width > 0, bounds.height > 0 else { return }

@@ -12,12 +12,16 @@ struct SculptedClockView: UIViewRepresentable {
     var contentSafeAreaInsets: UIEdgeInsets = .zero
     var weekdayFrame: CGRect = .zero
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    var onContentRevealed: (() -> Void)?
 
     func makeUIView(context: Context) -> ClockPageView {
         ClockPageView(theme: theme, scene: scene)
     }
 
     func updateUIView(_ view: ClockPageView, context: Context) {
+        view.onContentRevealed = {
+            Task { @MainActor in onContentRevealed?() }
+        }
         view.onWeekdayAnchorChange = { anchor in
             Task { @MainActor in
                 onWeekdayAnchorChange?(anchor)

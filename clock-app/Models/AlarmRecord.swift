@@ -116,4 +116,11 @@ final class AlarmRecord {
         AlarmOccurrence.latest(hour: hour, minute: minute, repeatDays: repeatDays,
                                before: date, calendar: calendar)
     }
+
+    func nextOccurrence(after date: Date, calendar: Calendar = .autoupdatingCurrent) -> Date? {
+        guard isEnabled else { return nil }
+        let scheduled = AlarmOccurrence.next(hour: hour, minute: minute, repeatDays: repeatDays,
+                                              after: date, calendar: calendar)
+        return [scheduled, snoozedUntil, nextRetryAt].compactMap { $0 }.filter { $0 > date }.min()
+    }
 }
