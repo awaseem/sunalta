@@ -3,9 +3,14 @@ import SwiftUI
 
 struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appTheme) private var theme
     @State private var isScrolling = false
     @State private var isClockVisible = true
+    @State private var hasPulledPastReturnThreshold = false
+    @State private var scrollPosition = ScrollPosition(edge: .top)
+    @State private var isPaging = true
+    @State private var isClockPageActive = true
     #if DEBUG
     // Set to true while tuning themes to show the appearance controls.
     private static let enablesAppearanceControls = false
@@ -84,7 +89,11 @@ struct HomeScreen: View {
                     }
                     #endif
 
-                    AlarmListPage(isScrolling: isScrolling)
+                    AlarmListPage(isScrolling: isScrolling) {
+                        withAnimation(reduceMotion ? nil : .smooth) {
+                            scrollPosition.scrollTo(edge: .top)
+                        }
+                    }
                     .padding(.top, geometry.safeAreaInsets.top + 20)
                     .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
                     .frame(minHeight: pageHeight, alignment: .top)
@@ -92,14 +101,36 @@ struct HomeScreen: View {
             }
             .scrollIndicators(.hidden)
             .defaultScrollAnchor(.top)
-            .scrollTargetBehavior(.paging)
-            .onScrollPhaseChange { _, phase in
+            .scrollPosition($scrollPosition)
+            .scrollTargetBehavior(isClockPageActive
+                ? AnyScrollTargetBehavior(.paging)
+                : AnyScrollTargetBehavior(HomeScrollTargetBehavior(
+                    clockHeight: pageHeight,
+                    hasPulledPastReturnThreshold: $hasPulledPastReturnThreshold,
+                    isPaging: isPaging
+                )))
+            .onScrollPhaseChange { _, phase, context in
                 isScrolling = phase != .idle
+                let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
+                if phase == .idle {
+                    // Change modes only after settling, keeping the native page snap intact.
+                    isClockPageActive = offset < pageHeight / 2
+                }
+                if phase == .interacting {
+                    isPaging = offset < pageHeight - 1
+                        || (offset <= pageHeight + 1 && (context.velocity?.dy ?? 0) < 0)
+                }
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
                 scroll.contentOffset.y < pageHeight
             } action: { _, visible in
                 isClockVisible = visible
+            }
+            .onScrollGeometryChange(for: Bool.self) { scroll in
+                // Pull a quarter of the clock into view before committing a return.
+                scroll.contentOffset.y + scroll.contentInsets.top < pageHeight * 0.75
+            } action: { _, hasPassedThreshold in
+                hasPulledPastReturnThreshold = hasPassedThreshold
             }
             .frame(height: pageHeight)
             .ignoresSafeArea()

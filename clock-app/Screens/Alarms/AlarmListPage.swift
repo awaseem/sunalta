@@ -10,13 +10,15 @@ struct AlarmListPage: View {
     @State private var updatingAlarmID: UUID?
     @State private var schedulingError: String?
     var isScrolling = false
+    let returnToClock: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            Label("Clock", systemImage: "chevron.up")
+            Button("Clock", systemImage: "chevron.up", action: returnToClock)
                 .font(.subheadline.weight(.medium))
+                .buttonStyle(.plain)
                 .frame(minHeight: 44)
-                .accessibilityLabel("Swipe down to return to the clock")
+                .accessibilityLabel("Return to the clock")
 
             if alarms.isEmpty {
                 AlarmEmptyState(isScrolling: isScrolling, isPresentingAlarm: showingNewAlarm) {
@@ -67,7 +69,7 @@ struct AlarmListPage: View {
 
 #Preview("Saved alarms") {
     AlarmPreviewContainer {
-        ScrollView { AlarmListPage() }
+        ScrollView { AlarmListPage(returnToClock: {}) }
             .background(AppTheme.white.palette.background)
     }
 }
