@@ -3,7 +3,7 @@ import RealityKit
 import SwiftUI
 import UIKit
 
-final class ClockRenderView: ARView {
+final class ClockRenderView: ClockMetalView {
     var onContentChanged: (() -> Void)?
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
@@ -11,7 +11,10 @@ final class ClockRenderView: ARView {
     private var weekdayAnchor: CGPoint?
     var weekdayFrame: CGRect = .zero {
         didSet {
-            if oldValue != weekdayFrame { applyWeekdayLighting() }
+            if oldValue != weekdayFrame {
+                applyWeekdayLighting()
+                requestFrame()
+            }
         }
     }
     var previewHeight: CGFloat = 240 {
@@ -34,6 +37,7 @@ final class ClockRenderView: ARView {
     private var displayedDate = Date.now
     private var previewTime: String?
     var isReady: Bool { content != nil && materialTask == nil }
+    override var isSceneReady: Bool { isReady }
     private let backdrop = ModelEntity()
     private var theme: AppTheme
     private let placement = Entity()
@@ -56,13 +60,17 @@ final class ClockRenderView: ARView {
         self.theme = theme
         sceneKind = scene
         self.isAlarmPreview = isAlarmPreview
-        super.init(frame: .zero, cameraMode: .nonAR, automaticallyConfigureSession: false)
-        renderOptions = [.disableMotionBlur, .disableDepthOfField, .disableCameraGrain]
+        super.init()
         isAccessibilityElement = true
         accessibilityTraits = .staticText
 
-        let anchor = AnchorEntity(world: .zero)
-        self.scene.addAnchor(anchor)
+        if let initializationError {
+            showLoadError(initializationError)
+            return
+        }
+
+        let anchor = Entity()
+        realityRenderer?.entities.append(anchor)
         anchor.addChild(placement)
         if scene == .alarm {
             var projection = OrthographicCameraComponent()
@@ -86,6 +94,7 @@ final class ClockRenderView: ARView {
                 ? "Drag horizontally to change the viewing angle. Swipe up to see alarms."
                 : "Drag horizontally to change the viewing angle. Release to return to the starting view."
         anchor.addChild(camera)
+        realityRenderer?.activeCamera = camera
         anchor.addChild(weekdayLight)
         weekdayLight.isEnabled = false
 
@@ -102,16 +111,18 @@ final class ClockRenderView: ARView {
         applyLighting()
         loadTask = Task { @MainActor [weak self] in
             do {
+                let environment = try await ClockLightingEnvironment.load()
                 let content = try await scene.load()
                 try Task.checkCancellation()
                 guard let self else { return }
                 self.content = content
+                realityRenderer?.lighting.resource = environment
                 placement.addChild(content.root)
                 updateTime()
                 applyMaterials()
                 setNeedsLayout()
             } catch is CancellationError {
-                // Offscreen pages release their renderer, including any pending load.
+                // Dismantling a view cancels any pending load.
             } catch {
                 guard !Task.isCancelled else { return }
                 self?.showLoadError(error)
@@ -139,10 +150,7 @@ final class ClockRenderView: ARView {
     }
 
     @available(*, unavailable)
-    required init(frame frameRect: CGRect) { fatalError("Use init(theme:)") }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
+    required init(coder: NSCoder) { fatalError("Use init(theme:)") }
 
     func applyTheme(_ theme: AppTheme) {
         guard self.theme != theme else { return }
@@ -168,9 +176,9 @@ final class ClockRenderView: ARView {
             )
         }
         let appearance = theme.clock
-        environment.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
+        realityRenderer?.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
         let background = UIColor(theme.palette.background)
-        environment.background = .color(background)
+        realityRenderer?.cameraSettings.colorBackground = .color(background.cgColor)
         backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
         applyInteractionLighting()
         applyWeekdayLighting()
@@ -219,6 +227,7 @@ final class ClockRenderView: ARView {
                 try Task.checkCancellation()
                 guard let self, materialRevision == revision else { return }
                 materialTask = nil
+                requestFrame()
                 onContentChanged?()
                 updateFlybys()
             } catch is CancellationError {
@@ -274,6 +283,7 @@ final class ClockRenderView: ARView {
         if flybys == nil {
             do {
                 let visitor = try ClockFlybyController(kind: theme.clockFlyby, appearance: theme.clock)
+                visitor.onFrame = { [weak self] in self?.requestFrame() }
                 camera.addChild(visitor.root)
                 flybys = visitor
             } catch {
@@ -317,6 +327,7 @@ final class ClockRenderView: ARView {
         camera.position = placement.position + orientation.act(cameraRestOffset)
         applyInteractionLighting()
         applyWeekdayLighting()
+        requestFrame()
     }
 
     private func applyInteractionLighting() {
@@ -341,6 +352,8 @@ final class ClockRenderView: ARView {
     }
 
     func show(date: Date) {
+        guard previewTime != nil || !Calendar.current.isDate(displayedDate, equalTo: date, toGranularity: .minute)
+            || content == nil else { return }
         displayedDate = date
         previewTime = nil
         accessibilityLabel = "Time, \(date.formatted(date: .omitted, time: .shortened))"
@@ -348,6 +361,7 @@ final class ClockRenderView: ARView {
     }
 
     func showAlarm(time: String) {
+        guard previewTime != time else { return }
         previewTime = time
         accessibilityLabel = "Alarm time, \(time)"
         updateTime()
@@ -361,6 +375,11 @@ final class ClockRenderView: ARView {
         }
         updateWeekdayAnchor()
         applyWeekdayLighting()
+        requestFrame()
+    }
+
+    func settleInteraction() {
+        orbitInteraction?.reset()
     }
 
     func stop() {
@@ -372,7 +391,8 @@ final class ClockRenderView: ARView {
         materialTask = nil
         materialRevision += 1
         orbitInteraction?.reset()
-        scene.anchors.removeAll()
+        isRenderingEnabled = false
+        realityRenderer?.entities.removeAll()
         content = nil
     }
 }

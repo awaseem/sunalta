@@ -1,30 +1,23 @@
-import RealityKit
 import SwiftUI
 import UIKit
 
-/// Scroll a cached frame, keeping RealityKit's drawable out of the paging animation.
-/// Offscreen pages retain only the cached frame; glyph assets are cached separately.
+/// The paused Metal surface scrolls with the page while its scene stays ready for interaction.
 final class ClockPageView: UIView {
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
     var onContentRevealed: (() -> Void)?
     private let scene: ClockScene
     private var renderer: ClockRenderView?
-    private let still = UIImageView()
-    private var snapshotTask: Task<Void, Never>?
-    private var revision = 0
-    private var hasCurrentSnapshot = false
     private var isScrolling = false
     private var isPageVisible = true
     private var isOrbiting = false
     private var isEditingAppearance = false
     private var allowsFlybys = true
     private var entrance: ClockEntranceAnimation?
-    private var entranceTask: Task<Void, Never>?
     private var hasPreparedEntrance = false
     private var hasRevealedContent = false
     private var minute: Int?
     private var displayedDate = Date.now
-    private var appearance: AppTheme?
+    private var appearance: AppTheme
     private var insets: UIEdgeInsets = .zero
     private var weekdayFrame: CGRect = .zero
     private var renderedSize: CGSize = .zero
@@ -33,58 +26,42 @@ final class ClockPageView: UIView {
         self.scene = scene
         appearance = theme
         super.init(frame: .zero)
-        still.contentMode = .scaleToFill
-        still.isUserInteractionEnabled = false
-        addSubview(still)
         isAccessibilityElement = true
         accessibilityTraits = .staticText
     }
 
-    private func makeRenderer(theme: AppTheme) -> ClockRenderView {
-        let renderer = ClockRenderView(theme: theme, scene: scene)
+    private func makeRenderer() -> ClockRenderView {
+        let renderer = ClockRenderView(theme: appearance, scene: scene)
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
-        if scene == .numbers && !hasPreparedEntrance {
-            // This page survives renderer recreation while scrolling and backgrounding.
+        if scene == .numbers && !hasPreparedEntrance && renderer.initializationError == nil {
             hasPreparedEntrance = true
-            renderer.alpha = 0
+            // Keep the surface drawable while waiting for its first completed frame.
+            renderer.alpha = 0.001
             let animation = ClockEntranceAnimation(reduceMotion: !allowsFlybys) { [weak renderer] opacity, angles in
                 renderer?.alpha = opacity
                 renderer?.entranceAngles = angles
             } onCompletion: { [weak self] in
-                guard let self else { return }
-                entrance = nil
-                invalidateSnapshot()
-                updatePresentation()
+                self?.entrance = nil
+                self?.updatePresentation()
             }
             renderer.entranceAngles = animation.initialAngles
             entrance = animation
         }
-        renderer.onContentChanged = { [weak self] in
-            guard let self else { return }
-            invalidateSnapshot()
-            updatePresentation()
-        }
+        renderer.onContentChanged = { [weak self] in self?.updatePresentation() }
+        renderer.onFrameRendered = { [weak self] in self?.revealRenderedContent() }
         renderer.onWeekdayAnchorChange = { [weak self] anchor in
             self?.onWeekdayAnchorChange?(anchor)
         }
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
-            entranceTask?.cancel()
-            entranceTask = nil
             entrance?.finish()
-            revealContent()
-            self.renderer?.allowsAmbientAnimation = false
-            invalidateSnapshot()
-            // A front-facing cached image must never replace an ongoing orbit.
-            still.image = nil
-            still.isHidden = true
+            updatePresentation()
         }
         renderer.onOrbitSettled = { [weak self] in
-            guard let self else { return }
-            isOrbiting = false
-            updatePresentation()
+            self?.isOrbiting = false
+            self?.updatePresentation()
         }
         renderer.contentSafeAreaInsets = insets
         renderer.weekdayFrame = weekdayFrame
@@ -99,15 +76,17 @@ final class ClockPageView: UIView {
     func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
                 isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
                 allowsFlybys: Bool) {
+        let beganScrolling = isScrolling && !self.isScrolling
         self.isScrolling = isScrolling
         isPageVisible = isVisible
         displayedDate = date
         self.isEditingAppearance = isEditingAppearance
         self.allowsFlybys = allowsFlybys
         entrance?.reduceMotion = !allowsFlybys
-        if isEditingAppearance {
-            invalidateSnapshot()
-            still.isHidden = true
+        if beganScrolling {
+            isOrbiting = false
+            renderer?.settleInteraction()
+            if entrance?.isRunning == true { entrance?.finish() }
         }
         let minute = Int(date.timeIntervalSince1970 / 60)
         if self.minute != minute || appearance != theme || self.insets != insets
@@ -116,12 +95,9 @@ final class ClockPageView: UIView {
             appearance = theme
             self.insets = insets
             self.weekdayFrame = weekdayFrame
-            invalidateSnapshot()
             renderer?.contentSafeAreaInsets = insets
             renderer?.weekdayFrame = weekdayFrame
             renderer?.applyTheme(theme)
-            still.image = nil
-            still.isHidden = true
             renderer?.show(date: date)
             if let renderer { accessibilityLabel = renderer.accessibilityLabel }
         }
@@ -130,10 +106,8 @@ final class ClockPageView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        still.frame = bounds
         guard renderedSize != bounds.size else { return }
         renderedSize = bounds.size
-        invalidateSnapshot()
         renderer?.frame = bounds
         updatePresentation()
     }
@@ -144,117 +118,46 @@ final class ClockPageView: UIView {
     }
 
     func stop() {
-        entranceTask?.cancel()
-        entranceTask = nil
         entrance?.cancel()
         entrance = nil
-        invalidateSnapshot()
-        renderer?.removeFromSuperview()
         renderer?.stop()
+        renderer?.removeFromSuperview()
         renderer = nil
     }
 
-    private func invalidateSnapshot() {
-        revision += 1
-        hasCurrentSnapshot = false
-        snapshotTask?.cancel()
-        snapshotTask = nil
-    }
-
     private func updatePresentation() {
-        // Detaching an ARView leaves its RealityKit renderer alive. Release it when
-        // offscreen so it cannot interfere with the alarm page's live renderer.
-        if window == nil || !isPageVisible {
-            stop()
-            isOrbiting = false
-            still.isHidden = still.image == nil
-            return
-        }
-        if isScrolling && still.image != nil {
-            stop()
-            isOrbiting = false
-            still.isHidden = still.image == nil
-            return
-        }
-        if renderer == nil {
-            guard let appearance, bounds.width > 0, bounds.height > 0 else { return }
-            renderer = makeRenderer(theme: appearance)
+        let isActive = window != nil && isPageVisible
+        if renderer == nil && isActive {
+            guard bounds.width > 0, bounds.height > 0 else { return }
+            renderer = makeRenderer()
+            if let renderer {
+                renderer.frame = bounds
+                addSubview(renderer)
+            }
         }
         guard let renderer else { return }
-        if renderer.superview == nil {
-            renderer.frame = bounds
-            insertSubview(renderer, belowSubview: still)
-            // Keep the cached image covering the drawable until its first fresh frame.
-            invalidateSnapshot()
+        let wasActive = renderer.isRenderingEnabled
+        renderer.isRenderingEnabled = isActive
+        renderer.allowsAmbientAnimation = isActive && allowsFlybys && !isScrolling && !isOrbiting
+            && !isEditingAppearance && entrance == nil
+        if !isActive && wasActive {
+            isOrbiting = false
+            renderer.settleInteraction()
+            if entrance?.isRunning == true { entrance?.finish() }
         }
-        if still.image == nil { still.isHidden = true }
-        if entrance != nil {
-            renderer.allowsAmbientAnimation = false
-            scheduleEntrance()
-            return
-        }
-        if renderer.isReady { revealContent() }
-        renderer.allowsAmbientAnimation = allowsFlybys && !isScrolling && !isOrbiting
-            && !isEditingAppearance && snapshotTask == nil
-        scheduleSnapshot()
+        // A first frame can finish during a swipe. Start its reveal when scrolling
+        // ends even if the stationary scene has no reason to submit another frame.
+        if isActive && renderer.renderedFrameCount > 0 { revealRenderedContent() }
     }
 
-    private func revealContent() {
+    private func revealRenderedContent() {
+        guard isPageVisible, window != nil, renderer?.isReady == true else { return }
+        if let entrance {
+            guard !isScrolling, !entrance.isRunning else { return }
+            entrance.start()
+        }
         guard !hasRevealedContent else { return }
         hasRevealedContent = true
         onContentRevealed?()
-    }
-
-    private func scheduleEntrance() {
-        guard let renderer, renderer.isReady, let entrance, !entrance.isRunning,
-              entranceTask == nil, !isScrolling, isPageVisible, window != nil,
-              bounds.width > 0, bounds.height > 0 else { return }
-        entranceTask = Task { @MainActor [weak self, weak renderer] in
-            // Keep the drawable invisible until geometry, materials and camera have a frame ready.
-            try? await Task.sleep(for: .milliseconds(150))
-            guard !Task.isCancelled, let self, let renderer else { return }
-            entranceTask = nil
-            guard renderer.isReady, !isScrolling, isPageVisible, window != nil else { return }
-            still.image = nil
-            still.isHidden = true
-            revealContent()
-            entrance.start()
-        }
-    }
-
-    private func scheduleSnapshot() {
-        guard let renderer, renderer.isReady, !hasCurrentSnapshot, snapshotTask == nil,
-              entrance == nil,
-              !isOrbiting, !isEditingAppearance,
-              !isScrolling, isPageVisible, window != nil,
-              renderer.superview != nil, bounds.width > 0, bounds.height > 0 else { return }
-        let requestedRevision = revision
-        // Cache only the clock: a visitor must never freeze into the scrolling image.
-        renderer.allowsAmbientAnimation = false
-        snapshotTask = Task { @MainActor [weak self, weak renderer] in
-            // Coalesce layout/content updates and let RealityKit present the scene.
-            try? await Task.sleep(for: .milliseconds(150))
-            guard !Task.isCancelled, let self, let renderer,
-                  revision == requestedRevision else { return }
-            guard !isScrolling else {
-                snapshotTask = nil
-                return
-            }
-            renderer.snapshot(saveToHDR: false) { [weak self] image in
-                guard let self, revision == requestedRevision else { return }
-                snapshotTask = nil
-                guard let image else {
-                    // A failed capture must leave the live clock usable.
-                    still.isHidden = true
-                    renderer.allowsAmbientAnimation = allowsFlybys && !isScrolling && !isOrbiting
-                        && !isEditingAppearance && isPageVisible && window != nil
-                    return
-                }
-                still.image = image
-                hasCurrentSnapshot = true
-                still.isHidden = !isScrolling && isPageVisible
-                updatePresentation()
-            }
-        }
     }
 }

@@ -3,6 +3,7 @@ import UIKit
 
 struct AlarmTimePreview: UIViewRepresentable, Animatable {
     @Environment(\.appTheme) private var theme
+    @Environment(\.scenePhase) private var scenePhase
     let time: String
     var previewHeight: CGFloat
     var previewTopInset: CGFloat
@@ -21,6 +22,8 @@ struct AlarmTimePreview: UIViewRepresentable, Animatable {
     }
 
     func updateUIView(_ view: ClockRenderView, context: Context) {
+        view.isRenderingEnabled = scenePhase == .active
+        if scenePhase != .active { view.settleInteraction() }
         view.contentSafeAreaInsets = contentSafeAreaInsets
         view.previewHeight = previewHeight
         view.previewTopInset = previewTopInset

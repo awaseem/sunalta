@@ -5,6 +5,7 @@ import RealityKit
 @MainActor
 final class ClockFlybyController: NSObject {
     let root = Entity()
+    var onFrame: (() -> Void)?
     private let birds: [ClockFlybyBird]
     private var nextFlightTask: Task<Void, Never>?
     private var displayLink: CADisplayLink?
@@ -86,6 +87,7 @@ final class ClockFlybyController: NSObject {
         guard elapsed < flightDuration else {
             stopDisplayLink()
             root.isEnabled = false
+            onFrame?()
             scheduleFlight(after: .random(in: 2...3.5))
             return
         }
@@ -94,13 +96,17 @@ final class ClockFlybyController: NSObject {
                         viewport: viewport, cameraDistance: cameraDistance)
         }
         root.isEnabled = true
+        onFrame?()
     }
 
     func stop() {
         nextFlightTask?.cancel()
         nextFlightTask = nil
         stopDisplayLink()
-        root.isEnabled = false
+        if root.isEnabled {
+            root.isEnabled = false
+            onFrame?()
+        }
     }
 
     private func stopDisplayLink() {
