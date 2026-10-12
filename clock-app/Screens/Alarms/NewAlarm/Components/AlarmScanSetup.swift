@@ -11,25 +11,34 @@ struct AlarmScanSetup: View {
     private var scanType: String { isNFC ? "NFC tag" : "QR code" }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Label(isConfigured ? "Specific \(scanType) set" : "Any \(scanType)",
-                  systemImage: isConfigured ? "checkmark.circle.fill" : selection.symbol)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 4) {
             Text(isConfigured
-                 ? "Only this \(isNFC ? "tag" : "code") will be accepted."
-                 : "Setup is optional. Leave it empty to accept any \(scanType).")
+                 ? "Only this \(scanType) can stop your alarm."
+                 : "Any \(scanType) can stop your alarm.")
                 .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
-            GlassEffectContainer {
-                VStack {
-                    Button(isConfigured ? "Replace \(scanType)" : "Scan a specific \(scanType)",
-                           systemImage: selection.symbol, action: onScan)
-                        .buttonStyle(.appCapsule(fillsWidth: true))
-                    if isConfigured {
-                        Button("Use any \(scanType)", action: onClear)
-                            .buttonStyle(.appCapsule(fillsWidth: true))
-                    }
+            Button(action: onScan) {
+                Text(isConfigured
+                     ? "Change specific \(isNFC ? "tag" : "code") to stop alarm"
+                     : "Set specific \(isNFC ? "tag" : "code") to stop alarm")
+                    .underline()
+                    .font(.subheadline)
+                    .frame(minHeight: 44, alignment: .topLeading)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel(isConfigured ? "Replace \(scanType)" : "Set a specific \(scanType) to stop alarm")
+            if isConfigured {
+                Button(action: onClear) {
+                    Text("Use any \(scanType)")
+                        .underline()
+                        .font(.subheadline)
+                        .frame(minHeight: 44, alignment: .topLeading)
+                        .contentShape(.rect)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .buttonStyle(.plain)
+        .tint(theme.palette.control)
+        .foregroundStyle(theme.palette.control)
     }
 }

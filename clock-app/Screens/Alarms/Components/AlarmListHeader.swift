@@ -14,8 +14,10 @@ struct AlarmListHeader: View {
                     .foregroundStyle(theme.palette.secondaryForeground)
             }
             Spacer(minLength: 12)
-            Button("Add alarm", systemImage: "plus", action: createAlarm)
+            Button("New", action: createAlarm)
                 .buttonStyle(.appCapsule)
+                .fixedSize()
+                .accessibilityLabel("New alarm")
         }
     }
 }

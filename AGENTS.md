@@ -49,7 +49,7 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - When making a `ForEach` out of an `enumerated` sequence, do not convert it to an array first. So, prefer `ForEach(x.enumerated(), id: \.element.id)` instead of `ForEach(Array(x.enumerated()), id: \.element.id)`.
 - When hiding scroll view indicators, use the `.scrollIndicators(.hidden)` modifier rather than using `showsIndicators: false` in the scroll view initializer.
 - Use the newest ScrollView APIs for item scrolling and positioning (e.g. `ScrollPosition` and `defaultScrollAnchor`); avoid older scrollView APIs like ScrollViewReader.
-- Place view logic into view models or similar, so it can be tested.
+- Extract complex presentation logic when it benefits from independent testing; do not introduce abstractions just to test simple views. Follow the project-specific architecture below.
 - Avoid `AnyView` unless it is absolutely required.
 - Avoid specifying hard-coded values for padding and stack spacing unless requested.
 - Avoid using UIKit colors in SwiftUI code.
@@ -67,8 +67,8 @@ If SwiftData is configured to use CloudKit:
 - Use a consistent project structure, with folder layout determined by app features.
 - Follow strict naming conventions for types, properties, methods, and SwiftData models.
 - Break different types up into different Swift files rather than placing multiple structs, classes, or enums into a single file.
-- Write unit tests for core application logic.
-- Only write UI tests if unit tests are not possible.
+- Write focused tests for meaningful edge cases, bug regressions, and complex application logic.
+- Add UI tests only for a concrete behavioral regression that cannot be covered by a unit or integration test.
 - Add code comments and documentation comments as needed.
 - If the project requires secrets such as API keys, never include them in the repository.
 - If the project uses Localizable.xcstrings, prefer to add user-facing strings using symbol keys (e.g. helloWorld) in the string catalog with `extractionState` set to "manual", accessing them via generated symbols such as  `Text(.helloWorld)`. Offer to translate new keys into all languages supported by the project.
@@ -119,8 +119,13 @@ These project-specific rules take precedence over general architecture suggestio
 
 ### Testing and dependencies
 
+- Every new test should protect against a specific failure: a meaningful edge case, a reproduced bug, or a nontrivial business rule or calculation. Name the behavior it protects. Do not add tests automatically for every change or to increase test counts.
+- Use previews and manual simulator checks for visual changes. Do not add tests that lock in padding, dimensions, colors, fonts, button labels, decorative asset proportions, or other appearance choices unless they reproduce a specific behavioral bug.
+- Avoid tests that mirror the implementation, check trivial getters/setters or field mappings, retest native framework behavior, or duplicate existing coverage. Remove obsolete or redundant tests when the underlying custom logic is removed.
+- Keep regression tests small and focused on the failing scenario and its observable result. Do not create custom controls, ViewModels, or helper abstractions solely to make simple UI testable.
 - Unit-test pure domain rules without initializing SwiftData; make calendars, time zones and clocks injectable where behavior depends on them.
-- Use in-memory `ModelContainer` instances for persistence integration tests. Cover relationship behavior, fetches, uniqueness constraints, save results and migration paths where relevant.
+- Use in-memory `ModelContainer` instances for persistence integration tests that protect data integrity, relationship behavior, failed writes, or migrations.
+- Run the tests relevant to the change and build when needed. Purely visual changes do not require new automated tests. Report what was checked and any verification limits.
 - Use initializer injection for ViewModels and services; use Environment for dependencies shared through a view tree.
 - Prefer concrete collaborators until a protocol has a real boundary or testing benefit; no dependency injection framework by default.
 
@@ -130,7 +135,7 @@ These project-specific rules take precedence over general architecture suggestio
 2. Start with a View and Model. Add a Service for reusable business logic. Add a ViewModel only if presentation complexity warrants it.
 3. Prefer feature-first folders, and create only folders and abstractions the feature needs.
 4. Make the smallest targeted change; don't refactor unrelated architecture.
-5. Add focused regression tests and run available build/test commands; report anything that could not be run.
+5. Add tests only when justified by the testing policy above. Run relevant existing checks and report anything that could not be run.
 
 **Optimize for simple data flow, correctness, testability, and low architectural ceremony.**
 

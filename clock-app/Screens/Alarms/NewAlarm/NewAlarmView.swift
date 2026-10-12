@@ -9,17 +9,24 @@ struct NewAlarmView: View {
     @State private var step = NewAlarmStep.time
     @State private var draft = NewAlarmDraft()
     @State private var saveError: String?
+    @State private var headerHeight: CGFloat = 44
+    @State private var footerHeight: CGFloat = 100
+    @State private var idealFormHeight: CGFloat = 240
 
     var body: some View {
         // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
         GeometryReader { geometry in
-            let previewHeight = step == .exitPoint
-                ? min(220, max(120, geometry.size.height * 0.24))
-                : min(340, max(160, geometry.size.height * 0.40))
+            let layout = NewAlarmLayoutMetrics(
+                availableHeight: geometry.size.height,
+                headerHeight: headerHeight,
+                footerHeight: footerHeight,
+                idealFormHeight: idealFormHeight
+            )
             ZStack {
                 AlarmTimePreview(
                     time: draft.displayTime,
-                    previewHeight: previewHeight,
+                    previewHeight: layout.previewHeight,
+                    previewTopInset: headerHeight,
                     contentSafeAreaInsets: UIEdgeInsets(
                         top: geometry.safeAreaInsets.top, left: 0,
                         bottom: geometry.safeAreaInsets.bottom, right: 0
@@ -30,16 +37,20 @@ struct NewAlarmView: View {
 
                 VStack(spacing: 0) {
                     NewAlarmHeader(step: step.rawValue, stepCount: NewAlarmStep.allCases.count, onBack: goBack, onCancel: { dismiss() })
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
                     Color.clear
-                        .frame(height: previewHeight)
+                        .frame(height: layout.previewHeight)
                         .allowsHitTesting(false)
                         .accessibilityElement()
                         .accessibilityLabel("Alarm preview, \(draft.displayTime), \(AlarmRepeatSummary.text(for: draft.repeatDays))")
                         .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
-                    NewAlarmStepContainer(step: step, draft: $draft)
+                    NewAlarmStepContainer(step: step, draft: $draft, idealHeight: $idealFormHeight)
+                        .frame(height: layout.formHeight)
                     NewAlarmContinueButton(isFinalStep: step == .exitPoint, onContinue: continueStep)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { footerHeight = $0 }
                 }
             }
+            .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: idealFormHeight)
         }
         .alert("Couldn't save alarm", isPresented: Binding(
             get: { saveError != nil }, set: { if !$0 { saveError = nil } }
@@ -56,7 +67,7 @@ struct NewAlarmView: View {
     }
 
     private func changeStep(to next: NewAlarmStep) {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { step = next }
+        withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) { step = next }
     }
 
     private func continueStep() {

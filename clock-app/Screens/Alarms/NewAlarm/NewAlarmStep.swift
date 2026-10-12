@@ -13,7 +13,7 @@ enum NewAlarmStep: Int, CaseIterable {
     var subtitle: String {
         switch self {
         case .time: "24-hour time"
-        case .repeatDays: "Choose the days. Leave empty for a one-time alarm."
+        case .repeatDays: "Leave empty to ring once."
         case .snooze: "Choose how long to snooze."
         case .exitPoint: "Choose how you'll stop your alarm."
         }

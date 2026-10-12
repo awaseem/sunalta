@@ -9,28 +9,21 @@ struct AlarmExitPointOptionButton: View {
     var body: some View {
         Button(action: onSelect) {
             HStack {
-                Image(systemName: option.symbol).font(.title3).frame(width: 28)
-                VStack(alignment: .leading) {
-                    Text(option.title).font(.body.weight(.semibold))
-                    Text(option.detail).font(.caption).foregroundStyle(theme.palette.secondaryForeground)
-                }
-                Spacer(minLength: 0)
                 Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(theme.palette.selection)
                     .accessibilityHidden(true)
+                Label(option.title, systemImage: option.symbol)
+                    .font(.body.bold())
             }
             .padding()
-            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-            .background(theme.palette.surface, in: .rect(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? theme.palette.selection : .clear, lineWidth: 2)
-            }
+            .frame(minHeight: 44)
+            .fixedSize(horizontal: true, vertical: false)
+            .foregroundStyle(isSelected ? theme.palette.onControl : theme.palette.foreground)
+            .background(isSelected ? theme.palette.control : theme.palette.surface, in: .capsule)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(option.title)
         .accessibilityHint(option.detail)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("exit-point-\(option.rawValue)")
     }

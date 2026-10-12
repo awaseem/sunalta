@@ -7,33 +7,42 @@ struct NewAlarmStepContent: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
-                if step == .time {
-                    Spacer()
-                    Text("24 H").font(.caption.weight(.medium)).foregroundStyle(theme.palette.secondaryForeground)
+            VStack(alignment: .leading) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
+                    if step == .time {
+                        Spacer()
+                        Text("24 H").font(.caption.weight(.medium)).foregroundStyle(theme.palette.secondaryForeground)
+                    }
+                }
+                if step != .time {
+                    Text(step.subtitle).font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
                 }
             }
-            if step != .time {
-                Text(step.subtitle).font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
-            }
+            .padding(.horizontal)
+            .frame(maxWidth: 560, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
             switch step {
             case .time:
-                DatePicker("Alarm time", selection: $draft.time, displayedComponents: .hourAndMinute)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .environment(\.locale, Locale(identifier: "en_GB"))
+                AlarmTimePicker(time: $draft.time)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
             case .repeatDays:
                 AlarmRepeatPicker(repeatDays: $draft.repeatDays)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity)
             case .snooze:
                 AlarmSnoozeOptions(snoozeEnabled: $draft.snoozeEnabled, snoozeMinutes: $draft.snoozeMinutes)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity)
             case .exitPoint:
                 AlarmExitPointOptions(draft: $draft.exitPoint)
             }
         }
-        .padding()
-        .frame(maxWidth: 560)
+        .padding(.vertical)
         .frame(maxWidth: .infinity)
     }
 }

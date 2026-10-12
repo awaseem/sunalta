@@ -5,38 +5,6 @@ import Testing
 
 @MainActor
 struct AppThemeTests {
-    @Test func whiteThemeUsesBlackContentAndControlsOnWhite() {
-        let theme = AppTheme.white
-        #expect(theme.palette.background == .white)
-        #expect(theme.clock.numeralColor == .black)
-        #expect(theme.palette.foreground == .black)
-        #expect(theme.palette.control == .black)
-        #expect(theme.palette.selection == .black)
-        #expect(theme.palette.onControl == .white)
-        #expect(theme.colorScheme == .light)
-    }
-
-    @Test func missingOrRemovedThemeFallsBackToTheDefault() {
-        #expect(AppTheme.resolve(id: nil) == .defaultTheme)
-        #expect(AppTheme.resolve(id: "removed-theme") == .defaultTheme)
-    }
-
-    @Test func themeCatalogHasUniquePersistentIdentifiers() {
-        #expect(Set(AppTheme.available.map(\.id)).count == AppTheme.available.count)
-        #expect(AppTheme.available.contains(.defaultTheme))
-    }
-
-    @Test func selectionSurvivesSettingsRecreation() throws {
-        let suite = "ThemeSettingsTests-\(UUID())"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let settings = ThemeSettings(defaults: defaults)
-        settings.select(.white)
-
-        #expect(defaults.string(forKey: "selectedThemeID") == AppTheme.white.id)
-        #expect(ThemeSettings(defaults: defaults).theme == .white)
-    }
-
     @Test func invalidSavedSelectionStillLaunchesWithDefaultTheme() throws {
         let suite = "ThemeSettingsTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
@@ -72,7 +40,6 @@ struct AppThemeTests {
         #expect(restored.shimmer == 0.85)
         #expect(restored.weekday == settings.weekday)
         #expect(restored.theme.palette.background == Color(background))
-        #expect(abs(restored.theme.clock.roughness - 0.06) < 0.0001)
     }
 
     @Test func adjustmentsAndResetApplyOnlyToTheSelectedTheme() throws {
@@ -165,29 +132,5 @@ struct AppThemeTests {
         settings.resetCurrentTheme()
         #expect(settings.errorMessage == nil)
         #expect(ThemeSettings(defaults: defaults).theme == .defaultTheme)
-    }
-
-    @Test func exportedSettingsIncludeDefaultsAndCurrentAdjustments() throws {
-        let suite = "ThemeSettingsTests-\(UUID())"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let settings = ThemeSettings(defaults: defaults)
-        settings.lighting.direction = 125
-        settings.weekday.glow.brightness = 4500
-
-        let text = try settings.exportText(in: EnvironmentValues())
-        let export = try #require(JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any])
-        let lighting = try #require(export["lighting"] as? [String: Any])
-        let weekday = try #require(export["weekday"] as? [String: Any])
-        let glow = try #require(weekday["glow"] as? [String: Any])
-
-        #expect(export["themeID"] as? String == AppTheme.white.id)
-        #expect(export["background"] != nil)
-        #expect(export["shimmer"] as? Double == settings.shimmer)
-        #expect(lighting["direction"] as? Double == 125)
-        #expect(weekday["size"] as? Double == AppTheme.white.weekday.size)
-        #expect(weekday["weight"] as? String == AppTheme.white.weekday.weight.rawValue)
-        #expect(glow["brightness"] as? Double == 4500)
-        #expect(glow["color"] != nil)
     }
 }

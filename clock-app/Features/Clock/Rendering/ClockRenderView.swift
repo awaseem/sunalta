@@ -16,6 +16,9 @@ final class ClockRenderView: ARView {
     var previewHeight: CGFloat = 240 {
         didSet { if oldValue != previewHeight { setNeedsLayout() } }
     }
+    var previewTopInset: CGFloat = 44 {
+        didSet { if oldValue != previewTopInset { setNeedsLayout() } }
+    }
     private let isAlarmPreview: Bool
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
         didSet {
@@ -230,7 +233,7 @@ final class ClockRenderView: ARView {
         let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
         let usableHeight = bounds.height - topInset - bottomInset
         let centerFromTop = isAlarmPreview
-            ? topInset + 44 + previewHeight * 0.50
+            ? topInset + previewTopInset + previewHeight * 0.50
             : topInset + usableHeight * 0.40
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]

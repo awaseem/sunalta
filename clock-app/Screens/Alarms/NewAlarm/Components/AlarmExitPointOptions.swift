@@ -1,24 +1,43 @@
 import SwiftUI
 
 struct AlarmExitPointOptions: View {
+    @Environment(\.appTheme) private var theme
     @Binding var draft: AlarmExitPointDraft
     @State private var nfcScanner = NFCScannerUtil()
     @State private var scanError: String?
     @State private var showsQRSetup = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(spacing: 12) {
-                ForEach(AlarmExitPoint.allCases) { option in
-                    AlarmExitPointOptionButton(option: option, isSelected: draft.selection == option) {
-                        select(option)
+        VStack(alignment: .leading, spacing: 8) {
+            ScrollView(.horizontal) {
+                HStack {
+                    ForEach(AlarmExitPoint.allCases) { option in
+                        AlarmExitPointOptionButton(option: option, isSelected: draft.selection == option) {
+                            select(option)
+                        }
                     }
                 }
+                .padding(.vertical, 2)
             }
+            .contentMargins(.horizontal, 16, for: .scrollContent)
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
 
             if draft.selection != .normal {
                 AlarmScanSetup(selection: draft.selection, isConfigured: draft.scannedCode != nil,
                                onScan: startScan, onClear: { draft.scannedCode = nil })
+                    .padding(.top, 8)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                Text(draft.selection.detail)
+                    .font(.subheadline)
+                    .foregroundStyle(theme.palette.secondaryForeground)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
         }
         .sheet(isPresented: $showsQRSetup) {
@@ -63,17 +82,20 @@ struct AlarmExitPointOptions: View {
 
 #Preview("Normal default") {
     @Previewable @State var draft = AlarmExitPointDraft()
-    ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
+    ScrollView { AlarmExitPointOptions(draft: $draft) }
+        .appTheme(.white)
 }
 
 #Preview("Any NFC tag") {
     @Previewable @State var draft = AlarmExitPointDraft(selection: .nfc)
-    ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
+    ScrollView { AlarmExitPointOptions(draft: $draft) }
+        .appTheme(.white)
 }
 
 #Preview("Specific QR code") {
     @Previewable @State var draft = AlarmExitPointDraft(
         selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "my-alarm-qr")
     )
-    ScrollView { AlarmExitPointOptions(draft: $draft).padding(24) }
+    ScrollView { AlarmExitPointOptions(draft: $draft) }
+        .appTheme(.white)
 }

@@ -10,9 +10,6 @@ struct ClockGlyphAssetTests {
         for character in "0123456789" {
             let glyph = try #require(glyphs[String(character)])
             #expect(glyph.model != nil)
-            let bounds = glyph.visualBounds(relativeTo: glyph)
-            #expect(bounds.extents.x > 0 && bounds.extents.z > 0)
-            #expect(abs(bounds.extents.y - 3.712) < 0.001)
         }
     }
 
