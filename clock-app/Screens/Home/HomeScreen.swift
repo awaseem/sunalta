@@ -7,10 +7,9 @@ struct HomeScreen: View {
     @Environment(\.appTheme) private var theme
     @State private var isScrolling = false
     @State private var isClockVisible = true
-    @State private var hasPulledPastReturnThreshold = false
     @State private var scrollPosition = ScrollPosition(edge: .top)
-    @State private var isPaging = true
-    @State private var isClockPageActive = true
+    @State private var usesAlarmScrolling = false
+    @State private var canEnterAlarmList = false
     #if DEBUG
     // Set to true while tuning themes to show the appearance controls.
     private static let enablesAppearanceControls = false
@@ -102,23 +101,17 @@ struct HomeScreen: View {
             .scrollIndicators(.hidden)
             .defaultScrollAnchor(.top)
             .scrollPosition($scrollPosition)
-            .scrollTargetBehavior(isClockPageActive
-                ? AnyScrollTargetBehavior(.paging)
-                : AnyScrollTargetBehavior(HomeScrollTargetBehavior(
-                    clockHeight: pageHeight,
-                    hasPulledPastReturnThreshold: $hasPulledPastReturnThreshold,
-                    isPaging: isPaging
-                )))
+            .scrollTargetBehavior(usesAlarmScrolling
+                ? AnyScrollTargetBehavior(AlarmListScrollTargetBehavior(topOffset: pageHeight))
+                : AnyScrollTargetBehavior(.paging))
             .onScrollPhaseChange { _, phase, context in
                 isScrolling = phase != .idle
                 let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
+                // At the alarm header, use native paging back to the clock. Only a drag
+                // farther into the list switches to free scrolling, once per gesture.
+                canEnterAlarmList = phase == .interacting && abs(offset - pageHeight) <= 1
                 if phase == .idle {
-                    // Change modes only after settling, keeping the native page snap intact.
-                    isClockPageActive = offset < pageHeight / 2
-                }
-                if phase == .interacting {
-                    isPaging = offset < pageHeight - 1
-                        || (offset <= pageHeight + 1 && (context.velocity?.dy ?? 0) < 0)
+                    usesAlarmScrolling = offset > pageHeight + 1
                 }
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
@@ -127,10 +120,12 @@ struct HomeScreen: View {
                 isClockVisible = visible
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
-                // Pull a quarter of the clock into view before committing a return.
-                scroll.contentOffset.y + scroll.contentInsets.top < pageHeight * 0.75
-            } action: { _, hasPassedThreshold in
-                hasPulledPastReturnThreshold = hasPassedThreshold
+                scroll.contentOffset.y + scroll.contentInsets.top > pageHeight + 1
+            } action: { _, isInsideAlarmList in
+                if canEnterAlarmList && isInsideAlarmList {
+                    usesAlarmScrolling = true
+                    canEnterAlarmList = false
+                }
             }
             .frame(height: pageHeight)
             .ignoresSafeArea()
