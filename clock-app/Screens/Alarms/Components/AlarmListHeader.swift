@@ -15,12 +15,7 @@ struct AlarmListHeader: View {
             }
             Spacer(minLength: 12)
             Button("Add alarm", systemImage: "plus", action: createAlarm)
-                .labelStyle(.iconOnly)
-                .font(.title3.weight(.semibold))
-                .frame(minWidth: 44, minHeight: 44)
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .tint(theme.palette.control)
+                .buttonStyle(.appCapsule)
         }
     }
 }

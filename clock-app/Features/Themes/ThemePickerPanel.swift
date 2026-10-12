@@ -17,7 +17,7 @@ struct ThemePickerPanel: View {
                 Text("Appearance").font(.headline)
                 Spacer()
                 Button("Reset", action: settings.resetCurrentTheme)
-                    .font(.subheadline)
+                    .buttonStyle(.appCapsule)
                     .accessibilityHint("Restores the selected theme's default appearance")
                 ThemeCopySettingsButton()
                 Button(isAtTop ? "Move appearance controls to bottom" : "Move appearance controls to top",

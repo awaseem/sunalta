@@ -32,14 +32,8 @@ struct AlarmEmptyState: View {
             .onScrollVisibilityChange(threshold: 0.05) { isVisible = $0 }
 
             Button("Create alarm", action: createAlarm)
-                .font(.headline)
-                .frame(minHeight: 44)
-                .padding(.horizontal, 24)
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.large)
-                .tint(theme.palette.control)
-                .foregroundStyle(theme.palette.onControl)
+                .buttonStyle(.appCapsule(fillsWidth: true))
+                .frame(maxWidth: 560)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical)

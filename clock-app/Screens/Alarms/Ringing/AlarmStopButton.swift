@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct AlarmStopButton: View {
-    @Environment(\.appTheme) private var theme
     let exitPoint: AlarmExitPoint
     let isWorking: Bool
     let onStop: () -> Void
-    @ScaledMetric(relativeTo: .largeTitle) private var symbolSize = 64
 
     private var title: String {
         switch exitPoint {
@@ -16,22 +14,9 @@ struct AlarmStopButton: View {
     }
 
     var body: some View {
-        Button(action: onStop) {
-            VStack {
-                Image(systemName: exitPoint == .normal ? "stop.fill" : exitPoint.symbol)
-                    .font(.system(size: symbolSize, weight: .medium))
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(.title3.weight(.semibold))
-                    .multilineTextAlignment(.center)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, minHeight: 240)
-            .background(theme.palette.control, in: .rect(cornerRadius: 48))
-            .foregroundStyle(theme.palette.onControl)
-        }
-        .buttonStyle(.plain)
-        .disabled(isWorking)
-        .accessibilityHint(exitPoint == .normal ? "Ends this alarm" : "Opens the scanner for this alarm")
+        Button(title, systemImage: exitPoint == .normal ? "stop.fill" : exitPoint.symbol, action: onStop)
+            .buttonStyle(.appCapsule(fillsWidth: true))
+            .disabled(isWorking)
+            .accessibilityHint(exitPoint == .normal ? "Ends this alarm" : "Opens the scanner for this alarm")
     }
 }

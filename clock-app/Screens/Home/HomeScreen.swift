@@ -68,7 +68,7 @@ struct HomeScreen: View {
                         }
                         .font(.subheadline)
                         .labelStyle(.iconOnly)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.glassProminent)
                         .buttonBorderShape(.circle)
                         .foregroundStyle(theme.palette.onControl)
                         .controlSize(.large)

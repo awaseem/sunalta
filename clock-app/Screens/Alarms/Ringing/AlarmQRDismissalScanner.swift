@@ -29,11 +29,13 @@ struct AlarmQRDismissalScanner: View {
                     Text(message).font(.subheadline).foregroundStyle(theme.palette.error)
                     if cameraDenied {
                         AppSettingsButton(title: "Open Camera Settings")
+                            .buttonStyle(.appCapsule(fillsWidth: true))
                     } else {
                         Button("Scan again") {
                             scanError = nil
                             scannerID = UUID()
                         }
+                        .buttonStyle(.appCapsule(fillsWidth: true))
                     }
                 }
             }

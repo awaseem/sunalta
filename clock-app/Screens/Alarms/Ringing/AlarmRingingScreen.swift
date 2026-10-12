@@ -14,13 +14,15 @@ struct AlarmRingingScreen: View {
             Spacer(minLength: 16)
             AlarmRingingHeader(alarm: alarm)
             Spacer(minLength: 16)
-            AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
-
-            if alarm.snoozeEnabled {
-                Button("Snooze for \(alarm.snoozeDurationMinutes) min", action: snooze)
-                .font(.headline)
-                .buttonStyle(.bordered)
-                .disabled(isWorking)
+            GlassEffectContainer {
+                VStack {
+                    AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
+                    if alarm.snoozeEnabled {
+                        Button("Snooze for \(alarm.snoozeDurationMinutes) min", action: snooze)
+                            .buttonStyle(.appCapsule(fillsWidth: true))
+                            .disabled(isWorking)
+                    }
+                }
             }
 
             VStack(spacing: 12) {

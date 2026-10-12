@@ -19,17 +19,16 @@ struct AlarmScanSetup: View {
                  ? "Only this \(isNFC ? "tag" : "code") will be accepted."
                  : "Setup is optional. Leave it empty to accept any \(scanType).")
                 .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
-            Button(action: onScan) {
-                Label(isConfigured ? "Replace \(scanType)" : "Scan a specific \(scanType)", systemImage: selection.symbol)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .buttonStyle(.bordered)
-            .tint(theme.palette.control)
-            if isConfigured {
-                Button("Use any \(scanType)", action: onClear)
-                    .buttonStyle(.plain)
-                    .font(.subheadline)
-                    .frame(minHeight: 44)
+            GlassEffectContainer {
+                VStack {
+                    Button(isConfigured ? "Replace \(scanType)" : "Scan a specific \(scanType)",
+                           systemImage: selection.symbol, action: onScan)
+                        .buttonStyle(.appCapsule(fillsWidth: true))
+                    if isConfigured {
+                        Button("Use any \(scanType)", action: onClear)
+                            .buttonStyle(.appCapsule(fillsWidth: true))
+                    }
+                }
             }
         }
     }
