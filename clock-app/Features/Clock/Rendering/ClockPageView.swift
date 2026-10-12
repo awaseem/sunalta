@@ -16,6 +16,7 @@ final class ClockPageView: UIView {
     private var isPageVisible = true
     private var isOrbiting = false
     private var isEditingAppearance = false
+    private var allowsFlybys = true
     private var minute: Int?
     private var displayedDate = Date.now
     private var appearance: AppTheme?
@@ -41,7 +42,7 @@ final class ClockPageView: UIView {
         renderer.onContentChanged = { [weak self] in
             guard let self else { return }
             invalidateSnapshot()
-            scheduleSnapshot()
+            updatePresentation()
         }
         renderer.onWeekdayAnchorChange = { [weak self] anchor in
             self?.onWeekdayAnchorChange?(anchor)
@@ -49,6 +50,7 @@ final class ClockPageView: UIView {
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
+            self.renderer?.allowsAmbientAnimation = false
             invalidateSnapshot()
             // A front-facing cached image must never replace an ongoing orbit.
             still.image = nil
@@ -57,7 +59,7 @@ final class ClockPageView: UIView {
         renderer.onOrbitSettled = { [weak self] in
             guard let self else { return }
             isOrbiting = false
-            scheduleSnapshot()
+            updatePresentation()
         }
         renderer.contentSafeAreaInsets = insets
         renderer.weekdayFrame = weekdayFrame
@@ -70,11 +72,13 @@ final class ClockPageView: UIView {
     required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
 
     func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
-                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect) {
+                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
+                allowsFlybys: Bool) {
         self.isScrolling = isScrolling
         isPageVisible = isVisible
         displayedDate = date
         self.isEditingAppearance = isEditingAppearance
+        self.allowsFlybys = allowsFlybys
         if isEditingAppearance {
             invalidateSnapshot()
             still.isHidden = true
@@ -154,6 +158,8 @@ final class ClockPageView: UIView {
             invalidateSnapshot()
         }
         if still.image == nil { still.isHidden = true }
+        renderer.allowsAmbientAnimation = allowsFlybys && !isScrolling && !isOrbiting
+            && !isEditingAppearance && snapshotTask == nil
         scheduleSnapshot()
     }
 
@@ -163,6 +169,8 @@ final class ClockPageView: UIView {
               !isScrolling, isPageVisible, window != nil,
               renderer.superview != nil, bounds.width > 0, bounds.height > 0 else { return }
         let requestedRevision = revision
+        // Cache only the clock: a visitor must never freeze into the scrolling image.
+        renderer.allowsAmbientAnimation = false
         snapshotTask = Task { @MainActor [weak self, weak renderer] in
             // Coalesce layout/content updates and let RealityKit present the scene.
             try? await Task.sleep(for: .milliseconds(150))
@@ -178,6 +186,8 @@ final class ClockPageView: UIView {
                 guard let image else {
                     // A failed capture must leave the live clock usable.
                     still.isHidden = true
+                    renderer.allowsAmbientAnimation = allowsFlybys && !isScrolling && !isOrbiting
+                        && !isEditingAppearance && isPageVisible && window != nil
                     return
                 }
                 still.image = image

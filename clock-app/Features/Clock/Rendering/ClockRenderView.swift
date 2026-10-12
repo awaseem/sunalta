@@ -1,3 +1,4 @@
+import OSLog
 import RealityKit
 import SwiftUI
 import UIKit
@@ -43,6 +44,10 @@ final class ClockRenderView: ARView {
     private let keyLight = DirectionalLight()
     private let weekdayLight = SpotLight()
     private var lighting: ClockLightingSettings { theme.clock.lighting }
+    private var flybys: ClockFlybyController?
+    var allowsAmbientAnimation = false {
+        didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
+    }
 
     init(theme: AppTheme, scene: ClockScene = .numbers, isAlarmPreview: Bool = false) {
         self.theme = theme
@@ -87,7 +92,8 @@ final class ClockRenderView: ARView {
             materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
-        backdrop.position.z = scene.backdropDepth
+        backdrop.position.z = scene == .numbers && !isAlarmPreview
+            ? ClockFlybyPath.backdropDepth : scene.backdropDepth
         anchor.addChild(backdrop)
 
         applyLighting()
@@ -134,9 +140,16 @@ final class ClockRenderView: ARView {
 
     func applyTheme(_ theme: AppTheme) {
         guard self.theme != theme else { return }
+        if self.theme.clockFlyby != theme.clockFlyby {
+            flybys?.stop()
+            flybys?.root.removeFromParent()
+            flybys = nil
+        }
         self.theme = theme
+        flybys?.apply(appearance: theme.clock)
         applyLighting()
         applyMaterials()
+        updateFlybys()
     }
 
     private func applyLighting() {
@@ -201,6 +214,7 @@ final class ClockRenderView: ARView {
                 guard let self, materialRevision == revision else { return }
                 materialTask = nil
                 onContentChanged?()
+                updateFlybys()
             } catch is CancellationError {
                 // A newer theme or a released renderer supersedes this work.
             } catch {
@@ -241,6 +255,32 @@ final class ClockRenderView: ARView {
         applyViewingAngle()
         updateWeekdayAnchor()
         applyWeekdayLighting()
+        updateFlybys()
+    }
+
+    private func updateFlybys() {
+        guard allowsAmbientAnimation, window != nil, isReady,
+              sceneKind == .numbers, !isAlarmPreview, theme.clockFlyby != .none,
+              bounds.width > 0, bounds.height > 0, cameraRestOffset.z > 1 else {
+            flybys?.stop()
+            return
+        }
+        if flybys == nil {
+            do {
+                let visitor = try ClockFlybyController(kind: theme.clockFlyby, appearance: theme.clock)
+                camera.addChild(visitor.root)
+                flybys = visitor
+            } catch {
+                // A decorative asset failure must leave the clock usable.
+                Logger(subsystem: "dev.ambitionsoftware.clock-app", category: "ClockFlyby")
+                    .error("Could not create clock visitor: \(error.localizedDescription)")
+                return
+            }
+        }
+        let height = 2 * cameraRestOffset.z * tan(Float(6 * Double.pi / 180))
+        flybys?.setViewport([height * Float(bounds.width / bounds.height), height],
+                           cameraDistance: cameraRestOffset.z)
+        flybys?.start()
     }
 
     private func updateWeekdayAnchor() {
@@ -288,6 +328,7 @@ final class ClockRenderView: ARView {
     override func didMoveToWindow() {
         super.didMoveToWindow()
         if window == nil { orbitInteraction?.reset() }
+        updateFlybys()
     }
 
     func show(date: Date) {
@@ -314,6 +355,8 @@ final class ClockRenderView: ARView {
     }
 
     func stop() {
+        flybys?.stop()
+        flybys = nil
         loadTask?.cancel()
         loadTask = nil
         materialTask?.cancel()

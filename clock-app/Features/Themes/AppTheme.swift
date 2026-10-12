@@ -11,4 +11,5 @@ struct AppTheme: Identifiable, Equatable {
     let panelShadow: ThemeShadow
     var weekday = ClockWeekdayAppearance()
     var alarmClockFinish = AlarmClockFinish()
+    var clockFlyby: ClockFlybyKind = .none
 }

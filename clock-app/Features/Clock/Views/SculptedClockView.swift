@@ -3,6 +3,7 @@ import UIKit
 
 struct SculptedClockView: UIViewRepresentable {
     @Environment(\.appTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let date: Date
     var scene: ClockScene = .numbers
     var isScrolling = false
@@ -24,7 +25,8 @@ struct SculptedClockView: UIViewRepresentable {
         }
         view.update(date: date, theme: theme, insets: contentSafeAreaInsets,
                     isScrolling: isScrolling, isVisible: isVisible,
-                    isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame)
+                    isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame,
+                    allowsFlybys: !reduceMotion)
     }
 
     static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {

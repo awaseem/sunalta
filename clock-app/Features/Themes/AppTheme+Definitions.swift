@@ -42,7 +42,8 @@ extension AppTheme {
                 direction: 20.36363124847412,
                 reach: 5.518181622028351
             )
-        )
+        ),
+        clockFlyby: .bird
     )
 
     static let available: [AppTheme] = [.white]
