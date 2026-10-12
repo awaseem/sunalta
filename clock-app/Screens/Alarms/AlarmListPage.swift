@@ -31,9 +31,15 @@ struct AlarmListPage: View {
                         AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id) { enabled in
                             Task { await setEnabled(enabled, for: alarm) }
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                Task { await delete(alarm) }
+                            }
+                        }
                         .disabled(updatingAlarmID != nil)
                     }
                 }
+                .swipeActionsContainer()
             }
         }
         .padding(.horizontal, 24)
@@ -60,6 +66,17 @@ struct AlarmListPage: View {
         defer { updatingAlarmID = nil }
         do {
             try await runtime.setEnabled(enabled, for: alarm)
+        } catch {
+            schedulingError = error.localizedDescription
+        }
+    }
+
+    private func delete(_ alarm: AlarmRecord) async {
+        guard updatingAlarmID == nil else { return }
+        updatingAlarmID = alarm.id
+        defer { updatingAlarmID = nil }
+        do {
+            try await runtime.delete(alarm)
         } catch {
             schedulingError = error.localizedDescription
         }

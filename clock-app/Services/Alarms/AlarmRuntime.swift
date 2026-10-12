@@ -14,10 +14,12 @@ final class AlarmRuntime {
     var errorMessage: String?
 
     private let context: ModelContext
+    private let cancelAlarm: @MainActor (UUID) throws -> Void
     private var operations: [UUID: (id: UUID, task: Task<Void, Error>)] = [:]
 
-    init(context: ModelContext) {
+    init(context: ModelContext, cancelAlarm: @escaping @MainActor (UUID) throws -> Void = AlarmScheduler.cancel(id:)) {
         self.context = context
+        self.cancelAlarm = cancelAlarm
     }
 
     func observe() async {
@@ -89,7 +91,7 @@ final class AlarmRuntime {
                     try self.saveRestoredState(after: error)
                 }
             } else {
-                try AlarmScheduler.cancel(id: alarm.id)
+                try self.cancelAlarm(alarm.id)
                 try self.cancelRetries(alarm)
                 alarm.scheduleToken = nil
                 alarm.lastCompletedAt = nil
@@ -98,6 +100,31 @@ final class AlarmRuntime {
             }
             alarm.isEnabled = enabled
             try self.context.save()
+        }
+    }
+
+    func delete(_ alarm: AlarmRecord) async throws {
+        let id = alarm.id
+        try await perform(for: id) {
+            guard let alarm = try self.alarm(id) else { return }
+            guard alarm.pendingSince == nil else { throw SessionError.scanRequired }
+
+            // Cancel every owned schedule before removing the record that tracks them.
+            // On cancellation failure, keep the record and retry IDs for another attempt.
+            for systemID in [id] + alarm.retryAlarmIDs {
+                try self.cancelAlarm(systemID)
+            }
+            self.context.delete(alarm)
+            do {
+                try self.context.save()
+            } catch {
+                self.context.rollback()
+                throw error
+            }
+            if self.activeAlarm?.id == id {
+                self.activeAlarm = nil
+                self.scanRequestID = nil
+            }
         }
     }
 
@@ -213,7 +240,7 @@ final class AlarmRuntime {
             try saveRestoredState(after: error)
         }
         for oldID in oldIDs {
-            try AlarmScheduler.cancel(id: oldID)
+            try cancelAlarm(oldID)
             alarm.retryAlarmIDs.removeAll { $0 == oldID }
         }
         try context.save()
@@ -222,7 +249,7 @@ final class AlarmRuntime {
     private func complete(_ alarm: AlarmRecord) throws {
         try cancelRetries(alarm)
         if alarm.repeatDays.isEmpty {
-            try AlarmScheduler.cancel(id: alarm.id)
+            try cancelAlarm(alarm.id)
             alarm.isEnabled = false
             alarm.scheduleToken = nil
         } else {
@@ -238,7 +265,7 @@ final class AlarmRuntime {
 
     private func cancelRetries(_ alarm: AlarmRecord) throws {
         for id in alarm.retryAlarmIDs {
-            try AlarmScheduler.cancel(id: id)
+            try cancelAlarm(id)
             alarm.retryAlarmIDs.removeAll { $0 == id }
         }
         alarm.nextRetryAt = nil
