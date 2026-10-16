@@ -36,49 +36,20 @@ enum ClockBirdMesh {
             faces.append([25, 16 + index, 16 + next])
         }
         // Two small triangular prisms keep the silhouette readable without facial detail.
-        appendPrism([SIMD3(3.6, 2.4, -0.6), [3.6, 1.1, -0.6], [6, 1.7, -0.6]],
+        ClockFlybyMesh.appendPrism([SIMD3(3.6, 2.4, -0.6), [3.6, 1.1, -0.6], [6, 1.7, -0.6]],
                     extrusion: [0, 0, 1.2], points: &points, faces: &faces)
-        appendPrism([SIMD3(-3, -1, -0.9), [-7, -0.5, -0.9], [-7, -2, -0.9]],
+        ClockFlybyMesh.appendPrism([SIMD3(-3, -1, -0.9), [-7, -0.5, -0.9], [-7, -2, -0.9]],
                     extrusion: [0, 0, 1.8], points: &points, faces: &faces)
-        let body = try mesh(name: "Clock bird body", points: points, faces: faces)
+        let body = try ClockFlybyMesh.make(name: "Clock bird body", points: points, faces: faces)
 
         points = []
         faces = []
-        appendPrism([SIMD3(1, -0.3, 0), [-2, -0.3, 0], [-4, -0.3, 7]],
+        ClockFlybyMesh.appendPrism([SIMD3(1, -0.3, 0), [-2, -0.3, 0], [-4, -0.3, 7]],
                     extrusion: [0, 0.6, 0], points: &points, faces: &faces)
-        let wing = try mesh(name: "Clock bird wing", points: points, faces: faces)
+        let wing = try ClockFlybyMesh.make(name: "Clock bird wing", points: points, faces: faces)
         let result = (body: body, wing: wing)
         cached = result
         return result
     }
 
-    private static func appendPrism(_ triangle: [SIMD3<Float>], extrusion: SIMD3<Float>,
-                                    points: inout [SIMD3<Float>], faces: inout [[Int]]) {
-        let start = points.count
-        points += triangle + triangle.map { $0 + extrusion }
-        // The triangle winds toward the extrusion; reverse the near cap.
-        let prismFaces = [[2, 1, 0], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [2, 0, 3, 5]]
-        faces += prismFaces.map { face in face.map { $0 + start } }
-    }
-
-    private static func mesh(name: String, points: [SIMD3<Float>], faces: [[Int]]) throws -> MeshResource {
-        var positions: [SIMD3<Float>] = []
-        var normals: [SIMD3<Float>] = []
-        var indices: [UInt32] = []
-        for face in faces {
-            let normal = simd_normalize(simd_cross(points[face[1]] - points[face[0]],
-                                                   points[face[2]] - points[face[0]]))
-            let first = UInt32(positions.count)
-            positions += face.map { points[$0] * 0.018 }
-            normals += Array(repeating: normal, count: face.count)
-            for index in 1..<(face.count - 1) {
-                indices += [first, first + UInt32(index), first + UInt32(index + 1)]
-            }
-        }
-        var descriptor = MeshDescriptor(name: name)
-        descriptor.positions = MeshBuffers.Positions(positions)
-        descriptor.normals = MeshBuffers.Normals(normals)
-        descriptor.primitives = .triangles(indices)
-        return try MeshResource.generate(from: [descriptor])
-    }
 }

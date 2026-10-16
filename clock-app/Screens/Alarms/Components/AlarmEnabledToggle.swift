@@ -15,7 +15,7 @@ struct AlarmEnabledToggle: View {
                 get: { alarm.isEnabled }, set: onEnabledChange
             ))
             .labelsHidden()
-            .tint(theme.palette.control)
+            .tint(theme.palette.selection)
             .accessibilityLabel("Alarm at \(AlarmTimeText.text(hour: alarm.hour, minute: alarm.minute))")
             .accessibilityValue(alarm.isEnabled ? "On" : "Off")
         }

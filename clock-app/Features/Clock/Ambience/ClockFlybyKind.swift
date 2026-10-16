@@ -2,4 +2,5 @@
 enum ClockFlybyKind: Equatable {
     case none
     case bird
+    case bat
 }

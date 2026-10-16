@@ -18,6 +18,6 @@ struct ThemeAdjustments: Codable, Equatable {
         return AppTheme(id: theme.id, name: theme.name, colorScheme: theme.colorScheme,
                         palette: palette, clock: clock, panelShadow: theme.panelShadow,
                         weekday: weekday?.applying(to: theme.weekday) ?? theme.weekday,
-                        alarmClockFinish: theme.alarmClockFinish)
+                        alarmClockFinish: theme.alarmClockFinish, clockFlyby: theme.clockFlyby)
     }
 }

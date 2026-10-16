@@ -1,14 +1,19 @@
 import RealityKit
 
-/// One reusable bird in the flock; every instance shares the same cached meshes.
+/// One reusable flying animal; every instance of a kind shares the same cached meshes.
 @MainActor
-final class ClockFlybyBird {
+final class ClockFlybyAnimal {
     let root = Entity()
     private let body: ModelEntity
     private let nearWing: ModelEntity
     private let farWing: ModelEntity
+    private let flapFrequency: Float
+    private let flapAmplitude: Float
 
-    init(meshes: (body: MeshResource, wing: MeshResource), material: PhysicallyBasedMaterial) {
+    init(kind: ClockFlybyKind, meshes: (body: MeshResource, wing: MeshResource),
+         material: PhysicallyBasedMaterial) {
+        flapFrequency = kind == .bat ? 4.5 : 3
+        flapAmplitude = kind == .bat ? 0.85 : 0.7
         body = ModelEntity(mesh: meshes.body, materials: [material])
         nearWing = ModelEntity(mesh: meshes.wing, materials: [material])
         farWing = ModelEntity(mesh: meshes.wing, materials: [material])
@@ -34,7 +39,7 @@ final class ClockFlybyBird {
         root.position = path.position(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
         root.orientation = path.orientation(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
         root.components[OpacityComponent.self]?.opacity = path.opacity(at: elapsed)
-        let flap = sin(Float(elapsed) * .pi * 2 * 3) * 0.7
+        let flap = sin(Float(elapsed) * .pi * 2 * flapFrequency) * flapAmplitude
         nearWing.orientation = simd_quatf(angle: flap, axis: [1, 0, 0])
         farWing.orientation = simd_quatf(angle: .pi - flap, axis: [1, 0, 0])
         root.isEnabled = true

@@ -4,6 +4,7 @@ import SwiftUI
 
 struct AlarmListPage: View {
     @Environment(AlarmRuntime.self) private var runtime
+    @Environment(\.appTheme) private var theme
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var showingNewAlarm = false
@@ -14,11 +15,15 @@ struct AlarmListPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            Button("Clock", systemImage: "chevron.up", action: returnToClock)
-                .font(.subheadline.weight(.medium))
-                .buttonStyle(.plain)
-                .frame(minHeight: 44)
-                .accessibilityLabel("Return to the clock")
+            HStack {
+                Button("Clock", systemImage: "chevron.up", action: returnToClock)
+                    .font(.subheadline.weight(.medium))
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                    .accessibilityLabel("Return to the clock")
+                Spacer()
+                ThemeSelectionMenu()
+            }
 
             if alarms.isEmpty {
                 AlarmEmptyState(isScrolling: isScrolling, isPresentingAlarm: showingNewAlarm) {
@@ -35,6 +40,8 @@ struct AlarmListPage: View {
                             Button("Delete", systemImage: "trash", role: .destructive) {
                                 Task { await delete(alarm) }
                             }
+                            .tint(theme.palette.selection)
+                            .foregroundStyle(theme.palette.onControl)
                         }
                         .disabled(updatingAlarmID != nil)
                     }

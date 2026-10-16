@@ -18,7 +18,7 @@ struct AlarmExitPointOptionButton: View {
             .frame(minHeight: 44)
             .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(isSelected ? theme.palette.onControl : theme.palette.foreground)
-            .background(isSelected ? theme.palette.control : theme.palette.surface, in: .capsule)
+            .background(isSelected ? theme.palette.selection : theme.palette.surface, in: .capsule)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(option.title)

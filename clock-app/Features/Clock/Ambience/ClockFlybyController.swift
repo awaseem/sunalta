@@ -4,10 +4,10 @@ import RealityKit
 
 @MainActor
 final class ClockFlybyController: NSObject {
-    private static let birdsPerFlock = 4
+    private static let animalsPerFlock = 4
     let root = Entity()
     var onFrame: (() -> Void)?
-    private let birds: [ClockFlybyBird]
+    private let animals: [ClockFlybyAnimal]
     private var nextFlightTask: Task<Void, Never>?
     private var displayLink: CADisplayLink?
     private var flights: [(path: ClockFlybyPath, delay: Double)] = []
@@ -18,24 +18,24 @@ final class ClockFlybyController: NSObject {
 
     init(kind: ClockFlybyKind, appearance: ClockAppearance) throws {
         switch kind {
-        case .bird:
-            let meshes = try ClockBirdMesh.load()
+        case .bird, .bat:
+            let meshes = try kind == .bat ? ClockBatMesh.load() : ClockBirdMesh.load()
             let material = appearance.numeralMaterial()
-            birds = (0..<(Self.birdsPerFlock * 2)).map { _ in
-                ClockFlybyBird(meshes: meshes, material: material)
+            animals = (0..<(Self.animalsPerFlock * 2)).map { _ in
+                ClockFlybyAnimal(kind: kind, meshes: meshes, material: material)
             }
         case .none:
-            birds = []
+            animals = []
         }
         super.init()
         root.name = "Clock theme flock"
-        for bird in birds { root.addChild(bird.root) }
+        for animal in animals { root.addChild(animal.root) }
         root.isEnabled = false
     }
 
     func apply(appearance: ClockAppearance) {
         let material = appearance.numeralMaterial()
-        for bird in birds { bird.apply(material: material) }
+        for animal in animals { animal.apply(material: material) }
     }
 
     func setViewport(_ viewport: SIMD2<Float>, cameraDistance: Float) {
@@ -44,7 +44,7 @@ final class ClockFlybyController: NSObject {
     }
 
     func start() {
-        guard !birds.isEmpty, nextFlightTask == nil, displayLink == nil,
+        guard !animals.isEmpty, nextFlightTask == nil, displayLink == nil,
               viewport.x > 0, cameraDistance > 1 else { return }
         scheduleFlight(after: 0.9)
     }
@@ -67,11 +67,11 @@ final class ClockFlybyController: NSObject {
         let height = Float.random(in: 0.28...0.46)
         let origin = Float.random(in: -0.12...0.12)
         let arc = Float.random(in: 0.08...0.16)
-        flights = birds.indices.map { index in
-            let member = index % Self.birdsPerFlock
-            let isUpperFlock = index < Self.birdsPerFlock
+        flights = animals.indices.map { index in
+            let member = index % Self.animalsPerFlock
+            let isUpperFlock = index < Self.animalsPerFlock
             let side: Float = isUpperFlock ? 1 : -1
-            let spread = Float(member) - Float(Self.birdsPerFlock - 1) / 2
+            let spread = Float(member) - Float(Self.animalsPerFlock - 1) / 2
             // Pair an upper flock with a lower flock heading toward the opposite edge.
             let path = ClockFlybyPath(duration: .random(in: 3.8...4.4),
                                      travelsRight: isUpperFlock ? travelsRight : !travelsRight,
@@ -100,9 +100,9 @@ final class ClockFlybyController: NSObject {
             scheduleFlight(after: .random(in: 0.7...1.4))
             return
         }
-        for (bird, flight) in zip(birds, flights) {
-            bird.update(path: flight.path, elapsed: elapsed - flight.delay,
-                        viewport: viewport, cameraDistance: cameraDistance)
+        for (animal, flight) in zip(animals, flights) {
+            animal.update(path: flight.path, elapsed: elapsed - flight.delay,
+                          viewport: viewport, cameraDistance: cameraDistance)
         }
         root.isEnabled = true
         onFrame?()

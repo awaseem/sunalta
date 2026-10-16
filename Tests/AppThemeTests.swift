@@ -5,6 +5,25 @@ import Testing
 
 @MainActor
 struct AppThemeTests {
+    @Test func appearanceEditsAndReloadPreserveTheSelectedThemesFlyingAnimals() throws {
+        let suite = "ThemeSettingsTests-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = ThemeSettings(defaults: defaults)
+
+        for theme in AppTheme.available {
+            settings.select(theme)
+            settings.lighting.direction = -70
+            settings.shimmer = 0.85
+            settings.weekday.size = 36
+
+            #expect(settings.theme.clockFlyby == theme.clockFlyby)
+            let restored = ThemeSettings(defaults: defaults)
+            #expect(restored.theme.id == theme.id)
+            #expect(restored.theme.clockFlyby == theme.clockFlyby)
+        }
+    }
+
     @Test func invalidSavedSelectionStillLaunchesWithDefaultTheme() throws {
         let suite = "ThemeSettingsTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))

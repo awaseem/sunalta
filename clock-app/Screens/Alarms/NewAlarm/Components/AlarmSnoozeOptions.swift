@@ -9,7 +9,7 @@ struct AlarmSnoozeOptions: View {
         VStack(alignment: .leading, spacing: 20) {
             Toggle("Allow snooze", isOn: $snoozeEnabled)
                 .font(.headline)
-                .tint(theme.palette.control)
+                .tint(theme.palette.selection)
                 .padding(18)
                 .background(theme.palette.surface, in: .rect(cornerRadius: 18))
             if snoozeEnabled {
