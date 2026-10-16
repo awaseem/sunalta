@@ -11,6 +11,8 @@ struct ClockAppearance: Equatable {
     let clearcoatRoughness: Float
     var lighting: ClockLightingSettings
     let shadow: ClockShadowSettings?
+    var surface: ClockSurface = .plastic
+    var flybyTint: Color?
 
     func numeralMaterial() -> PhysicallyBasedMaterial {
         var material = PhysicallyBasedMaterial()
@@ -27,6 +29,12 @@ struct ClockAppearance: Equatable {
     func backdropMaterial(color: UIColor) -> UnlitMaterial {
         var material = UnlitMaterial(applyPostProcessToneMap: false)
         material.color = .init(tint: color)
+        return material
+    }
+
+    func flybyMaterial() -> PhysicallyBasedMaterial {
+        var material = numeralMaterial()
+        if let flybyTint { material.baseColor = .init(tint: UIColor(flybyTint)) }
         return material
     }
 }

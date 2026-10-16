@@ -18,9 +18,13 @@ final class ClockFlybyController: NSObject {
 
     init(kind: ClockFlybyKind, appearance: ClockAppearance) throws {
         switch kind {
-        case .bird, .bat:
-            let meshes = try kind == .bat ? ClockBatMesh.load() : ClockBirdMesh.load()
-            let material = appearance.numeralMaterial()
+        case .bird, .bat, .butterfly:
+            let meshes = switch kind {
+            case .butterfly: try ClockButterflyMesh.load()
+            case .bat: try ClockBatMesh.load()
+            default: try ClockBirdMesh.load()
+            }
+            let material = appearance.flybyMaterial()
             animals = (0..<(Self.animalsPerFlock * 2)).map { _ in
                 ClockFlybyAnimal(kind: kind, meshes: meshes, material: material)
             }
@@ -34,7 +38,7 @@ final class ClockFlybyController: NSObject {
     }
 
     func apply(appearance: ClockAppearance) {
-        let material = appearance.numeralMaterial()
+        let material = appearance.flybyMaterial()
         for animal in animals { animal.apply(material: material) }
     }
 

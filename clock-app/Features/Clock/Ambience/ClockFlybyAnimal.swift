@@ -9,11 +9,22 @@ final class ClockFlybyAnimal {
     private let farWing: ModelEntity
     private let flapFrequency: Float
     private let flapAmplitude: Float
+    private let isButterfly: Bool
 
     init(kind: ClockFlybyKind, meshes: (body: MeshResource, wing: MeshResource),
          material: PhysicallyBasedMaterial) {
-        flapFrequency = kind == .bat ? 4.5 : 3
-        flapAmplitude = kind == .bat ? 0.85 : 0.7
+        isButterfly = kind == .butterfly
+        switch kind {
+        case .butterfly:
+            flapFrequency = 5.2
+            flapAmplitude = 1.1
+        case .bat:
+            flapFrequency = 4.5
+            flapAmplitude = 0.85
+        case .bird, .none:
+            flapFrequency = 3
+            flapAmplitude = 0.7
+        }
         body = ModelEntity(mesh: meshes.body, materials: [material])
         nearWing = ModelEntity(mesh: meshes.wing, materials: [material])
         farWing = ModelEntity(mesh: meshes.wing, materials: [material])
@@ -22,8 +33,8 @@ final class ClockFlybyAnimal {
             part.components.set(DynamicLightShadowComponent(castsShadow: false))
             root.addChild(part)
         }
-        nearWing.position = [-0.018, 0.018, 0.048]
-        farWing.position = [-0.018, 0.018, -0.048]
+        nearWing.position = isButterfly ? [0, 0, 0.008] : [-0.018, 0.018, 0.048]
+        farWing.position = isButterfly ? [0, 0, -0.008] : [-0.018, 0.018, -0.048]
         root.isEnabled = false
     }
 
@@ -38,8 +49,13 @@ final class ClockFlybyAnimal {
         }
         root.position = path.position(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
         root.orientation = path.orientation(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
+        if isButterfly {
+            let time = Float(elapsed)
+            root.position.y += sin(time * 4.2) * viewport.y * 0.005
+            root.orientation *= simd_quatf(angle: 0.65 + sin(time * 2.1) * 0.15, axis: [1, 0, 0])
+        }
         root.components[OpacityComponent.self]?.opacity = path.opacity(at: elapsed)
-        let flap = sin(Float(elapsed) * .pi * 2 * flapFrequency) * flapAmplitude
+        let flap = sin(Float(elapsed) * .pi * 2 * flapFrequency) * flapAmplitude + (isButterfly ? 0.25 : 0)
         nearWing.orientation = simd_quatf(angle: flap, axis: [1, 0, 0])
         farWing.orientation = simd_quatf(angle: .pi - flap, axis: [1, 0, 0])
         root.isEnabled = true

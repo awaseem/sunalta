@@ -23,7 +23,7 @@ struct AlarmBellView: View {
             do {
                 let scene = try await AlarmBellScene()
                 try Task.checkCancellation()
-                scene.apply(theme: theme)
+                try scene.apply(theme: theme)
                 scene.setViewport(viewportSize)
                 content.add(scene.root)
                 self.scene = scene
@@ -37,7 +37,11 @@ struct AlarmBellView: View {
                 failedToLoad = true
             }
         } update: { _ in
-            scene?.apply(theme: theme)
+            do {
+                try scene?.apply(theme: theme)
+            } catch {
+                failedToLoad = true
+            }
             scene?.setViewport(viewportSize)
         } placeholder: {
             Color.clear

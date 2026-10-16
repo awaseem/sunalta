@@ -52,6 +52,7 @@ final class ClockRenderView: ClockMetalView {
     private let weekdayLight = SpotLight()
     private var lighting: ClockLightingSettings { theme.clock.lighting }
     private var flybys: ClockFlybyController?
+    private let grassBreeze = GrassBreeze()
     var allowsAmbientAnimation = false {
         didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
     }
@@ -274,6 +275,17 @@ final class ClockRenderView: ClockMetalView {
     }
 
     private func updateFlybys() {
+        if allowsAmbientAnimation, window != nil, isReady, sceneKind == .numbers,
+           !isAlarmPreview, theme.clock.surface == .grass {
+            grassBreeze.onFrame = { [weak self] deltaTime in
+                guard let self else { return }
+                (content as? NumeralClockScene)?.advanceBreeze(by: deltaTime)
+                requestFrame()
+            }
+            grassBreeze.start()
+        } else {
+            grassBreeze.stop()
+        }
         guard allowsAmbientAnimation, window != nil, isReady,
               sceneKind == .numbers, !isAlarmPreview, theme.clockFlyby != .none,
               bounds.width > 0, bounds.height > 0, cameraRestOffset.z > 1 else {
@@ -383,6 +395,7 @@ final class ClockRenderView: ClockMetalView {
     }
 
     func stop() {
+        grassBreeze.stop()
         flybys?.stop()
         flybys = nil
         loadTask?.cancel()

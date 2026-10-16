@@ -58,6 +58,28 @@ struct ClockRenderingTests {
         #expect(clock.renderedFrameCount == suspendedFrames + 1)
     }
 
+    @Test func grassBreezeStopsRenderingWhenAmbientAnimationIsDisabled() async throws {
+        let clock = ClockRenderView(theme: .grass)
+        let window = try host(clock)
+        defer {
+            clock.stop()
+            window.isHidden = true
+        }
+        try await waitForFrame(clock, after: 0)
+        clock.allowsAmbientAnimation = true
+        try await waitForFrame(clock, after: clock.renderedFrameCount)
+        try await waitForFrame(clock, after: clock.renderedFrameCount)
+
+        clock.allowsAmbientAnimation = false
+        try await Task.sleep(for: .milliseconds(200))
+        let pausedFrames = clock.renderedFrameCount
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(clock.renderedFrameCount == pausedFrames)
+
+        clock.allowsAmbientAnimation = true
+        try await waitForFrame(clock, after: pausedFrames)
+    }
+
     @Test func pagingKeepsThePreparedRendererForImmediateInteraction() async throws {
         let page = ClockPageView(theme: .white, scene: .numbers)
         let date = Date.now

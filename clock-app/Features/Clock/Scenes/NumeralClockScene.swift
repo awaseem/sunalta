@@ -13,6 +13,9 @@ final class NumeralClockScene: ClockSceneContent {
     private let rowGap: Float = 0.28
     private var displayedTime: String?
     private var material: PhysicallyBasedMaterial?
+    private var surface = ClockSurface.plastic
+    private var grassGlyphs: [String: ModelEntity] = [:]
+    private var grassTime: Float = 0
 
     init() throws {
         glyphs = try ClockGlyphAssets.load()
@@ -20,9 +23,21 @@ final class NumeralClockScene: ClockSceneContent {
     }
 
     func apply(theme: AppTheme) async throws {
+        if theme.clock.surface == .grass {
+            for (key, glyph) in glyphs where grassGlyphs[key] == nil {
+                try Task.checkCancellation()
+                if let mesh = glyph.model?.mesh {
+                    grassGlyphs[key] = try GrassSurface.make(on: mesh, cacheKey: "numeral-\(key)")
+                }
+            }
+        }
+        surface = theme.clock.surface
         let material = theme.clock.numeralMaterial()
         self.material = material
-        for glyph in timeSlots { glyph.model?.materials = [material] }
+        for glyph in timeSlots {
+            glyph.model?.materials = [material]
+            applySurface(to: glyph)
+        }
     }
 
     func show(date: Date) {
@@ -51,7 +66,9 @@ final class NumeralClockScene: ClockSceneContent {
             let glyph = timeSlots[index]
             if index >= previous.count || previous[index] != character {
                 glyph.model = prototype.model
+                glyph.name = key
                 if let material { glyph.model?.materials = [material] }
+                applySurface(to: glyph)
             }
             let columnCenter = (index.isMultiple(of: 2) ? -1 : Float(1)) * (columnWidth + digitGap) / 2
             let rowCenter = (index < 2 ? 1 : Float(-1)) * (rowHeight + rowGap) / 2
@@ -60,6 +77,24 @@ final class NumeralClockScene: ClockSceneContent {
                               rowCenter - bounds.center.y * digitHeightScale, 0]
         }
         root.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
+    }
+
+    func advanceBreeze(by deltaTime: Float) {
+        guard surface == .grass else { return }
+        grassTime += deltaTime
+        for glyph in timeSlots {
+            if let grass = glyph.findEntity(named: GrassSurface.entityName) {
+                GrassSurface.update(grass, time: grassTime)
+            }
+        }
+    }
+
+    private func applySurface(to glyph: ModelEntity) {
+        glyph.findEntity(named: GrassSurface.entityName)?.removeFromParent()
+        guard surface == .grass, let prototype = grassGlyphs[glyph.name] else { return }
+        let grass = prototype.clone(recursive: false)
+        GrassSurface.update(grass, time: grassTime)
+        glyph.addChild(grass)
     }
 
 }

@@ -3,6 +3,7 @@ import SwiftUI
 extension AppTheme {
     private static let whiteAccent = Color.Resolved(red: 1, green: 0.08, blue: 0.16)
     private static let midnightAccent = Color.Resolved(red: 1, green: 0.85, blue: 0.12)
+    private static let grassAccent = Color.Resolved(red: 0.45, green: 0.29, blue: 0.18)
 
     // Add authored themes here and include them in `available` to expose them in Appearance.
     static let white = AppTheme(
@@ -92,7 +93,46 @@ extension AppTheme {
         clockFlyby: .bat
     )
 
-    static let available: [AppTheme] = [.white, .midnight]
+    static let grass = AppTheme(
+        id: "grass",
+        name: "Grass",
+        colorScheme: .light,
+        palette: ThemePalette(
+            background: Color(red: 0.96, green: 0.95, blue: 0.90),
+            surface: Color(red: 0.20, green: 0.32, blue: 0.12).opacity(0.07),
+            foreground: Color(red: 0.12, green: 0.20, blue: 0.08),
+            secondaryForeground: Color(red: 0.12, green: 0.20, blue: 0.08).opacity(0.6),
+            control: Color(red: 0.16, green: 0.29, blue: 0.09),
+            onControl: .white,
+            selection: Color(grassAccent),
+            separator: Color(red: 0.16, green: 0.29, blue: 0.09).opacity(0.15),
+            error: .red
+        ),
+        clock: ClockAppearance(
+            numeralColor: Color(red: 0.17, green: 0.29, blue: 0.07),
+            lightColor: .white,
+            ambientIntensityExponent: 0,
+            roughness: 0.95,
+            clearcoat: 0,
+            clearcoatRoughness: 1,
+            lighting: ClockLightingSettings(direction: 15, tilt: 45, strength: 1900, fill: 0.3),
+            shadow: nil,
+            surface: .grass,
+            flybyTint: Color(red: 1, green: 0.32, blue: 0.62)
+        ),
+        panelShadow: ThemeShadow(color: .black.opacity(0.1), radius: 16, x: 0, y: 6),
+        weekday: ClockWeekdayAppearance(
+            size: 40.16969585418701,
+            weight: .medium,
+            glow: ClockWeekdayGlowSettings(
+                color: grassAccent,
+                halo: 0, brightness: 0, spread: 60, direction: 20.36, reach: 5.52
+            )
+        ),
+        clockFlyby: .butterfly
+    )
+
+    static let available: [AppTheme] = [.white, .midnight, .grass]
     static let defaultTheme = white
 
     static func resolve(id: String?) -> AppTheme {

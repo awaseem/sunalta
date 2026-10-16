@@ -21,6 +21,8 @@ final class AlarmBellScene {
     private var isRinging = false
     private var previousSwingPhase: TimeInterval = 0
     private var revealElapsed: TimeInterval = 0
+    private var grass: [Entity] = []
+    private var grassTime: Float = 0
     private static let swingDuration: TimeInterval = 2.4
     private static let swingEnds = [swingDuration / 4, swingDuration * 3 / 4]
 
@@ -65,8 +67,15 @@ final class AlarmBellScene {
         updateViewingAngle()
     }
 
-    func apply(theme: AppTheme) {
+    func apply(theme: AppTheme) throws {
         guard theme != appliedTheme else { return }
+        if theme.clock.surface == .grass, grass.isEmpty,
+           let shell = model.findEntity(named: "BellShell") {
+            try addGrass(to: shell)
+        } else if theme.clock.surface != .grass {
+            grass.forEach { $0.removeFromParent() }
+            grass.removeAll()
+        }
         appliedTheme = theme
         bellMaterial = theme.clock.numeralMaterial()
         applyRevealMaterial()
@@ -103,6 +112,10 @@ final class AlarmBellScene {
     }
 
     func advanceReveal(by deltaTime: TimeInterval) {
+        if isRinging, !grass.isEmpty {
+            grassTime += Float(min(deltaTime, 1 / 15))
+            updateGrass()
+        }
         let duration = ClockEntranceAnimation.fadeDuration
         guard revealElapsed < duration else { return }
         revealElapsed = min(revealElapsed + deltaTime, duration)
@@ -177,6 +190,7 @@ final class AlarmBellScene {
     }
 
     private func apply(material: PhysicallyBasedMaterial, to entity: Entity) {
+        guard entity.name != GrassSurface.entityName else { return }
         if var component = entity.components[ModelComponent.self] {
             component.materials = Array(repeating: material, count: max(component.materials.count, 1))
             entity.components.set(component)
@@ -193,5 +207,23 @@ final class AlarmBellScene {
         }
         // Restore the opaque theme material once the entrance finishes.
         apply(material: material, to: model)
+        updateGrass()
+    }
+
+    private func addGrass(to entity: Entity) throws {
+        // Capture the authored hierarchy before attaching the generated meshes.
+        let children = Array(entity.children)
+        if let component = entity.components[ModelComponent.self] {
+            let blades = try GrassSurface.make(on: component.mesh, cacheKey: "bell-\(entity.name)")
+            entity.addChild(blades)
+            grass.append(blades)
+        }
+        for child in children { try addGrass(to: child) }
+    }
+
+    private func updateGrass() {
+        let progress = min(revealElapsed / ClockEntranceAnimation.fadeDuration, 1)
+        let opacity = Float(progress * progress * (3 - 2 * progress))
+        for blades in grass { GrassSurface.update(blades, time: grassTime, opacity: opacity) }
     }
 }
