@@ -4,6 +4,7 @@ import RealityKit
 
 @MainActor
 final class ClockFlybyController: NSObject {
+    private static let birdsPerFlock = 4
     let root = Entity()
     var onFrame: (() -> Void)?
     private let birds: [ClockFlybyBird]
@@ -20,7 +21,9 @@ final class ClockFlybyController: NSObject {
         case .bird:
             let meshes = try ClockBirdMesh.load()
             let material = appearance.numeralMaterial()
-            birds = (0..<3).map { _ in ClockFlybyBird(meshes: meshes, material: material) }
+            birds = (0..<(Self.birdsPerFlock * 2)).map { _ in
+                ClockFlybyBird(meshes: meshes, material: material)
+            }
         case .none:
             birds = []
         }
@@ -43,7 +46,7 @@ final class ClockFlybyController: NSObject {
     func start() {
         guard !birds.isEmpty, nextFlightTask == nil, displayLink == nil,
               viewport.x > 0, cameraDistance > 1 else { return }
-        scheduleFlight(after: 1.5)
+        scheduleFlight(after: 0.9)
     }
 
     private func scheduleFlight(after delay: Double) {
@@ -61,15 +64,21 @@ final class ClockFlybyController: NSObject {
     private func beginFlight() {
         nextFlightTask = nil
         let travelsRight = Bool.random()
-        let height = Float.random(in: -0.05...0.45)
+        let height = Float.random(in: 0.28...0.46)
         let origin = Float.random(in: -0.12...0.12)
         let arc = Float.random(in: 0.08...0.16)
         flights = birds.indices.map { index in
-            let path = ClockFlybyPath(duration: .random(in: 3.8...4.4), travelsRight: travelsRight,
-                                     height: height + Float(index - 1) * 0.09,
-                                     arc: arc + Float(index) * 0.02,
-                                     origin: origin + Float(index - 1) * 0.04)
-            return (path, Double(index) * 0.22)
+            let member = index % Self.birdsPerFlock
+            let isUpperFlock = index < Self.birdsPerFlock
+            let side: Float = isUpperFlock ? 1 : -1
+            let spread = Float(member) - Float(Self.birdsPerFlock - 1) / 2
+            // Pair an upper flock with a lower flock heading toward the opposite edge.
+            let path = ClockFlybyPath(duration: .random(in: 3.8...4.4),
+                                     travelsRight: isUpperFlock ? travelsRight : !travelsRight,
+                                     height: (height + spread * 0.08) * side,
+                                     arc: (arc + Float(member) * 0.015) * side,
+                                     origin: (origin + spread * 0.04) * side)
+            return (path, Double(member) * 0.18 + (isUpperFlock ? 0 : 0.12))
         }
         flightDuration = flights.map { $0.path.duration + $0.delay }.max() ?? 0
         flightStart = nil
@@ -88,7 +97,7 @@ final class ClockFlybyController: NSObject {
             stopDisplayLink()
             root.isEnabled = false
             onFrame?()
-            scheduleFlight(after: .random(in: 2...3.5))
+            scheduleFlight(after: .random(in: 0.7...1.4))
             return
         }
         for (bird, flight) in zip(birds, flights) {
