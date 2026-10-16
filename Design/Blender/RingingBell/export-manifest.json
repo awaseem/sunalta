@@ -1,0 +1,11 @@
+{
+  "source": "Design/Blender/RingingBell/ringing-bell.blend",
+  "resource": "clock-app/Resources/RingingBell.usdz",
+  "pivots": [
+    "BellSwing",
+    "ClapperSwing"
+  ],
+  "upAxis": "Y",
+  "ringAxis": "Z",
+  "material": "replaced by theme.clock.numeralMaterial()"
+}

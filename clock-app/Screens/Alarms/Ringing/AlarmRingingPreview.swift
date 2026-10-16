@@ -3,8 +3,11 @@ import SwiftUI
 struct AlarmRingingPreview: View {
     private let alarm: Result<AlarmRecord, Error>
 
-    init(exitPoint: AlarmExitPoint) {
-        alarm = Result { try AlarmRecord(hour: 7, minute: 0, label: "Morning", exitPoint: exitPoint) }
+    init(exitPoint: AlarmExitPoint, snoozeEnabled: Bool = true) {
+        alarm = Result {
+            try AlarmRecord(hour: 7, minute: 0, label: "Morning",
+                            snoozeEnabled: snoozeEnabled, exitPoint: exitPoint)
+        }
     }
 
     var body: some View {

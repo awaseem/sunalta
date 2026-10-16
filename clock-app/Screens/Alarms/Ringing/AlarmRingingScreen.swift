@@ -3,52 +3,90 @@ import SwiftUI
 struct AlarmRingingScreen: View {
     @Environment(\.appTheme) private var theme
     @Environment(AlarmRuntime.self) private var runtime
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let alarm: AlarmRecord
     @State private var nfcScanner = NFCScannerUtil()
     @State private var showsQRScanner = false
     @State private var isWorking = false
     @State private var scanError: String?
+    @State private var bellCenter = CGPoint.zero
+    @State private var rippleStarts: [Date] = []
+
+    private var scanRequirement: String {
+        switch alarm.exitPoint {
+        case .normal: ""
+        case .nfc: alarm.stopTargets.isEmpty ? "Any tag" : "Specific tag"
+        case .qrCode: alarm.stopTargets.isEmpty ? "Any QR code" : "Specific QR code"
+        }
+    }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer(minLength: 16)
-            AlarmRingingHeader(alarm: alarm)
-            Spacer(minLength: 16)
-            GlassEffectContainer {
-                VStack {
-                    AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
-                    if alarm.snoozeEnabled {
-                        Button("Snooze for \(alarm.snoozeDurationMinutes) min", action: snooze)
-                            .buttonStyle(.appCapsule(fillsWidth: true))
-                            .disabled(isWorking)
+        ScrollView {
+            VStack {
+                AlarmBellView(isRinging: !showsQRScanner) {
+                    rippleStarts = Array(rippleStarts.suffix(2)) + [.now]
+                }
+                    .frame(minHeight: 220, idealHeight: 320, maxHeight: 360)
+                    .layoutPriority(-1)
+                    .onGeometryChange(for: CGPoint.self) { geometry in
+                        let frame = geometry.frame(in: .named("alarmRingingScreen"))
+                        return CGPoint(x: frame.midX, y: frame.midY)
+                    } action: { bellCenter = $0 }
+                VStack(spacing: 12) {
+                    if isWorking { ProgressView() }
+                    if let scanError {
+                        Text(scanError)
+                            .font(.subheadline)
+                            .foregroundStyle(theme.palette.error)
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
+                .multilineTextAlignment(.center)
             }
-
-            VStack(spacing: 12) {
-                if alarm.exitPoint != .normal {
-                    Text(alarm.exitPointSummary)
-                        .font(.headline)
-                    Text("A scan ends this alarm. Stopping the ring gives you 30 seconds before it rings again.")
-                        .font(.subheadline)
-                        .foregroundStyle(theme.palette.secondaryForeground)
-                }
-                if isWorking { ProgressView() }
-                if let scanError {
-                    Text(scanError)
-                        .font(.subheadline)
-                        .foregroundStyle(theme.palette.error)
-                        .accessibilityAddTraits(.updatesFrequently)
-                }
-            }
-            .multilineTextAlignment(.center)
-            .frame(minHeight: 84, alignment: .top)
-            Spacer(minLength: 16)
+            .padding()
+            .frame(maxWidth: 480)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 32)
-        .frame(maxWidth: 480)
+        .safeAreaInset(edge: .top) {
+            AlarmRingingHeader(alarm: alarm)
+                .padding()
+        }
+        .safeAreaInset(edge: .bottom) {
+            GlassEffectContainer {
+                HStack(alignment: .bottom) {
+                    if alarm.snoozeEnabled {
+                        Button("Snooze", action: snooze)
+                            .buttonStyle(.appCapsule(fillsWidth: true))
+                            .disabled(isWorking)
+                            .accessibilityLabel("Snooze for \(alarm.snoozeDurationMinutes) minutes")
+                    }
+                    VStack {
+                        if alarm.exitPoint != .normal {
+                            Text(scanRequirement)
+                                .font(.caption)
+                                .foregroundStyle(theme.palette.secondaryForeground)
+                                .multilineTextAlignment(.center)
+                        }
+                        AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .padding()
+            .frame(maxWidth: 480)
+            .frame(maxWidth: .infinity)
+        }
+        .defaultScrollAnchor(.center, for: .alignment)
+        .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            AlarmRingingRipples(origin: bellCenter, pulses: rippleStarts,
+                                isActive: !showsQRScanner && !reduceMotion && scenePhase == .active)
+                .ignoresSafeArea()
+        }
         .background(theme.palette.background.ignoresSafeArea())
+        .coordinateSpace(name: "alarmRingingScreen")
         .sheet(isPresented: $showsQRScanner) {
             AlarmQRDismissalScanner(alarm: alarm)
         }
@@ -101,3 +139,4 @@ struct AlarmRingingScreen: View {
 
 #Preview("QR alarm") { AlarmRingingPreview(exitPoint: .qrCode) }
 #Preview("Normal alarm") { AlarmRingingPreview(exitPoint: .normal) }
+#Preview("Snooze disabled") { AlarmRingingPreview(exitPoint: .normal, snoozeEnabled: false) }
