@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The shared configuration contract for every theme, independent of device appearance.
-/// Add new appearance capabilities here with defaults, then opt into them in a theme definition.
+/// Add new capabilities here with defaults, then opt into them in a theme definition.
 struct AppTheme: Identifiable, Equatable {
     let id: String
     let name: String
@@ -13,6 +13,7 @@ struct AppTheme: Identifiable, Equatable {
     var weekday: ClockWeekdayAppearance
     var alarmClockFinish: AlarmClockFinish
     var clockFlyby: ClockFlybyKind
+    var audio: ClockAudioConfiguration
 
     init(
         id: String,
@@ -23,7 +24,8 @@ struct AppTheme: Identifiable, Equatable {
         panelShadow: ThemeShadow? = nil,
         weekday: ClockWeekdayAppearance = .init(),
         alarmClockFinish: AlarmClockFinish = .init(),
-        clockFlyby: ClockFlybyKind = .none
+        clockFlyby: ClockFlybyKind = .none,
+        audio: ClockAudioConfiguration = .init()
     ) {
         self.id = id
         self.name = name
@@ -36,5 +38,6 @@ struct AppTheme: Identifiable, Equatable {
         self.weekday = weekday
         self.alarmClockFinish = alarmClockFinish
         self.clockFlyby = clockFlyby
+        self.audio = audio
     }
 }

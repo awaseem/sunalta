@@ -8,6 +8,7 @@ final class ClockFlybyController: NSObject {
     let root = Entity()
     var onFrame: (() -> Void)?
     private let animals: [ClockFlybyAnimal]
+    private let audioService: ClockAudioService?
     private var nextFlightTask: Task<Void, Never>?
     private var displayLink: CADisplayLink?
     private var flights: [(path: ClockFlybyPath, delay: Double)] = []
@@ -16,7 +17,8 @@ final class ClockFlybyController: NSObject {
     private var viewport = SIMD2<Float>.zero
     private var cameraDistance: Float = 0
 
-    init(kind: ClockFlybyKind, appearance: ClockAppearance) throws {
+    init(kind: ClockFlybyKind, appearance: ClockAppearance, audioService: ClockAudioService? = nil) throws {
+        self.audioService = audioService
         switch kind {
         case .bird, .bat, .butterfly:
             let meshes = switch kind {
@@ -54,6 +56,7 @@ final class ClockFlybyController: NSObject {
     }
 
     private func scheduleFlight(after delay: Double) {
+        audioService?.prepareFlight()
         nextFlightTask = Task { @MainActor [weak self] in
             do {
                 try await Task.sleep(for: .seconds(delay))
@@ -95,19 +98,26 @@ final class ClockFlybyController: NSObject {
 
     @objc private func advanceFlight(_ link: CADisplayLink) {
         guard !flights.isEmpty else { return }
-        if flightStart == nil { flightStart = link.targetTimestamp }
+        if flightStart == nil {
+            flightStart = link.targetTimestamp
+            audioService?.beginFlight()
+        }
         let elapsed = link.targetTimestamp - (flightStart ?? link.targetTimestamp)
         guard elapsed < flightDuration else {
             stopDisplayLink()
             root.isEnabled = false
             onFrame?()
-            scheduleFlight(after: .random(in: 0.7...1.4))
+            scheduleFlight(after: 2.5)
             return
         }
         for (animal, flight) in zip(animals, flights) {
             animal.update(path: flight.path, elapsed: elapsed - flight.delay,
                           viewport: viewport, cameraDistance: cameraDistance)
         }
+        let visibility = flights.reduce(Float.zero) { result, flight in
+            max(result, flight.path.visibility(at: elapsed - flight.delay))
+        }
+        audioService?.updateFlight(visibility: visibility)
         root.isEnabled = true
         onFrame?()
     }
@@ -123,6 +133,7 @@ final class ClockFlybyController: NSObject {
     }
 
     private func stopDisplayLink() {
+        audioService?.stopFlight()
         displayLink?.invalidate()
         displayLink = nil
         flightStart = nil

@@ -28,6 +28,12 @@ extension AppTheme {
                 reach: 5.518181622028351
             )
         ),
-        clockFlyby: .bird
+        clockFlyby: .bird,
+        audio: ClockAudioConfiguration(
+            music: ClockSound(fileName: "white-dawn.mp3", volume: 0.25),
+            musicLoopDelay: .seconds(10),
+            flyby: ClockSound(fileName: "bird-sounds.wav", volume: 0.65),
+            entrance: ClockSound(fileName: "clock-entrance.wav", volume: 0.4)
+        )
     )
 }

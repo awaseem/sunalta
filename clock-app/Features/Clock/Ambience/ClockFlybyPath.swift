@@ -26,10 +26,15 @@ nonisolated struct ClockFlybyPath {
     }
 
     func opacity(at elapsed: Double) -> Float {
+        0.88 * visibility(at: elapsed)
+    }
+
+    /// A normalized fade shared by the visual opacity and the flight's audio level.
+    func visibility(at elapsed: Double) -> Float {
         let progress = Float(min(max(elapsed / duration, 0), 1))
         let fadeIn = smoothstep(progress / 0.24)
         let fadeOut = smoothstep((1 - progress) / 0.22)
-        return 0.88 * fadeIn * fadeOut
+        return fadeIn * fadeOut
     }
 
     private func smoothstep(_ value: Float) -> Float {

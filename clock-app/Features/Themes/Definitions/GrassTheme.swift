@@ -32,6 +32,12 @@ extension AppTheme {
                 halo: 0, brightness: 0, spread: 60, direction: 20.36, reach: 5.52
             )
         ),
-        clockFlyby: .butterfly
+        clockFlyby: .butterfly,
+        audio: ClockAudioConfiguration(
+            music: ClockSound(fileName: "grass-field.mp3", volume: 0.25),
+            musicLoopDelay: .seconds(10),
+            flyby: ClockSound(fileName: "butterfly-sounds.wav", volume: 0.65),
+            entrance: ClockSound(fileName: "clock-entrance.wav", volume: 0.4)
+        )
     )
 }

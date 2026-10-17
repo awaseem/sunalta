@@ -4,6 +4,7 @@ import UIKit
 struct SculptedClockView: UIViewRepresentable {
     @Environment(\.appTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(ClockAudioService.self) private var audioService: ClockAudioService?
     let date: Date
     var scene: ClockScene = .numbers
     var isScrolling = false
@@ -15,7 +16,7 @@ struct SculptedClockView: UIViewRepresentable {
     var onContentRevealed: (() -> Void)?
 
     func makeUIView(context: Context) -> ClockPageView {
-        ClockPageView(theme: theme, scene: scene)
+        ClockPageView(theme: theme, scene: scene, audioService: audioService)
     }
 
     func updateUIView(_ view: ClockPageView, context: Context) {

@@ -7,6 +7,7 @@ struct ClockApp: App {
     private let container: ModelContainer
     @State private var runtime: AlarmRuntime
     @State private var themeSettings = ThemeSettings()
+    @State private var audioService = ClockAudioService()
 
     init() {
         do {
@@ -27,6 +28,7 @@ struct ClockApp: App {
             AlarmRootView()
                 .environment(runtime)
                 .environment(themeSettings)
+                .environment(audioService)
                 .appTheme(themeSettings.theme)
         }
         .modelContainer(container)

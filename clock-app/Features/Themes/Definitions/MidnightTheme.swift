@@ -29,6 +29,12 @@ extension AppTheme {
                 reach: 5.52
             )
         ),
-        clockFlyby: .bat
+        clockFlyby: .bat,
+        audio: ClockAudioConfiguration(
+            music: ClockSound(fileName: "midnight-street.mp3", volume: 0.25),
+            musicLoopDelay: .seconds(10),
+            flyby: ClockSound(fileName: "bat-sounds.wav", volume: 0.65),
+            entrance: ClockSound(fileName: "clock-entrance.wav", volume: 0.4)
+        )
     )
 }

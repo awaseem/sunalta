@@ -5,7 +5,7 @@ import Testing
 
 @MainActor
 struct AppThemeTests {
-    @Test func appearanceEditsAndReloadPreserveTheSelectedThemesFlyingAnimals() throws {
+    @Test func appearanceEditsAndReloadPreserveTheSelectedThemesAnimalsAndAudio() throws {
         let suite = "ThemeSettingsTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -18,9 +18,11 @@ struct AppThemeTests {
             settings.weekday.size = 36
 
             #expect(settings.theme.clockFlyby == theme.clockFlyby)
+            #expect(settings.theme.audio == theme.audio)
             let restored = ThemeSettings(defaults: defaults)
             #expect(restored.theme.id == theme.id)
             #expect(restored.theme.clockFlyby == theme.clockFlyby)
+            #expect(restored.theme.audio == theme.audio)
         }
     }
 

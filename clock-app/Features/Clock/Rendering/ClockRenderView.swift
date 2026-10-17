@@ -52,13 +52,16 @@ final class ClockRenderView: ClockMetalView {
     private let weekdayLight = SpotLight()
     private var lighting: ClockLightingSettings { theme.clock.lighting }
     private var flybys: ClockFlybyController?
+    private let audioService: ClockAudioService?
     private let grassBreeze = GrassBreeze()
     var allowsAmbientAnimation = false {
         didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
     }
 
-    init(theme: AppTheme, scene: ClockScene = .numbers, isAlarmPreview: Bool = false) {
+    init(theme: AppTheme, scene: ClockScene = .numbers, isAlarmPreview: Bool = false,
+         audioService: ClockAudioService? = nil) {
         self.theme = theme
+        self.audioService = audioService
         sceneKind = scene
         self.isAlarmPreview = isAlarmPreview
         super.init()
@@ -294,7 +297,8 @@ final class ClockRenderView: ClockMetalView {
         }
         if flybys == nil {
             do {
-                let visitor = try ClockFlybyController(kind: theme.clockFlyby, appearance: theme.clock)
+                let visitor = try ClockFlybyController(kind: theme.clockFlyby, appearance: theme.clock,
+                                                      audioService: audioService)
                 visitor.onFrame = { [weak self] in self?.requestFrame() }
                 camera.addChild(visitor.root)
                 flybys = visitor
