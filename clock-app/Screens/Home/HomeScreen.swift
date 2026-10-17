@@ -5,6 +5,10 @@ struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appTheme) private var theme
+    @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
+    private var alarms: [AlarmRecord]
+    @State private var showingNewAlarm = false
+    @State private var createAlarmFooterHeight: CGFloat = 0
     @State private var isScrolling = false
     @State private var isClockVisible = true
     @State private var scrollPosition = ScrollPosition(edge: .top)
@@ -88,13 +92,14 @@ struct HomeScreen: View {
                     }
                     #endif
 
-                    AlarmListPage(isScrolling: isScrolling) {
+                    AlarmListPage(alarms: alarms, createAlarm: { showingNewAlarm = true }) {
                         withAnimation(reduceMotion ? nil : .smooth) {
                             scrollPosition.scrollTo(edge: .top)
                         }
                     }
                     .padding(.top, geometry.safeAreaInsets.top + 20)
-                    .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
+                    .padding(.bottom, alarms.isEmpty
+                             ? createAlarmFooterHeight : geometry.safeAreaInsets.bottom + 24)
                     .frame(minHeight: pageHeight, alignment: .top)
                 }
             }
@@ -128,9 +133,30 @@ struct HomeScreen: View {
                 }
             }
             .frame(height: pageHeight)
+            .overlay(alignment: .bottom) {
+                if alarms.isEmpty {
+                    Button("Create alarm") { showingNewAlarm = true }
+                        .buttonStyle(.appCapsule(fillsWidth: true))
+                        .frame(maxWidth: 560)
+                        .padding(.horizontal, 24)
+                        .padding(.top)
+                        .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
+                        .frame(maxWidth: .infinity)
+                        .background(theme.palette.background)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                            createAlarmFooterHeight = $0
+                        }
+                        .opacity(isClockVisible ? 0 : 1)
+                        .allowsHitTesting(!isClockVisible)
+                        .accessibilityHidden(isClockVisible)
+                }
+            }
             .ignoresSafeArea()
         }
         .background(theme.palette.background)
+        .fullScreenCover(isPresented: $showingNewAlarm) {
+            NewAlarmView()
+        }
     }
 }
 

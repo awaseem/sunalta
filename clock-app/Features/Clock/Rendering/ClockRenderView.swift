@@ -29,8 +29,7 @@ final class ClockRenderView: ClockMetalView {
             if oldValue != contentSafeAreaInsets { setNeedsLayout() }
         }
     }
-    private let sceneKind: ClockScene
-    private var content: (any ClockSceneContent)?
+    private var content: NumeralClockScene?
     private var loadTask: Task<Void, Never>?
     private var materialTask: Task<Void, Never>?
     private var materialRevision = 0
@@ -58,11 +57,10 @@ final class ClockRenderView: ClockMetalView {
         didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
     }
 
-    init(theme: AppTheme, scene: ClockScene = .numbers, isAlarmPreview: Bool = false,
+    init(theme: AppTheme, isAlarmPreview: Bool = false,
          audioService: ClockAudioService? = nil) {
         self.theme = theme
         self.audioService = audioService
-        sceneKind = scene
         self.isAlarmPreview = isAlarmPreview
         super.init()
         isAccessibilityElement = true
@@ -76,17 +74,10 @@ final class ClockRenderView: ClockMetalView {
         let anchor = Entity()
         realityRenderer?.entities.append(anchor)
         anchor.addChild(placement)
-        if scene == .alarm {
-            var projection = OrthographicCameraComponent()
-            projection.scaleDirection = .vertical
-            projection.scale = 2.05
-            camera.components.set(projection)
-        } else {
-            var projection = PerspectiveCameraComponent()
-            projection.fieldOfViewInDegrees = 12
-            camera.components.set(projection)
-        }
-        orbitInteraction = ClockOrbitInteraction(view: self, restingAngles: scene.restingAngles,
+        var projection = PerspectiveCameraComponent()
+        projection.fieldOfViewInDegrees = 12
+        camera.components.set(projection)
+        orbitInteraction = ClockOrbitInteraction(view: self, restingAngles: .zero,
                                                  allowsVerticalDrag: isAlarmPreview) { [weak self] _ in
             self?.applyViewingAngle()
         }
@@ -94,9 +85,7 @@ final class ClockRenderView: ClockMetalView {
         orbitInteraction?.onSettled = { [weak self] in self?.onOrbitSettled?() }
         accessibilityHint = isAlarmPreview
             ? "Drag to change the viewing angle. Release to return to the front view."
-            : scene == .numbers
-                ? "Drag horizontally to change the viewing angle. Swipe up to see alarms."
-                : "Drag horizontally to change the viewing angle. Release to return to the starting view."
+            : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
         realityRenderer?.activeCamera = camera
         anchor.addChild(weekdayLight)
@@ -108,15 +97,14 @@ final class ClockRenderView: ClockMetalView {
             materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
-        backdrop.position.z = scene == .numbers && !isAlarmPreview
-            ? ClockFlybyPath.backdropDepth : scene.backdropDepth
+        backdrop.position.z = isAlarmPreview ? -0.04 : ClockFlybyPath.backdropDepth
         anchor.addChild(backdrop)
 
         applyLighting()
         loadTask = Task { @MainActor [weak self] in
             do {
                 let environment = try await ClockLightingEnvironment.load()
-                let content = try await scene.load()
+                let content = try NumeralClockScene()
                 try Task.checkCancellation()
                 guard let self else { return }
                 self.content = content
@@ -174,7 +162,7 @@ final class ClockRenderView: ClockMetalView {
         let settings = theme.clock.lighting
         keyLight.light.color = UIColor(theme.clock.lightColor)
         keyLight.light.intensity = Float(settings.strength)
-        keyLight.shadow = sceneKind == .alarm ? nil : theme.clock.shadow.map {
+        keyLight.shadow = theme.clock.shadow.map {
             DirectionalLightComponent.Shadow(
                 shadowProjection: .automatic(maximumDistance: $0.maximumDistance), depthBias: $0.depthBias
             )
@@ -190,7 +178,7 @@ final class ClockRenderView: ClockMetalView {
 
     private func applyWeekdayLighting() {
         guard !isAlarmPreview, !weekdayFrame.isEmpty, bounds.height > 0,
-              cameraRestOffset.z > 0, let content = content as? NumeralClockScene,
+              cameraRestOffset.z > 0, let content,
               content.firstDigit != nil else {
             weekdayLight.isEnabled = false
             return
@@ -247,15 +235,6 @@ final class ClockRenderView: ClockMetalView {
     override func layoutSubviews() {
         super.layoutSubviews()
         guard bounds.width > 0, bounds.height > 0 else { return }
-        if sceneKind == .alarm {
-            placement.position = .zero
-            let aspect = Float(bounds.width / bounds.height)
-            let visibleHeight = max(4.1, 3.2 / aspect)
-            camera.components[OrthographicCameraComponent.self]?.scale = visibleHeight / 2
-            cameraRestOffset = [0, 0, 8]
-            applyViewingAngle()
-            return
-        }
         let aspect = Float(bounds.width / bounds.height)
         // The preview's lit backdrop fills the entire modal, eliminating color seams.
         let visibleHeight = isAlarmPreview
@@ -278,11 +257,11 @@ final class ClockRenderView: ClockMetalView {
     }
 
     private func updateFlybys() {
-        if allowsAmbientAnimation, window != nil, isReady, sceneKind == .numbers,
+        if allowsAmbientAnimation, window != nil, isReady,
            !isAlarmPreview, theme.clock.surface == .grass {
             grassBreeze.onFrame = { [weak self] deltaTime in
                 guard let self else { return }
-                (content as? NumeralClockScene)?.advanceBreeze(by: deltaTime)
+                content?.advanceBreeze(by: deltaTime)
                 requestFrame()
             }
             grassBreeze.start()
@@ -290,7 +269,7 @@ final class ClockRenderView: ClockMetalView {
             grassBreeze.stop()
         }
         guard allowsAmbientAnimation, window != nil, isReady,
-              sceneKind == .numbers, !isAlarmPreview, theme.clockFlyby != .none,
+              !isAlarmPreview, theme.clockFlyby != .none,
               bounds.width > 0, bounds.height > 0, cameraRestOffset.z > 1 else {
             flybys?.stop()
             return
@@ -317,7 +296,7 @@ final class ClockRenderView: ClockMetalView {
 
     private func updateWeekdayAnchor() {
         guard !isAlarmPreview, bounds.height > 0, cameraRestOffset.z > 0,
-              let content = content as? NumeralClockScene,
+              let content,
               let firstDigit = content.firstDigit else { return }
         let firstBounds = firstDigit.visualBounds(relativeTo: nil)
         let clockBounds = content.root.visualBounds(relativeTo: nil)
@@ -384,7 +363,7 @@ final class ClockRenderView: ClockMetalView {
     }
 
     private func updateTime() {
-        if let previewTime, let content = content as? NumeralClockScene {
+        if let previewTime, let content {
             content.show(time: previewTime)
         } else {
             content?.show(date: displayedDate)

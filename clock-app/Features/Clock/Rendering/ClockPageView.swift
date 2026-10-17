@@ -5,7 +5,6 @@ import UIKit
 final class ClockPageView: UIView {
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
     var onContentRevealed: (() -> Void)?
-    private let scene: ClockScene
     private let audioService: ClockAudioService?
     private var renderer: ClockRenderView?
     private var isScrolling = false
@@ -23,8 +22,7 @@ final class ClockPageView: UIView {
     private var weekdayFrame: CGRect = .zero
     private var renderedSize: CGSize = .zero
 
-    init(theme: AppTheme, scene: ClockScene, audioService: ClockAudioService? = nil) {
-        self.scene = scene
+    init(theme: AppTheme, audioService: ClockAudioService? = nil) {
         self.audioService = audioService
         appearance = theme
         super.init(frame: .zero)
@@ -33,11 +31,11 @@ final class ClockPageView: UIView {
     }
 
     private func makeRenderer() -> ClockRenderView {
-        if scene == .numbers { audioService?.apply(configuration: appearance.audio) }
-        let renderer = ClockRenderView(theme: appearance, scene: scene, audioService: audioService)
+        audioService?.apply(configuration: appearance.audio)
+        let renderer = ClockRenderView(theme: appearance, audioService: audioService)
         accessibilityHint = renderer.accessibilityHint
         renderer.isAccessibilityElement = false
-        if scene == .numbers && !hasPreparedEntrance && renderer.initializationError == nil {
+        if !hasPreparedEntrance && renderer.initializationError == nil {
             hasPreparedEntrance = true
             // Keep the surface drawable while waiting for its first completed frame.
             renderer.alpha = 0.001
@@ -88,7 +86,7 @@ final class ClockPageView: UIView {
         self.allowsFlybys = allowsFlybys
         entrance?.reduceMotion = !allowsFlybys
         if beganScrolling {
-            if scene == .numbers { audioService?.stopEntrance() }
+            audioService?.stopEntrance()
             isOrbiting = false
             renderer?.settleInteraction()
             if entrance?.isRunning == true { entrance?.finish() }
@@ -98,7 +96,7 @@ final class ClockPageView: UIView {
             || self.weekdayFrame != weekdayFrame {
             self.minute = minute
             appearance = theme
-            if scene == .numbers { audioService?.apply(configuration: theme.audio) }
+            audioService?.apply(configuration: theme.audio)
             self.insets = insets
             self.weekdayFrame = weekdayFrame
             renderer?.contentSafeAreaInsets = insets
@@ -124,9 +122,7 @@ final class ClockPageView: UIView {
     }
 
     func stop() {
-        if scene == .numbers {
-            audioService?.updateAmbience(isVisible: false)
-        }
+        audioService?.updateAmbience(isVisible: false)
         entrance?.cancel()
         entrance = nil
         renderer?.stop()
@@ -174,7 +170,6 @@ final class ClockPageView: UIView {
     }
 
     private func updateAmbientAudio() {
-        guard scene == .numbers else { return }
         audioService?.updateAmbience(
             isVisible: window != nil && isPageVisible && hasRevealedContent && renderer?.isReady == true
         )

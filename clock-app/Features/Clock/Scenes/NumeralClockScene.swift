@@ -2,7 +2,7 @@ import Foundation
 import RealityKit
 
 @MainActor
-final class NumeralClockScene: ClockSceneContent {
+final class NumeralClockScene {
     let root = Entity()
     var firstDigit: ModelEntity? { timeSlots.first }
     private let glyphs: [String: ModelEntity]

@@ -81,7 +81,7 @@ struct ClockRenderingTests {
     }
 
     @Test func pagingKeepsThePreparedRendererForImmediateInteraction() async throws {
-        let page = ClockPageView(theme: .white, scene: .numbers)
+        let page = ClockPageView(theme: .white)
         let date = Date.now
         func update(scrolling: Bool, visible: Bool) {
             page.update(date: date, theme: .white, insets: .zero,
@@ -114,7 +114,7 @@ struct ClockRenderingTests {
     }
 
     @Test func scrollingDuringFirstFrameDoesNotLeaveClockHidden() async throws {
-        let page = ClockPageView(theme: .white, scene: .numbers)
+        let page = ClockPageView(theme: .white)
         func update(scrolling: Bool) {
             page.update(date: .now, theme: .white, insets: .zero,
                         isScrolling: scrolling, isVisible: true,

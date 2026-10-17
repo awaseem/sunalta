@@ -1,16 +1,13 @@
 import AlarmKit
-import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(\.appTheme) private var theme
-    @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
-    private var alarms: [AlarmRecord]
-    @State private var showingNewAlarm = false
     @State private var updatingAlarmID: UUID?
     @State private var schedulingError: String?
-    var isScrolling = false
+    let alarms: [AlarmRecord]
+    let createAlarm: () -> Void
     let returnToClock: () -> Void
 
     var body: some View {
@@ -26,11 +23,9 @@ struct AlarmListPage: View {
             }
 
             if alarms.isEmpty {
-                AlarmEmptyState(isScrolling: isScrolling, isPresentingAlarm: showingNewAlarm) {
-                    showingNewAlarm = true
-                }
+                AlarmEmptyState()
             } else {
-                AlarmListHeader { showingNewAlarm = true }
+                AlarmListHeader(createAlarm: createAlarm)
                 LazyVStack(spacing: 12) {
                     ForEach(alarms) { alarm in
                         AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id) { enabled in
@@ -52,9 +47,6 @@ struct AlarmListPage: View {
         .padding(.horizontal, 24)
         .frame(maxWidth: 640)
         .frame(maxWidth: .infinity, alignment: .top)
-        .fullScreenCover(isPresented: $showingNewAlarm) {
-            NewAlarmView()
-        }
         .alert("Couldn't update alarm", isPresented: Binding(
             get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
         )) {
@@ -91,9 +83,9 @@ struct AlarmListPage: View {
 
 }
 
-#Preview("Saved alarms") {
+#Preview("Welcome") {
     AlarmPreviewContainer {
-        ScrollView { AlarmListPage(returnToClock: {}) }
+        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, returnToClock: {}) }
             .background(AppTheme.white.palette.background)
     }
 }

@@ -11,7 +11,6 @@ struct AppTheme: Identifiable, Equatable {
     var clock: ClockAppearance
     let panelShadow: ThemeShadow
     var weekday: ClockWeekdayAppearance
-    var alarmClockFinish: AlarmClockFinish
     var clockFlyby: ClockFlybyKind
     var audio: ClockAudioConfiguration
 
@@ -23,7 +22,6 @@ struct AppTheme: Identifiable, Equatable {
         clock: ClockAppearance? = nil,
         panelShadow: ThemeShadow? = nil,
         weekday: ClockWeekdayAppearance = .init(),
-        alarmClockFinish: AlarmClockFinish = .init(),
         clockFlyby: ClockFlybyKind = .none,
         audio: ClockAudioConfiguration = .init()
     ) {
@@ -36,7 +34,6 @@ struct AppTheme: Identifiable, Equatable {
             color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12)
         )
         self.weekday = weekday
-        self.alarmClockFinish = alarmClockFinish
         self.clockFlyby = clockFlyby
         self.audio = audio
     }
