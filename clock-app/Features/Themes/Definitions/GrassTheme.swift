@@ -34,6 +34,7 @@ extension AppTheme {
         ),
         clockFlyby: .butterfly,
         audio: ClockAudioConfiguration(
+            alarm: .meadowMorning,
             music: ClockSound(fileName: "grass-field.mp3", volume: 0.25),
             musicLoopDelay: .seconds(10),
             flyby: ClockSound(fileName: "butterfly-sounds.wav", volume: 0.65),

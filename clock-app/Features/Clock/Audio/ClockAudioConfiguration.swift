@@ -1,5 +1,7 @@
 /// Theme-authored audio. Leave a layer nil to keep that part of the theme silent.
 struct ClockAudioConfiguration: Equatable {
+    /// Explicit wake-up sound, separate from the decorative clock music.
+    var alarm: AlarmSound?
     /// Loops while the numeral clock is visible.
     var music: ClockSound?
     /// Silence after the track finishes, before its next play.

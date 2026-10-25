@@ -7,7 +7,7 @@ enum AlarmEditorStep: Int, CaseIterable {
         case .repeatDays: "Repeat"
         case .snooze: "Snooze"
         case .exitPoint: "Exit point"
-        case .name: "Name"
+        case .name: "Name & sound"
         }
     }
 

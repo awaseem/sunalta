@@ -1,0 +1,42 @@
+{
+  "provider": "ElevenLabs",
+  "flowID": "WMjNxzWbs2X0ulYRyA70",
+  "approval": "White and Midnight: third pass with stronger melodic accents. Grass: second pass retained. Approved in the alarm sounds conversation.",
+  "encoding": "16-bit little-endian PCM WAV, 44.1 kHz stereo. Trimmed to 29.8 seconds with a 20 ms endpoint taper; original mix levels preserved.",
+  "selectionPolicy": "Theme selections capture the creation theme. Fixed selections do not follow appearance. Legacy nil and missing resources use the system alarm sound.",
+  "assets": [
+    {
+      "theme": "white",
+      "title": "Morning Light",
+      "file": "white-alarm.wav",
+      "generationID": "HDxeghh28ilaalEo5adT",
+      "sessionID": "Y4n37fwnUwyNOf5CBIZA",
+      "durationSeconds": 29.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "sha256": "1d6a50ff449ec4b92bc060cfc6fd8c58e6b5d9e702fda4a89fbf4cc79fc4c516"
+    },
+    {
+      "theme": "midnight",
+      "title": "Quiet Orbit",
+      "file": "midnight-alarm.wav",
+      "generationID": "TwMzF2Ri3VC7oN5VCgxV",
+      "sessionID": "grR05DbJQ0I20DV3j0mS",
+      "durationSeconds": 29.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "sha256": "e9ee5a098b6b2c32d25d630b195828265fc8c763081730676953703bdbbfcf5f"
+    },
+    {
+      "theme": "grass",
+      "title": "Meadow Morning",
+      "file": "grass-alarm.wav",
+      "generationID": "hPVLVBUNFtpsCuVfac9J",
+      "sessionID": "OTaLSpzQ9s315SN6w5i4",
+      "durationSeconds": 29.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "sha256": "552b3e7fda98a5f10ab77394e701e4e4a923e37f97669eea5ce9247983fc489b"
+    }
+  ]
+}

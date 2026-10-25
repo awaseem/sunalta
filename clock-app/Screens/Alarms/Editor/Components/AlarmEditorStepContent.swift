@@ -41,10 +41,13 @@ struct AlarmEditorStepContent: View {
             case .exitPoint:
                 AlarmExitPointOptions(draft: $draft.exitPoint)
             case .name:
-                AlarmNameField(name: $draft.name)
-                    .padding(.horizontal)
-                    .frame(maxWidth: 560)
-                    .frame(maxWidth: .infinity)
+                VStack(alignment: .leading) {
+                    AlarmNameField(name: $draft.name)
+                    AlarmSoundPicker(selection: $draft.soundSelection)
+                }
+                .padding(.horizontal)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(.vertical)

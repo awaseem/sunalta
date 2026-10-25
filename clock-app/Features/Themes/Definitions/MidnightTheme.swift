@@ -31,6 +31,7 @@ extension AppTheme {
         ),
         clockFlyby: .bat,
         audio: ClockAudioConfiguration(
+            alarm: .quietOrbit,
             music: ClockSound(fileName: "midnight-street.mp3", volume: 0.25),
             musicLoopDelay: .seconds(10),
             flyby: ClockSound(fileName: "bat-sounds.wav", volume: 0.65),

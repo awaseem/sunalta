@@ -30,6 +30,7 @@ extension AppTheme {
         ),
         clockFlyby: .bird,
         audio: ClockAudioConfiguration(
+            alarm: .morningLight,
             music: ClockSound(fileName: "white-dawn.mp3", volume: 0.25),
             musicLoopDelay: .seconds(10),
             flyby: ClockSound(fileName: "bird-sounds.wav", volume: 0.65),

@@ -20,7 +20,8 @@ struct AlarmEditorService {
         let alarm = try AlarmRecord(
             hour: time.hour ?? 7, minute: time.minute ?? 0,
             label: name, isEnabled: false,
-            repeatDays: draft.repeatDays, snoozeEnabled: draft.snoozeEnabled,
+            repeatDays: draft.repeatDays, soundName: draft.soundSelection.storedValue,
+            snoozeEnabled: draft.snoozeEnabled,
             snoozeDurationMinutes: draft.snoozeMinutes, exitPoint: draft.exitPoint.selection,
             stopTargets: target.map { [$0] } ?? []
         )
@@ -128,6 +129,7 @@ struct AlarmEditorService {
         alarm.label = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         alarm.repeatDays = draft.repeatDays
         alarm.snoozeEnabled = draft.snoozeEnabled
+        alarm.soundSelection = draft.soundSelection
         try alarm.validate()
     }
 }
