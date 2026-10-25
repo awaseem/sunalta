@@ -17,7 +17,8 @@ struct ClockAlarmLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     Label(context.attributes.metadata?.title ?? "Alarm", systemImage: symbol(context))
                         .font(.headline)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .truncationMode(.tail)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     AlarmCountdownTime(mode: context.state.mode)

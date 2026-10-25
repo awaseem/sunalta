@@ -9,8 +9,10 @@ struct AlarmCreationService {
     func create(_ draft: NewAlarmDraft) throws -> AlarmRecord {
         let target = try draft.exitPoint.makeStopTarget()
         let time = draft.timeComponents(calendar: calendar)
+        let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let alarm = try AlarmRecord(
-            hour: time.hour ?? 7, minute: time.minute ?? 0, isEnabled: false,
+            hour: time.hour ?? 7, minute: time.minute ?? 0,
+            label: name, isEnabled: false,
             repeatDays: draft.repeatDays, snoozeEnabled: draft.snoozeEnabled,
             snoozeDurationMinutes: draft.snoozeMinutes, exitPoint: draft.exitPoint.selection,
             stopTargets: target.map { [$0] } ?? []

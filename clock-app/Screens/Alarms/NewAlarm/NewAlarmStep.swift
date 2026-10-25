@@ -1,5 +1,5 @@
 enum NewAlarmStep: Int, CaseIterable {
-    case time, repeatDays, snooze, exitPoint
+    case time, repeatDays, snooze, exitPoint, name
 
     var title: String {
         switch self {
@@ -7,6 +7,7 @@ enum NewAlarmStep: Int, CaseIterable {
         case .repeatDays: "Repeat"
         case .snooze: "Snooze"
         case .exitPoint: "Exit point"
+        case .name: "Name"
         }
     }
 
@@ -16,6 +17,7 @@ enum NewAlarmStep: Int, CaseIterable {
         case .repeatDays: "Leave empty to ring once."
         case .snooze: "Choose how long to snooze."
         case .exitPoint: "Choose how you'll stop your alarm."
+        case .name: "Give your alarm a name, or leave it blank."
         }
     }
 

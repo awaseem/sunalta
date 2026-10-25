@@ -11,7 +11,8 @@ struct AlarmCountdownContent: View {
             VStack(alignment: .leading, spacing: 6) {
                 Label(metadata?.title ?? "Alarm", systemImage: metadata?.scanSymbol ?? "alarm")
                     .font(.headline)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
                 Text(metadata?.statusText ?? "Snoozed").font(.subheadline).foregroundStyle(.secondary)
                 AlarmCountdownTime(mode: state.mode)
                     .font(.system(.largeTitle, design: .rounded, weight: .semibold))

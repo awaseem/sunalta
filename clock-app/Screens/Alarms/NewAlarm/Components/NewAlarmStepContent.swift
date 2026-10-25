@@ -40,6 +40,11 @@ struct NewAlarmStepContent: View {
                     .frame(maxWidth: .infinity)
             case .exitPoint:
                 AlarmExitPointOptions(draft: $draft.exitPoint)
+            case .name:
+                AlarmNameField(name: $draft.name)
+                    .padding(.horizontal)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity)
             }
         }
         .padding(.vertical)
