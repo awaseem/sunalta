@@ -46,7 +46,7 @@ struct NewAlarmView: View {
                         .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
                     NewAlarmStepContainer(step: step, draft: $draft, idealHeight: $idealFormHeight)
                         .frame(height: layout.formHeight)
-                    NewAlarmContinueButton(isFinalStep: step == .exitPoint, onContinue: continueStep)
+                    NewAlarmContinueButton(isFinalStep: step.next == nil, onContinue: continueStep)
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { footerHeight = $0 }
                 }
             }

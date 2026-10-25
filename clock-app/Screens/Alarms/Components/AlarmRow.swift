@@ -23,9 +23,11 @@ struct AlarmRow: View {
                     AlarmEnabledToggle(alarm: alarm, isUpdating: isUpdating, onEnabledChange: onEnabledChange)
                 }
             }
-            if !alarm.label.isEmpty && alarm.label != "Alarm" {
+            if !alarm.label.isEmpty {
                 Text(alarm.label)
                     .font(.headline)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
             }
             Text(repeatDescription)
                 .font(.subheadline)

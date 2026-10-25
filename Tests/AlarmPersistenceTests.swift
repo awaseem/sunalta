@@ -15,6 +15,7 @@ struct AlarmPersistenceTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .gmt
         var draft = NewAlarmDraft()
+        draft.name = " \n Morning workout \t "
         draft.time = try Date("2026-10-08T07:05:00Z", strategy: .iso8601)
         draft.repeatDays = [.monday, .friday]
         draft.exitPoint = .init(selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "wake-up"))
@@ -25,10 +26,23 @@ struct AlarmPersistenceTests {
         let alarm = try #require(context.fetch(FetchDescriptor<AlarmRecord>()).first)
         let target = try #require(context.fetch(FetchDescriptor<AlarmStopTarget>()).first)
         #expect(alarm.id == created.id)
+        #expect(alarm.label == "Morning workout")
         #expect(alarm.hour == 7 && alarm.minute == 5 && !alarm.isEnabled)
         #expect(alarm.repeatDays == [.monday, .friday])
         #expect(alarm.stopTargets.map(\.id) == [target.id])
         #expect(target.alarms.map(\.id) == [alarm.id])
+    }
+
+    @Test(arguments: [("", ""), (" \t\n\r ", ""), ("\u{00A0}\u{2003}", ""), (" Alarm ", "Alarm")])
+    func creationKeepsUnnamedAlarmsDistinctFromAnExplicitAlarmName(name: String, expectedLabel: String) throws {
+        let container = try makeContainer()
+        var draft = NewAlarmDraft()
+        draft.name = name
+        try AlarmCreationService(context: container.mainContext).create(draft)
+
+        let context = ModelContext(container)
+        let alarm = try #require(context.fetch(FetchDescriptor<AlarmRecord>()).first)
+        #expect(alarm.label == expectedLabel)
     }
 
     @Test func invalidCreationDoesNotInsertPartialRecords() throws {

@@ -8,6 +8,7 @@ struct NewAlarmDraft {
     var snoozeEnabled = true
     var snoozeMinutes = 10
     var exitPoint = AlarmExitPointDraft()
+    var name = ""
 
     func timeComponents(calendar: Calendar = .autoupdatingCurrent) -> DateComponents {
         calendar.dateComponents([.hour, .minute], from: time)
