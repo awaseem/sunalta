@@ -7,6 +7,7 @@ extension AppTheme {
         id: "midnight",
         name: "Midnight",
         colorScheme: .dark,
+        appIconName: "AppIconMidnight",
         palette: ThemePalette(
             background: Color(red: 16 / 255, green: 17 / 255, blue: 20 / 255),
             foreground: .white,

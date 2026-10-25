@@ -7,6 +7,8 @@ struct AppTheme: Identifiable, Equatable {
     let name: String
     /// Used only to match native controls and system presentation to the theme.
     let colorScheme: ColorScheme
+    /// Asset catalog name; nil uses the primary (White) app icon.
+    let appIconName: String?
     var palette: ThemePalette
     var clock: ClockAppearance
     let panelShadow: ThemeShadow
@@ -18,6 +20,7 @@ struct AppTheme: Identifiable, Equatable {
         id: String,
         name: String,
         colorScheme: ColorScheme,
+        appIconName: String? = nil,
         palette: ThemePalette,
         clock: ClockAppearance? = nil,
         panelShadow: ThemeShadow? = nil,
@@ -28,6 +31,7 @@ struct AppTheme: Identifiable, Equatable {
         self.id = id
         self.name = name
         self.colorScheme = colorScheme
+        self.appIconName = appIconName
         self.palette = palette
         self.clock = clock ?? ClockAppearance(numeralColor: palette.foreground)
         self.panelShadow = panelShadow ?? ThemeShadow(

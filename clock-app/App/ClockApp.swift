@@ -4,10 +4,12 @@ import AppIntents
 
 @main
 struct ClockApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     private let container: ModelContainer
     @State private var runtime: AlarmRuntime
     @State private var themeSettings = ThemeSettings()
     @State private var audioService = ClockAudioService()
+    @State private var appIcon = ThemeAppIcon()
 
     init() {
         do {
@@ -30,6 +32,19 @@ struct ClockApp: App {
                 .environment(themeSettings)
                 .environment(audioService)
                 .appTheme(themeSettings.theme)
+                .task(id: themeSettings.theme.id) {
+                    await appIcon.synchronize(with: themeSettings.theme)
+                }
+                .task(id: scenePhase) {
+                    if scenePhase == .active {
+                        await appIcon.synchronize(with: themeSettings.theme)
+                    }
+                }
+                .task {
+                    #if DEBUG
+                    await ThemeIconExporter.exportIfRequested()
+                    #endif
+                }
         }
         .modelContainer(container)
     }
