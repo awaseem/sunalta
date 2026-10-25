@@ -60,7 +60,8 @@ enum AlarmScheduler {
             stopIntent: StopClockAlarmIntent(alarmID: alarm.id, systemID: id, token: token),
             secondaryIntent: needsScan
                 ? ScanClockAlarmIntent(alarmID: alarm.id, systemID: id, token: token)
-                : alarm.snoozeEnabled ? SnoozeClockAlarmIntent(alarmID: alarm.id, systemID: id, token: token) : nil
+                : alarm.snoozeEnabled ? SnoozeClockAlarmIntent(alarmID: alarm.id, systemID: id, token: token) : nil,
+            sound: AlarmSoundResolver().alertSound(for: alarm.soundSelection)
         )
     }
 

@@ -9,6 +9,7 @@ struct AlarmEditorDraft {
     var snoozeMinutes = 10
     var exitPoint = AlarmExitPointDraft()
     var name = ""
+    var soundSelection: AlarmSoundSelection = .theme(AppTheme.defaultTheme.id)
 
     func validate(calendar: Calendar = .autoupdatingCurrent) throws {
         let components = timeComponents(calendar: calendar)
@@ -36,14 +37,20 @@ struct AlarmEditorDraft {
 }
 
 extension AlarmEditorDraft {
-    init(alarm: AlarmRecord, calendar: Calendar = .autoupdatingCurrent) {
+    init(theme: AppTheme) {
         self.init()
+        soundSelection = .theme(theme.id)
+    }
+
+    init(alarm: AlarmRecord, theme: AppTheme = .defaultTheme, calendar: Calendar = .autoupdatingCurrent) {
+        self.init(theme: theme)
         time = calendar.date(from: DateComponents(year: 2001, month: 1, day: 1,
                                                   hour: alarm.hour, minute: alarm.minute)) ?? time
         repeatDays = alarm.repeatDays
         snoozeEnabled = alarm.snoozeEnabled
         snoozeMinutes = alarm.snoozeDurationMinutes
         name = alarm.label
+        soundSelection = alarm.soundSelection
         exitPoint.selection = alarm.exitPoint
         if let target = alarm.stopTargets.first, let kind = target.kind {
             exitPoint.scannedCode = .init(kind: kind, value: target.codeValue)

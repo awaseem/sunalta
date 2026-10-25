@@ -33,7 +33,7 @@ struct HomeScreen: View {
                 VStack(spacing: 0) {
                     TimelineView(.everyMinute) { context in
                         SculptedClockView(date: context.date, isScrolling: isScrolling,
-                                         isVisible: isClockVisible && scenePhase == .active,
+                                         isVisible: isClockVisible && scenePhase == .active && alarmEditor == nil,
                                          isEditingAppearance: isEditingAppearance,
                                          contentSafeAreaInsets: UIEdgeInsets(
                             top: geometry.safeAreaInsets.top, left: 0,
@@ -156,7 +156,7 @@ struct HomeScreen: View {
         }
         .background(theme.palette.background)
         .fullScreenCover(item: $alarmEditor) { destination in
-            AlarmEditorView(alarm: destination.alarm)
+            AlarmEditorView(alarm: destination.alarm, theme: theme)
         }
     }
 }

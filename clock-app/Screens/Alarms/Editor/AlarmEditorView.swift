@@ -17,9 +17,10 @@ struct AlarmEditorView: View {
     @State private var idealFormHeight: CGFloat = 240
     private let alarm: AlarmRecord?
 
-    init(alarm: AlarmRecord? = nil) {
+    init(alarm: AlarmRecord? = nil, theme: AppTheme = .defaultTheme) {
         self.alarm = alarm
-        _draft = State(initialValue: alarm.map { AlarmEditorDraft(alarm: $0) } ?? AlarmEditorDraft())
+        _draft = State(initialValue: alarm.map { AlarmEditorDraft(alarm: $0, theme: theme) }
+                       ?? AlarmEditorDraft(theme: theme))
     }
 
     var body: some View {

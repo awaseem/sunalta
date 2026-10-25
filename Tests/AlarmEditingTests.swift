@@ -118,6 +118,7 @@ struct AlarmEditingTests {
         var draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
         draft.name = "Updated"
         draft.time = try Date("2026-10-25T10:15:00Z", strategy: .iso8601)
+        draft.soundSelection = .named(AlarmSound.quietOrbit.rawValue)
         var schedules = [alarm.id: "Early start"]
         var operations: [String] = []
         var service = makeService(container.mainContext)
@@ -130,8 +131,10 @@ struct AlarmEditingTests {
             #expect(schedules.isEmpty)
             #expect(record.hour == 10 && record.minute == 15)
             #expect(record.scheduleToken != "old-token")
+            #expect(record.soundSelection == draft.soundSelection)
             let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
             #expect(saved.scheduleToken == record.scheduleToken)
+            #expect(saved.soundSelection == draft.soundSelection)
             operations.append("schedule")
             schedules[id] = record.label
         }
@@ -154,13 +157,18 @@ struct AlarmEditingTests {
         var draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
         draft.name = "Updated"
         draft.exitPoint = .init(selection: .nfc, scannedCode: .init(kind: .nfc, value: "0ABC"))
+        draft.soundSelection = .theme(AppTheme.grass.id)
         var schedules = [alarm.id: "Early start"]
         var attempts = 0
         var service = makeService(container.mainContext)
         service.cancel = { schedules[$0] = nil }
         service.schedule = { record, id, _ in
             attempts += 1
-            if attempts == 1 { throw CocoaError(.featureUnsupported) }
+            if attempts == 1 {
+                #expect(record.soundSelection == draft.soundSelection)
+                throw CocoaError(.featureUnsupported)
+            }
+            #expect(record.soundName == "birdsong.caf")
             #expect(record.scheduleToken == "old-token")
             #expect(record.stopTargets.first?.id == targetID)
             schedules[id] = record.label
@@ -172,6 +180,7 @@ struct AlarmEditingTests {
         let savedContext = ModelContext(container)
         let saved = try #require(savedContext.fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(saved.label == "Early start" && saved.scheduleToken == "old-token")
+        #expect(saved.soundName == "birdsong.caf")
         #expect(saved.exitPoint == .qrCode && saved.exitPointName == "Kitchen")
         #expect(saved.stopTargets.first?.id == targetID)
         #expect(try savedContext.fetchCount(FetchDescriptor<AlarmStopTarget>()) == 1)
@@ -182,6 +191,7 @@ struct AlarmEditingTests {
         let alarm = try insertAlarm(in: container.mainContext)
         var draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
         draft.name = "Unsaved"
+        draft.soundSelection = .named(AlarmSound.morningLight.rawValue)
         var attempts = 0
         var service = makeService(container.mainContext)
         service.save = { context in
@@ -197,6 +207,7 @@ struct AlarmEditingTests {
         #expect(attempts == 2)
         let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(alarm.label == "Early start" && saved.label == "Early start")
+        #expect(alarm.soundName == "birdsong.caf" && saved.soundName == "birdsong.caf")
         #expect(alarm.scheduleToken == "old-token" && saved.scheduleToken == "old-token")
     }
 
