@@ -45,6 +45,23 @@ final class NumeralClockScene {
         show(time: AlarmTimeText.text(hour: time.hour ?? 0, minute: time.minute ?? 0))
     }
 
+    /// A material swatch uses the same sculpted glyph and surface as the clock face.
+    func show(numeral: String) {
+        guard displayedTime != numeral, let prototype = glyphs[numeral],
+              let bounds = glyphBounds[numeral] else { return }
+        displayedTime = numeral
+        for glyph in timeSlots { glyph.removeFromParent() }
+        let glyph = prototype.clone(recursive: true)
+        glyph.name = numeral
+        if let material { glyph.model?.materials = [material] }
+        glyph.scale = [1, digitHeightScale, 1]
+        glyph.position = [-bounds.center.x, -bounds.center.y * digitHeightScale, 0]
+        applySurface(to: glyph)
+        timeSlots = [glyph]
+        root.scale = .one
+        root.addChild(glyph)
+    }
+
     func show(time: String) {
         guard time != displayedTime, !glyphs.isEmpty else { return }
         let characters = Array(time.filter(\.isNumber))

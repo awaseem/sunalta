@@ -21,7 +21,7 @@ struct AlarmListPage: View {
                     .frame(minHeight: 44)
                     .accessibilityLabel("Return to the clock")
                 Spacer()
-                ClockSettingsMenu()
+                ClockSettingsButton()
             }
 
             if alarms.isEmpty {
