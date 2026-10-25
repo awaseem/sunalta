@@ -13,7 +13,12 @@ final class ThemeSettings {
     private static let adjustmentsKey = "themeAdjustmentsV1"
 
     var theme: AppTheme {
-        adjustments[baseTheme.id]?.applying(to: baseTheme) ?? baseTheme
+        appearance(for: baseTheme)
+    }
+
+    /// Preview saved adjustments without changing the selected theme or its persisted ID.
+    func appearance(for theme: AppTheme) -> AppTheme {
+        adjustments[theme.id]?.applying(to: theme) ?? theme
     }
 
     var lighting: ClockLightingSettings {

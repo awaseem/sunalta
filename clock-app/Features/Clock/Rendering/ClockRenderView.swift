@@ -24,6 +24,7 @@ final class ClockRenderView: ClockMetalView {
         didSet { if oldValue != previewTopInset { setNeedsLayout() } }
     }
     private let isAlarmPreview: Bool
+    private let previewNumeral: String?
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
         didSet {
             if oldValue != contentSafeAreaInsets { setNeedsLayout() }
@@ -57,11 +58,12 @@ final class ClockRenderView: ClockMetalView {
         didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
     }
 
-    init(theme: AppTheme, isAlarmPreview: Bool = false,
+    init(theme: AppTheme, isAlarmPreview: Bool = false, previewNumeral: String? = nil,
          audioService: ClockAudioService? = nil) {
         self.theme = theme
         self.audioService = audioService
-        self.isAlarmPreview = isAlarmPreview
+        self.isAlarmPreview = isAlarmPreview || previewNumeral != nil
+        self.previewNumeral = previewNumeral
         super.init()
         isAccessibilityElement = true
         accessibilityTraits = .staticText
@@ -97,7 +99,7 @@ final class ClockRenderView: ClockMetalView {
             materials: []
         )
         backdrop.components.set(DynamicLightShadowComponent(castsShadow: false))
-        backdrop.position.z = isAlarmPreview ? -0.04 : ClockFlybyPath.backdropDepth
+        backdrop.position.z = self.isAlarmPreview ? -0.04 : ClockFlybyPath.backdropDepth
         anchor.addChild(backdrop)
 
         applyLighting()
@@ -237,16 +239,26 @@ final class ClockRenderView: ClockMetalView {
         guard bounds.width > 0, bounds.height > 0 else { return }
         let aspect = Float(bounds.width / bounds.height)
         // The preview's lit backdrop fills the entire modal, eliminating color seams.
-        let visibleHeight = isAlarmPreview
-            ? max(Float(bounds.height / max(previewHeight, 1)) * 10.7, 4.4 / aspect)
-            : max(13.8, 4.4 / aspect)
+        let visibleHeight: Float
+        if previewNumeral != nil {
+            visibleHeight = max(6.2, 3 / aspect)
+        } else if isAlarmPreview {
+            visibleHeight = max(Float(bounds.height / max(previewHeight, 1)) * 10.7, 4.4 / aspect)
+        } else {
+            visibleHeight = max(13.8, 4.4 / aspect)
+        }
         let distance = visibleHeight / (2 * tan(Float(6 * Double.pi / 180))) + 0.6565
         let topInset = max(safeAreaInsets.top, contentSafeAreaInsets.top)
         let bottomInset = max(safeAreaInsets.bottom, contentSafeAreaInsets.bottom)
         let usableHeight = bounds.height - topInset - bottomInset
-        let centerFromTop = isAlarmPreview
-            ? topInset + previewTopInset + previewHeight * 0.50
-            : topInset + usableHeight * 0.40
+        let centerFromTop: CGFloat
+        if previewNumeral != nil {
+            centerFromTop = bounds.height * 0.5
+        } else if isAlarmPreview {
+            centerFromTop = topInset + previewTopInset + previewHeight * 0.50
+        } else {
+            centerFromTop = topInset + usableHeight * 0.40
+        }
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]
         cameraRestOffset = [0, -centerY, distance]
@@ -363,7 +375,9 @@ final class ClockRenderView: ClockMetalView {
     }
 
     private func updateTime() {
-        if let previewTime, let content {
+        if let previewNumeral {
+            content?.show(numeral: previewNumeral)
+        } else if let previewTime, let content {
             content.show(time: previewTime)
         } else {
             content?.show(date: displayedDate)

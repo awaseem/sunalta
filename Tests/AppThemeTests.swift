@@ -5,6 +5,27 @@ import Testing
 
 @MainActor
 struct AppThemeTests {
+    @Test func browsingThemePreviewsPreservesSelectionAndSavedAdjustments() throws {
+        let suite = "ThemeSettingsTests-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = ThemeSettings(defaults: defaults)
+        settings.select(.grass)
+        settings.lighting.direction = -70
+        settings.shimmer = 0.2
+        settings.select(.midnight)
+
+        let preview = settings.appearance(for: .grass)
+
+        #expect(preview.clock.lighting.direction == -70)
+        #expect(preview == ThemeSettings(defaults: defaults).appearance(for: .grass))
+        #expect(settings.theme.id == AppTheme.midnight.id)
+        #expect(ThemeSettings(defaults: defaults).theme.id == AppTheme.midnight.id)
+        settings.select(.grass)
+        #expect(settings.theme == preview)
+        #expect(settings.shimmer == 0.2)
+    }
+
     @Test func appearanceEditsAndReloadPreserveTheSelectedThemesAnimalsAndAudio() throws {
         let suite = "ThemeSettingsTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
