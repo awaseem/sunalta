@@ -11,19 +11,18 @@ struct AlarmSoundPicker: View {
         VStack(alignment: .leading) {
             HStack {
                 Menu {
-                    Picker("Alarm sound", selection: pickerSelection) {
-                        ForEach(AlarmSound.allCases) { sound in
-                            Text(sound.title).tag(AlarmSoundSelection.named(sound.rawValue))
+                    ForEach(AlarmSound.allCases) { sound in
+                        Button {
+                            selection = .named(sound.rawValue)
+                        } label: {
+                            if selectedSound == sound {
+                                Label(sound.title, systemImage: "checkmark")
+                            } else {
+                                Text(sound.title)
+                            }
                         }
-                        Text("System default").tag(AlarmSoundSelection.systemDefault)
-                        if case .named(let name) = selection, AlarmSound(rawValue: name) == nil {
-                            Text("Previous sound").tag(selection)
-                        }
-                        if case .theme = pickerSelection.wrappedValue {
-                            Text("Unavailable sound").tag(selection)
-                        }
+                        .accessibilityAddTraits(selectedSound == sound ? .isSelected : [])
                     }
-                    .pickerStyle(.inline)
                 } label: {
                     HStack {
                         Text(selectionTitle)
@@ -40,18 +39,20 @@ struct AlarmSoundPicker: View {
                 .accessibilityValue(selectionTitle)
                 .accessibilityIdentifier("alarmSoundPicker")
 
-                Button(preview.playingSelection == selection ? "Stop preview" : "Preview sound",
-                       systemImage: preview.playingSelection == selection ? "stop.fill" : "play.fill") {
-                    preview.toggle(selection)
+                if fileName != nil {
+                    Button(preview.playingSelection == selection ? "Stop preview" : "Preview sound",
+                           systemImage: preview.playingSelection == selection ? "stop.fill" : "play.fill") {
+                        preview.toggle(selection)
+                    }
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(theme.palette.onControl)
+                    .buttonStyle(.glassProminent)
+                    .buttonBorderShape(.circle)
+                    .controlSize(.large)
+                    .tint(theme.palette.control)
+                    .accessibilityHint("Plays the selected alarm sound once.")
+                    .accessibilityIdentifier("alarmSoundPreview")
                 }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.circle)
-                .controlSize(.large)
-                .tint(theme.palette.selection)
-                .accessibilityHint("Plays the selected alarm sound once.")
-                .accessibilityIdentifier("alarmSoundPreview")
-                .disabled(fileName == nil)
             }
             if let error = preview.errorMessage {
                 Text(error).font(.footnote).foregroundStyle(theme.palette.error)
@@ -68,25 +69,20 @@ struct AlarmSoundPicker: View {
         .task { await preview.observeInterruptions() }
     }
 
-    // Show the captured theme's track as the selected item without a duplicate theme option.
-    private var pickerSelection: Binding<AlarmSoundSelection> {
-        Binding(
-            get: {
-                if case .theme(let id) = selection,
-                   let sound = AppTheme.available.first(where: { $0.id == id })?.audio.alarm {
-                    return .named(sound.rawValue)
-                }
-                return selection
-            },
-            set: { selection = $0 }
-        )
+    private var selectedSound: AlarmSound? {
+        switch selection {
+        case .systemDefault: nil
+        case .theme(let id): AppTheme.available.first { $0.id == id }?.audio.alarm
+        case .named(let name): AlarmSound(rawValue: name)
+        }
     }
 
     private var selectionTitle: String {
-        switch pickerSelection.wrappedValue {
+        if let selectedSound { return selectedSound.title }
+        return switch selection {
         case .systemDefault: "System default"
         case .theme: "Unavailable sound"
-        case .named(let name): AlarmSound(rawValue: name)?.title ?? "Previous sound"
+        case .named: "Previous sound"
         }
     }
 }
