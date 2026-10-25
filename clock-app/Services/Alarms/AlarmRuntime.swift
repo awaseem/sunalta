@@ -7,7 +7,7 @@ import SwiftData
 @Observable
 final class AlarmRuntime {
     nonisolated static let retryInterval: TimeInterval = 30
-    private static let configurationVersion = 1
+    static let configurationVersion = 1
 
     private(set) var activeAlarm: AlarmRecord?
     private(set) var scanRequestID: UUID?
@@ -125,6 +125,14 @@ final class AlarmRuntime {
                 self.activeAlarm = nil
                 self.scanRequestID = nil
             }
+        }
+    }
+
+    func update(_ alarm: AlarmRecord, from draft: AlarmEditorDraft) async throws {
+        let id = alarm.id
+        try await perform(for: id) {
+            guard let alarm = try self.alarm(id) else { throw SessionError.alarmDeleted }
+            try await AlarmEditorService(context: self.context).update(draft, alarm: alarm)
         }
     }
 
@@ -332,7 +340,7 @@ final class AlarmRuntime {
         do {
             try context.save()
         } catch {
-            throw AlarmRecoveryError(operationError: operationError, persistenceError: error)
+            throw AlarmRecoveryError(operationError: operationError, recoveryError: error)
         }
         throw operationError
     }

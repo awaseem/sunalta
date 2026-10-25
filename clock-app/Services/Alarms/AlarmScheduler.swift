@@ -3,6 +3,11 @@ import Foundation
 import SwiftUI
 
 enum AlarmScheduler {
+    static func hasActiveSession(_ alarm: AlarmRecord) throws -> Bool {
+        let ids = Set([alarm.id] + alarm.retryAlarmIDs)
+        return try AlarmManager.shared.alarms.contains { ids.contains($0.id) && $0.state != .scheduled }
+    }
+
     static func authorize() async throws {
         let manager = AlarmManager.shared
         var authorization = manager.authorizationState

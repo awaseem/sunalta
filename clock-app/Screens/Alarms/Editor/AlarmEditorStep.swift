@@ -1,4 +1,4 @@
-enum NewAlarmStep: Int, CaseIterable {
+enum AlarmEditorStep: Int, CaseIterable {
     case time, repeatDays, snooze, exitPoint, name
 
     var title: String {

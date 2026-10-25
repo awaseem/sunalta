@@ -5,6 +5,10 @@ struct AlarmSnoozeOptions: View {
     @Binding var snoozeEnabled: Bool
     @Binding var snoozeMinutes: Int
 
+    private var durations: [Int] {
+        Array(Set([5, 10, 15, 20, 25, 30, snoozeMinutes])).sorted()
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Toggle("Allow snooze", isOn: $snoozeEnabled)
@@ -15,7 +19,7 @@ struct AlarmSnoozeOptions: View {
             if snoozeEnabled {
                 Text("Snooze duration").font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 10) {
-                    ForEach([5, 10, 15, 20, 25, 30], id: \.self) { minutes in
+                    ForEach(durations, id: \.self) { minutes in
                         Button { snoozeMinutes = minutes } label: {
                             Text("\(minutes) min")
                                 .font(.body.weight(.medium))

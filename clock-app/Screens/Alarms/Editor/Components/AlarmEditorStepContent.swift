@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct NewAlarmStepContent: View {
+struct AlarmEditorStepContent: View {
     @Environment(\.appTheme) private var theme
-    let step: NewAlarmStep
-    @Binding var draft: NewAlarmDraft
+    let step: AlarmEditorStep
+    @Binding var draft: AlarmEditorDraft
 
     var body: some View {
         VStack(alignment: .leading) {

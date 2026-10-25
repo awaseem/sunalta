@@ -1,7 +1,8 @@
 import SwiftUI
 
-struct NewAlarmHeader: View {
+struct AlarmEditorHeader: View {
     @Environment(\.appTheme) private var theme
+    let isEditing: Bool
     let step: Int
     let stepCount: Int
     let onBack: () -> Void
@@ -10,16 +11,15 @@ struct NewAlarmHeader: View {
     var body: some View {
         GlassEffectContainer {
             HStack {
-                Button(step == 0 ? "Cancel new alarm" : "Previous step",
+                Button(step == 0 ? "Cancel alarm changes" : "Previous step",
                        systemImage: step == 0 ? "xmark" : "chevron.left", action: onBack)
                     .labelStyle(.iconOnly)
                     .font(.body.weight(.semibold))
                     .frame(minWidth: 44, minHeight: 44)
                     .glassEffect(.regular.interactive(), in: .circle)
-                .accessibilityLabel(step == 0 ? "Cancel new alarm" : "Previous step")
                 Spacer()
                 VStack(spacing: 6) {
-                    Text("NEW ALARM")
+                    Text(isEditing ? "EDIT ALARM" : "NEW ALARM")
                         .font(.caption.weight(.semibold))
                         .tracking(2)
                     HStack(spacing: 5) {
@@ -31,15 +31,14 @@ struct NewAlarmHeader: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("New alarm, step \(step + 1) of \(stepCount)")
+                .accessibilityLabel("\(isEditing ? "Edit alarm" : "New alarm"), step \(step + 1) of \(stepCount)")
                 Spacer()
                 if step > 0 {
-                    Button("Cancel new alarm", systemImage: "xmark", action: onCancel)
+                    Button("Cancel alarm changes", systemImage: "xmark", action: onCancel)
                         .labelStyle(.iconOnly)
                         .font(.body.weight(.semibold))
                         .frame(minWidth: 44, minHeight: 44)
                         .glassEffect(.regular.interactive(), in: .circle)
-                    .accessibilityLabel("Cancel new alarm")
                 } else {
                     Color.clear.frame(width: 44, height: 44)
                 }

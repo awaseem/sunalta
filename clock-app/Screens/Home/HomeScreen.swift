@@ -7,7 +7,7 @@ struct HomeScreen: View {
     @Environment(\.appTheme) private var theme
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
-    @State private var showingNewAlarm = false
+    @State private var alarmEditor: AlarmEditorDestination?
     @State private var createAlarmFooterHeight: CGFloat = 0
     @State private var isScrolling = false
     @State private var isClockVisible = true
@@ -92,7 +92,8 @@ struct HomeScreen: View {
                     }
                     #endif
 
-                    AlarmListPage(alarms: alarms, createAlarm: { showingNewAlarm = true }) {
+                    AlarmListPage(alarms: alarms, createAlarm: { alarmEditor = .create },
+                                  editAlarm: { alarmEditor = .edit($0) }) {
                         withAnimation(reduceMotion ? nil : .smooth) {
                             scrollPosition.scrollTo(edge: .top)
                         }
@@ -135,7 +136,7 @@ struct HomeScreen: View {
             .frame(height: pageHeight)
             .overlay(alignment: .bottom) {
                 if alarms.isEmpty {
-                    Button("Create alarm") { showingNewAlarm = true }
+                    Button("Create alarm") { alarmEditor = .create }
                         .buttonStyle(.appCapsule(fillsWidth: true))
                         .frame(maxWidth: 560)
                         .padding(.horizontal, 24)
@@ -154,8 +155,8 @@ struct HomeScreen: View {
             .ignoresSafeArea()
         }
         .background(theme.palette.background)
-        .fullScreenCover(isPresented: $showingNewAlarm) {
-            NewAlarmView()
+        .fullScreenCover(item: $alarmEditor) { destination in
+            AlarmEditorView(alarm: destination.alarm)
         }
     }
 }

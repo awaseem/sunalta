@@ -1,7 +1,7 @@
 import Foundation
 
-/// Scan setup stays in the draft until the user creates the alarm.
-struct AlarmExitPointDraft {
+/// Scan setup stays separate from the saved alarm until the editor is saved.
+struct AlarmExitPointDraft: Equatable {
 
     var selection: AlarmExitPoint = .normal
     var scannedCode: ScannedCode?

@@ -1,4 +1,5 @@
 import AlarmKit
+import SwiftData
 import SwiftUI
 
 struct AlarmListPage: View {
@@ -8,6 +9,7 @@ struct AlarmListPage: View {
     @State private var schedulingError: String?
     let alarms: [AlarmRecord]
     let createAlarm: () -> Void
+    let editAlarm: (AlarmRecord) -> Void
     let returnToClock: () -> Void
 
     var body: some View {
@@ -27,18 +29,22 @@ struct AlarmListPage: View {
             } else {
                 AlarmListHeader(createAlarm: createAlarm)
                 LazyVStack(spacing: 12) {
-                    ForEach(alarms) { alarm in
-                        AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id) { enabled in
-                            Task { await setEnabled(enabled, for: alarm) }
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button("Delete", systemImage: "trash", role: .destructive) {
-                                Task { await delete(alarm) }
+                    ForEach(alarms, id: \.persistentModelID) { alarm in
+                        if alarm.modelContext != nil, !alarm.isDeleted {
+                            AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id, onEdit: {
+                                editAlarm(alarm)
+                            }) { enabled in
+                                Task { await setEnabled(enabled, for: alarm) }
                             }
-                            .tint(theme.palette.selection)
-                            .foregroundStyle(theme.palette.onControl)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button("Delete", systemImage: "trash", role: .destructive) {
+                                    Task { await delete(alarm) }
+                                }
+                                .tint(theme.palette.selection)
+                                .foregroundStyle(theme.palette.onControl)
+                            }
+                            .disabled(updatingAlarmID != nil)
                         }
-                        .disabled(updatingAlarmID != nil)
                     }
                 }
                 .swipeActionsContainer()
@@ -85,7 +91,7 @@ struct AlarmListPage: View {
 
 #Preview("Welcome") {
     AlarmPreviewContainer {
-        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, returnToClock: {}) }
+        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, editAlarm: { _ in }, returnToClock: {}) }
             .background(AppTheme.white.palette.background)
     }
 }

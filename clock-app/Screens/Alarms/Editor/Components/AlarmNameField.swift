@@ -20,14 +20,14 @@ struct AlarmNameField: View {
 }
 
 #Preview("Optional name") {
-    @Previewable @State var draft = NewAlarmDraft()
-    NewAlarmStepContent(step: .name, draft: $draft)
+    @Previewable @State var draft = AlarmEditorDraft()
+    AlarmEditorStepContent(step: .name, draft: $draft)
         .appTheme(.white)
 }
 
 #Preview("Long name, large text") {
-    @Previewable @State var draft = NewAlarmDraft(name: "Morning workout before heading to work")
-    NewAlarmStepContent(step: .name, draft: $draft)
+    @Previewable @State var draft = AlarmEditorDraft(name: "Morning workout before heading to work")
+    AlarmEditorStepContent(step: .name, draft: $draft)
         .dynamicTypeSize(.accessibility3)
         .appTheme(.white)
 }
