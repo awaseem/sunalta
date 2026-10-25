@@ -82,6 +82,17 @@ final class AlarmRecord {
         snoozeDurationMinutes = minutes
     }
 
+    func setExitPoint(_ selection: AlarmExitPoint, stopTargets: [AlarmStopTarget]) throws {
+        guard stopTargets.count <= 1 else { throw AlarmValidationError.invalidScanTarget }
+        for target in stopTargets {
+            try target.validate()
+            guard target.kind == selection.scanKind else { throw AlarmValidationError.invalidScanTarget }
+        }
+        exitPointValue = selection.rawValue
+        requiresScanToStop = selection != .normal
+        self.stopTargets = stopTargets
+    }
+
     func validate() throws {
         guard (0...23).contains(hour), (0...59).contains(minute) else {
             throw AlarmValidationError.invalidTime

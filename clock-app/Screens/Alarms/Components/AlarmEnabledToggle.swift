@@ -2,7 +2,9 @@ import SwiftUI
 
 struct AlarmEnabledToggle: View {
     @Environment(\.appTheme) private var theme
-    let alarm: AlarmRecord
+    let hour: Int
+    let minute: Int
+    let isEnabled: Bool
     let isUpdating: Bool
     let onEnabledChange: @MainActor @Sendable (Bool) -> Void
 
@@ -12,12 +14,12 @@ struct AlarmEnabledToggle: View {
                 ProgressView().accessibilityLabel("Updating alarm")
             }
             Toggle("Alarm enabled", isOn: Binding(
-                get: { alarm.isEnabled }, set: onEnabledChange
+                get: { isEnabled }, set: onEnabledChange
             ))
             .labelsHidden()
             .tint(theme.palette.selection)
-            .accessibilityLabel("Alarm at \(AlarmTimeText.text(hour: alarm.hour, minute: alarm.minute))")
-            .accessibilityValue(alarm.isEnabled ? "On" : "Off")
+            .accessibilityLabel("Alarm at \(AlarmTimeText.text(hour: hour, minute: minute))")
+            .accessibilityValue(isEnabled ? "On" : "Off")
         }
     }
 }

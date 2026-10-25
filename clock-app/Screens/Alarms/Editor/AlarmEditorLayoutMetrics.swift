@@ -1,7 +1,7 @@
 import Foundation
 
 /// Fit the form to its content and give the preview all remaining vertical space.
-nonisolated struct NewAlarmLayoutMetrics {
+nonisolated struct AlarmEditorLayoutMetrics {
     let previewHeight: CGFloat
     let formHeight: CGFloat
 

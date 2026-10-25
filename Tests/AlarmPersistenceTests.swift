@@ -14,12 +14,12 @@ struct AlarmPersistenceTests {
         let container = try makeContainer()
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .gmt
-        var draft = NewAlarmDraft()
+        var draft = AlarmEditorDraft()
         draft.name = " \n Morning workout \t "
         draft.time = try Date("2026-10-08T07:05:00Z", strategy: .iso8601)
         draft.repeatDays = [.monday, .friday]
         draft.exitPoint = .init(selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "wake-up"))
-        let created = try AlarmCreationService(context: container.mainContext, calendar: calendar).create(draft)
+        let created = try AlarmEditorService(context: container.mainContext, calendar: calendar).create(draft)
 
         // Fetch from an independent context to verify an explicit save, not an in-memory insertion.
         let context = ModelContext(container)
@@ -36,9 +36,9 @@ struct AlarmPersistenceTests {
     @Test(arguments: [("", ""), (" \t\n\r ", ""), ("\u{00A0}\u{2003}", ""), (" Alarm ", "Alarm")])
     func creationKeepsUnnamedAlarmsDistinctFromAnExplicitAlarmName(name: String, expectedLabel: String) throws {
         let container = try makeContainer()
-        var draft = NewAlarmDraft()
+        var draft = AlarmEditorDraft()
         draft.name = name
-        try AlarmCreationService(context: container.mainContext).create(draft)
+        try AlarmEditorService(context: container.mainContext).create(draft)
 
         let context = ModelContext(container)
         let alarm = try #require(context.fetch(FetchDescriptor<AlarmRecord>()).first)
@@ -47,10 +47,10 @@ struct AlarmPersistenceTests {
 
     @Test func invalidCreationDoesNotInsertPartialRecords() throws {
         let container = try makeContainer()
-        var draft = NewAlarmDraft()
+        var draft = AlarmEditorDraft()
         draft.exitPoint = .init(selection: .qrCode, scannedCode: .init(kind: .nfc, value: "0ABC"))
         #expect(throws: AlarmValidationError.invalidScanTarget) {
-            try AlarmCreationService(context: container.mainContext).create(draft)
+            try AlarmEditorService(context: container.mainContext).create(draft)
         }
         #expect(try container.mainContext.fetchCount(FetchDescriptor<AlarmRecord>()) == 0)
         #expect(try container.mainContext.fetchCount(FetchDescriptor<AlarmStopTarget>()) == 0)
@@ -58,9 +58,9 @@ struct AlarmPersistenceTests {
 
     @Test func deletingATargetNullifiesTheAlarmRelationship() throws {
         let container = try makeContainer()
-        var draft = NewAlarmDraft()
+        var draft = AlarmEditorDraft()
         draft.exitPoint = .init(selection: .nfc, scannedCode: .init(kind: .nfc, value: "0ABC"))
-        let alarm = try AlarmCreationService(context: container.mainContext).create(draft)
+        let alarm = try AlarmEditorService(context: container.mainContext).create(draft)
         let target = try #require(alarm.stopTargets.first)
         container.mainContext.delete(target)
         try container.mainContext.save()
@@ -71,9 +71,9 @@ struct AlarmPersistenceTests {
     @Test func runtimesUseTheirInjectedContexts() async throws {
         let first = try makeContainer()
         let second = try makeContainer()
-        var draft = NewAlarmDraft()
+        var draft = AlarmEditorDraft()
         draft.exitPoint.selection = .qrCode
-        let alarm = try AlarmCreationService(context: first.mainContext).create(draft)
+        let alarm = try AlarmEditorService(context: first.mainContext).create(draft)
         let secondRuntime = AlarmRuntime(context: second.mainContext)
         // An unknown alarm ID must remain a harmless no-op in a separate store.
         try await secondRuntime.handleStop(alarmID: alarm.id.uuidString,
