@@ -1,4 +1,10 @@
-"""Import the native Debug renderer's completed icon exports into the asset catalog."""
+"""Import the native Debug renderer's completed icon exports into the asset catalog.
+
+Launch a stopped Debug app with --export-theme-icons, then locate its data container:
+xcrun simctl get_app_container SIMULATOR_UDID dev.ambitionsoftware.clock-app data
+Run this script with that container's Documents/ThemeIcons folder after complete.txt appears.
+The App Store image is clock-app/Assets.xcassets/AppIcon.appiconset/Any.png.
+"""
 import argparse
 import json
 from pathlib import Path
