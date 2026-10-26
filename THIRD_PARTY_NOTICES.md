@@ -1,4 +1,4 @@
-# Third-party code
+# Third-party notices
 
 ## Foqos
 
@@ -21,7 +21,7 @@ CodeScanner is linked through Swift Package Manager. The complete notice is in `
 ## Sharp Blender numerals
 
 Editable source: `Design/Blender/ClockSharp/clock-sharp.blend`.
-Source reference and export instructions: `Design/Blender/ClockSharp/README.md`.
+Exporter and usage: `Tools/export_clock_meshes.py`.
 Source and native-resource hashes: `Design/Blender/ClockSharp/export-manifest.json`.
 
 The saved scene was supplied in the project's sharp Blender asset set. The app
@@ -34,10 +34,10 @@ handoff. They are an Impact approximation, not Obviously Condensed Black. Font
 use and redistribution remain subject to the original font license; no external
 model author or separate model license was provided with the supplied scene.
 
-# Scanner integration
+## Studio lighting
 
-Retain an `NFCScannerUtil` instance for the lifetime of the scanning flow, set `onTagScanned` / `onError`, and call `scan(alarmName:)`. Call `cancel()` when leaving that flow. Use `NFCResult.id` as the `.nfc` target's `codeValue`.
+`clock-app/Resources/ClockStudio.skybox/ClockStudio.exr` is Apple's unmodified
+`studio_lighting_objectmode_v002.exr`, published for use in third-party renderers.
 
-Future camera views can import `CodeScanner` and present `CodeScannerView`. Use the successful `ScanResult.string` as the `.qrCode` target's `codeValue` for both QR codes and barcodes.
-
-Camera and NFC usage descriptions, the NFC `TAG` entitlement, and ISO7816 application identifiers are configured. Device signing must provision NFC access for the app identifier. Actual scans require device testing; no scanning screen has been added yet.
+Source: https://developer.apple.com/sample-code/ar/studio_lighting_objectmode_v002.exr
+Documentation: https://developer.apple.com/documentation/arkit/specifying-a-lighting-environment-in-ar-quick-look

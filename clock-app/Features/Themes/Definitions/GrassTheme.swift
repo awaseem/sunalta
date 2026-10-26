@@ -7,6 +7,7 @@ extension AppTheme {
         id: "grass",
         name: "Grass",
         colorScheme: .light,
+        appIconName: "AppIconGrass",
         palette: ThemePalette(
             background: Color(red: 0.96, green: 0.95, blue: 0.90),
             foreground: Color(red: 0.12, green: 0.20, blue: 0.08),
