@@ -4,13 +4,15 @@ struct ClockSettingsButton: View {
     @State private var showsSettings = false
 
     var body: some View {
-        Button("Settings", systemImage: "gearshape") {
+        Button {
             showsSettings = true
+        } label: {
+            Label("Settings", systemImage: "gearshape")
+                .labelStyle(.iconOnly)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
         }
-        .labelStyle(.iconOnly)
-        .font(.subheadline)
         .buttonStyle(.plain)
-        .frame(minWidth: 44, minHeight: 44)
         .accessibilityHint("Choose a theme and manage clock sounds")
         .sheet(isPresented: $showsSettings) {
             ClockSettingsView()

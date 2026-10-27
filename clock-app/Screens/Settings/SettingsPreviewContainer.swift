@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsPreviewContainer: View {
     @State private var settings: ThemeSettings
     @State private var audioService: ClockAudioService
+    @State private var tips = TipStore()
 
     init(theme: AppTheme) {
         let defaults = UserDefaults(suiteName: "ClockSettingsPreview") ?? .standard
@@ -17,5 +18,6 @@ struct SettingsPreviewContainer: View {
         ClockSettingsView()
             .environment(settings)
             .environment(audioService)
+            .environment(tips)
     }
 }

@@ -10,6 +10,7 @@ struct ClockApp: App {
     @State private var themeSettings = ThemeSettings()
     @State private var audioService = ClockAudioService()
     @State private var appIcon = ThemeAppIcon()
+    @State private var tips = TipStore()
 
     init() {
         do {
@@ -31,6 +32,8 @@ struct ClockApp: App {
                 .environment(runtime)
                 .environment(themeSettings)
                 .environment(audioService)
+                .environment(tips)
+                .task { await tips.observeTransactions() }
                 .appTheme(themeSettings.theme)
                 .task(id: themeSettings.theme.id) {
                     await appIcon.synchronize(with: themeSettings.theme)

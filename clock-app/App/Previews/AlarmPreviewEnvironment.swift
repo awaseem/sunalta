@@ -5,6 +5,7 @@ struct AlarmPreviewEnvironment<Content: View>: View {
     private let container: ModelContainer
     private let content: Content
     @State private var runtime: AlarmRuntime
+    @State private var tips = TipStore()
     @State private var audioService = ClockAudioService(
         defaults: UserDefaults(suiteName: "AlarmAudioPreview") ?? .standard
     )
@@ -24,6 +25,7 @@ struct AlarmPreviewEnvironment<Content: View>: View {
             .environment(runtime)
             .environment(themeSettings)
             .environment(audioService)
+            .environment(tips)
             .appTheme(themeSettings.theme)
     }
 }
