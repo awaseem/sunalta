@@ -10,20 +10,9 @@ struct AlarmListPage: View {
     let alarms: [AlarmRecord]
     let createAlarm: () -> Void
     let editAlarm: (AlarmRecord) -> Void
-    let returnToClock: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            HStack {
-                Button("Clock", systemImage: "chevron.up", action: returnToClock)
-                    .font(.subheadline.weight(.medium))
-                    .buttonStyle(.plain)
-                    .frame(minHeight: 44)
-                    .accessibilityLabel("Return to the clock")
-                Spacer()
-                ClockSettingsButton()
-            }
-
             if alarms.isEmpty {
                 AlarmEmptyState()
             } else {
@@ -91,7 +80,7 @@ struct AlarmListPage: View {
 
 #Preview("Welcome") {
     AlarmPreviewContainer {
-        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, editAlarm: { _ in }, returnToClock: {}) }
+        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, editAlarm: { _ in }) }
             .background(AppTheme.white.palette.background)
     }
 }

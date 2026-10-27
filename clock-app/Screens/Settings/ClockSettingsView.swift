@@ -20,6 +20,11 @@ struct ClockSettingsView: View {
             .scrollBounceBehavior(.basedOnSize)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .navigationDestination(for: SettingsDestination.self) { destination in
+                switch destination {
+                case .support: ClockSupportView()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Close settings", systemImage: "xmark") { dismiss() }

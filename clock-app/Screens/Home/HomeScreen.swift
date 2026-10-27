@@ -3,17 +3,15 @@ import SwiftUI
 
 struct HomeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appTheme) private var theme
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var alarmEditor: AlarmEditorDestination?
-    @State private var createAlarmFooterHeight: CGFloat = 0
     @State private var isScrolling = false
     @State private var isClockVisible = true
-    @State private var scrollPosition = ScrollPosition(edge: .top)
     @State private var usesAlarmScrolling = false
     @State private var canEnterAlarmList = false
+    @State private var alarmFooterHeight: CGFloat = 0
     #if DEBUG
     // Set to true while tuning themes to show the appearance controls.
     private static let enablesAppearanceControls = false
@@ -93,20 +91,17 @@ struct HomeScreen: View {
                     #endif
 
                     AlarmListPage(alarms: alarms, createAlarm: { alarmEditor = .create },
-                                  editAlarm: { alarmEditor = .edit($0) }) {
-                        withAnimation(reduceMotion ? nil : .smooth) {
-                            scrollPosition.scrollTo(edge: .top)
-                        }
-                    }
+                                  editAlarm: { alarmEditor = .edit($0) })
                     .padding(.top, geometry.safeAreaInsets.top + 20)
-                    .padding(.bottom, alarms.isEmpty
-                             ? createAlarmFooterHeight : geometry.safeAreaInsets.bottom + 24)
+                    .padding(.bottom, alarmFooterHeight)
                     .frame(minHeight: pageHeight, alignment: .top)
                 }
             }
             .scrollIndicators(.hidden)
+            .contentMargins(.bottom, 0, for: .scrollContent)
+            .scrollEdgeEffectStyle(.soft, for: .bottom)
+            .scrollEdgeEffectHidden(isClockVisible, for: .bottom)
             .defaultScrollAnchor(.top)
-            .scrollPosition($scrollPosition)
             .scrollTargetBehavior(usesAlarmScrolling
                 ? AnyScrollTargetBehavior(AlarmListScrollTargetBehavior(topOffset: pageHeight))
                 : AnyScrollTargetBehavior(.paging))
@@ -121,7 +116,7 @@ struct HomeScreen: View {
                 }
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
-                scroll.contentOffset.y < pageHeight
+                scroll.contentOffset.y + scroll.contentInsets.top < pageHeight - 1
             } action: { _, visible in
                 isClockVisible = visible
             }
@@ -133,25 +128,21 @@ struct HomeScreen: View {
                     canEnterAlarmList = false
                 }
             }
-            .frame(height: pageHeight)
-            .overlay(alignment: .bottom) {
-                if alarms.isEmpty {
-                    Button("Create alarm") { alarmEditor = .create }
-                        .buttonStyle(.appCapsule(fillsWidth: true))
-                        .frame(maxWidth: 560)
-                        .padding(.horizontal, 24)
-                        .padding(.top)
-                        .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
-                        .frame(maxWidth: .infinity)
-                        .background(theme.palette.background)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                            createAlarmFooterHeight = $0
-                        }
-                        .opacity(isClockVisible ? 0 : 1)
-                        .allowsHitTesting(!isClockVisible)
-                        .accessibilityHidden(isClockVisible)
+            // Overlap the bar to preserve full-screen paging. The alarm page reserves
+            // its height so the final row can scroll completely above it.
+            .safeAreaBar(edge: .bottom, spacing: -alarmFooterHeight) {
+                AlarmListFooter(showsCreateAlarm: alarms.isEmpty) {
+                    alarmEditor = .create
                 }
+                .padding(.bottom, geometry.safeAreaInsets.bottom + 16)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                    alarmFooterHeight = $0
+                }
+                .opacity(isClockVisible ? 0 : 1)
+                .allowsHitTesting(!isClockVisible)
+                .accessibilityHidden(isClockVisible)
             }
+            .frame(height: pageHeight)
             .ignoresSafeArea()
         }
         .background(theme.palette.background)

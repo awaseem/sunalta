@@ -14,7 +14,20 @@ struct SettingsAboutSection: View {
                 .foregroundStyle(theme.palette.foreground, theme.palette.secondaryForeground)
                 .padding()
                 .background(theme.palette.surface, in: .rect(cornerRadius: 20))
-            // Add support/privacy destinations when finalized in #5, and Donations when it ships.
+            NavigationLink(value: SettingsDestination.support) {
+                HStack {
+                    SupportLabel()
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(theme.palette.secondaryForeground)
+                        .accessibilityHidden(true)
+                }
+                .padding()
+                .background(theme.palette.surface, in: .rect(cornerRadius: 20))
+            }
+            .buttonStyle(.plain)
+            // Add help/privacy destinations when finalized in #5.
         }
     }
 }
