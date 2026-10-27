@@ -4,7 +4,7 @@ A SwiftUI clock and alarm app. Open `clock-app.xcodeproj` and run the `clock-app
 
 ## Support and tips
 
-Support is available beside Settings on the alarms page and under Settings → About → Support. Tips are optional, one-time consumable in-app purchases; they do not unlock features or create a subscription. The page uses StoreKit's localized product prices and only shows thanks after a verified transaction succeeds.
+Support is available through the Donations button grouped with Settings at the bottom left of the alarms page and under Settings → About → Support. Tips are optional, one-time consumable in-app purchases; they do not unlock features or create a subscription. The page uses StoreKit's localized product prices and only shows thanks after a verified transaction succeeds.
 
 ### App Store Connect setup
 
@@ -18,7 +18,7 @@ Create these products in the Clock App record (`dev.ambitionsoftware.clock-app`)
 
 1. In App Store Connect, open Clock App → Monetization → In-App Purchases and add the three consumables. [Apple's creation guide](https://developer.apple.com/help/app-store-connect/manage-in-app-purchases/create-consumable-or-non-consumable-in-app-purchases)
 2. Add the English names and descriptions above, choose availability, and set the US base prices. Review Apple's prices for other storefronts; the app displays the localized amount returned by StoreKit. [Pricing guide](https://developer.apple.com/help/app-store-connect/manage-in-app-purchases/set-a-price-for-an-in-app-purchase)
-3. Complete the required purchase metadata and review screenshots. Suggested review note: “Optional developer tips. Open the alarms page, then Support beside Settings, or Settings → About → Support. All clock and alarm features remain available without a tip.”
+3. Complete the required purchase metadata and review screenshots. Suggested review note: “Optional developer tips. Open the alarms page, then the Donations heart button at the bottom left, or Settings → About → Support. All clock and alarm features remain available without a tip.”
 4. Include these initial consumables with the app version submitted for review. [Submission guide](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase)
 5. Test the configured products in Apple's sandbox before release. In the Xcode scheme, set Run → Options → StoreKit Configuration to None when testing App Store Connect products. Allow time for new product metadata to reach the sandbox.
 

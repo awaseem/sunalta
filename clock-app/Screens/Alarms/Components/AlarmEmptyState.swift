@@ -7,7 +7,7 @@ struct AlarmEmptyState: View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading) {
                 Text("Welcome")
-                    .font(.largeTitle.bold())
+                    .font(.title2.bold())
                     .foregroundStyle(theme.palette.foreground)
                     .accessibilityAddTraits(.isHeader)
                 Text("Wake up your way, with alarms built around your routine.")
