@@ -9,9 +9,7 @@ struct HomeScreen: View {
     @State private var alarmEditor: AlarmEditorDestination?
     @State private var isScrolling = false
     @State private var isClockVisible = true
-    @State private var usesAlarmScrolling = false
-    @State private var canEnterAlarmList = false
-    @State private var alarmFooterHeight: CGFloat = 0
+    @State private var pagePosition = ScrollPosition(edge: .top)
     #if DEBUG
     // Set to true while tuning themes to show the appearance controls.
     private static let enablesAppearanceControls = false
@@ -90,57 +88,29 @@ struct HomeScreen: View {
                     }
                     #endif
 
-                    AlarmListPage(alarms: alarms, createAlarm: { alarmEditor = .create },
-                                  editAlarm: { alarmEditor = .edit($0) })
-                    .padding(.top, geometry.safeAreaInsets.top + 20)
-                    .padding(.bottom, alarmFooterHeight)
-                    .frame(minHeight: pageHeight, alignment: .top)
+                    AlarmListPage(alarms: alarms, isActive: !isClockVisible,
+                                  createAlarm: { alarmEditor = .create },
+                                  editAlarm: { alarmEditor = .edit($0) },
+                                  returnToClock: {
+                        withAnimation(.smooth) { pagePosition.scrollTo(edge: .top) }
+                    })
+                    .frame(height: geometry.size.height)
+                    .padding(.top, geometry.safeAreaInsets.top)
+                    .padding(.bottom, geometry.safeAreaInsets.bottom)
                 }
             }
             .scrollIndicators(.hidden)
             .contentMargins(.bottom, 0, for: .scrollContent)
-            .scrollEdgeEffectStyle(.soft, for: .bottom)
-            .scrollEdgeEffectHidden(isClockVisible, for: .bottom)
             .defaultScrollAnchor(.top)
-            .scrollTargetBehavior(usesAlarmScrolling
-                ? AnyScrollTargetBehavior(AlarmListScrollTargetBehavior(topOffset: pageHeight))
-                : AnyScrollTargetBehavior(.paging))
-            .onScrollPhaseChange { _, phase, context in
+            .scrollPosition($pagePosition)
+            .scrollTargetBehavior(.paging)
+            .onScrollPhaseChange { _, phase in
                 isScrolling = phase != .idle
-                let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
-                // At the alarm header, use native paging back to the clock. Only a drag
-                // farther into the list switches to free scrolling, once per gesture.
-                canEnterAlarmList = phase == .interacting && abs(offset - pageHeight) <= 1
-                if phase == .idle {
-                    usesAlarmScrolling = offset > pageHeight + 1
-                }
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
                 scroll.contentOffset.y + scroll.contentInsets.top < pageHeight - 1
             } action: { _, visible in
                 isClockVisible = visible
-            }
-            .onScrollGeometryChange(for: Bool.self) { scroll in
-                scroll.contentOffset.y + scroll.contentInsets.top > pageHeight + 1
-            } action: { _, isInsideAlarmList in
-                if canEnterAlarmList && isInsideAlarmList {
-                    usesAlarmScrolling = true
-                    canEnterAlarmList = false
-                }
-            }
-            // Overlap the bar to preserve full-screen paging. The alarm page reserves
-            // its height so the final row can scroll completely above it.
-            .safeAreaBar(edge: .bottom, spacing: -alarmFooterHeight) {
-                AlarmListFooter(showsCreateAlarm: alarms.isEmpty) {
-                    alarmEditor = .create
-                }
-                .padding(.bottom, geometry.safeAreaInsets.bottom + 16)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                    alarmFooterHeight = $0
-                }
-                .opacity(isClockVisible ? 0 : 1)
-                .allowsHitTesting(!isClockVisible)
-                .accessibilityHidden(isClockVisible)
             }
             .frame(height: pageHeight)
             .ignoresSafeArea()

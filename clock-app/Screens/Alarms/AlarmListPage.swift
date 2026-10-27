@@ -7,41 +7,90 @@ struct AlarmListPage: View {
     @Environment(\.appTheme) private var theme
     @State private var updatingAlarmID: UUID?
     @State private var schedulingError: String?
+    @State private var canReturnToClock = false
+    @State private var activeSheet: AlarmPageSheet?
     let alarms: [AlarmRecord]
+    var isActive = true
     let createAlarm: () -> Void
     let editAlarm: (AlarmRecord) -> Void
+    var returnToClock: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            if alarms.isEmpty {
-                AlarmEmptyState()
-            } else {
-                AlarmListHeader(createAlarm: createAlarm)
-                LazyVStack(spacing: 12) {
-                    ForEach(alarms, id: \.persistentModelID) { alarm in
-                        if alarm.modelContext != nil, !alarm.isDeleted {
-                            AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id, onEdit: {
-                                editAlarm(alarm)
-                            }) { enabled in
-                                Task { await setEnabled(enabled, for: alarm) }
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button("Delete", systemImage: "trash", role: .destructive) {
-                                    Task { await delete(alarm) }
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading) {
+                    if alarms.isEmpty {
+                        AlarmEmptyState()
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(alarms, id: \.persistentModelID) { alarm in
+                                if alarm.modelContext != nil, !alarm.isDeleted {
+                                    AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id, onEdit: {
+                                        editAlarm(alarm)
+                                    }) { enabled in
+                                        Task { await setEnabled(enabled, for: alarm) }
+                                    }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button("Delete", systemImage: "trash", role: .destructive) {
+                                            Task { await delete(alarm) }
+                                        }
+                                        .tint(theme.palette.selection)
+                                        .foregroundStyle(theme.palette.onControl)
+                                    }
+                                    .disabled(updatingAlarmID != nil)
                                 }
-                                .tint(theme.palette.selection)
-                                .foregroundStyle(theme.palette.onControl)
                             }
-                            .disabled(updatingAlarmID != nil)
                         }
+                        .swipeActionsContainer()
                     }
                 }
-                .swipeActionsContainer()
+                .padding(.horizontal)
+                .padding(.bottom)
+                .frame(maxWidth: 640)
+                .frame(maxWidth: .infinity, alignment: .top)
+            }
+            .scrollIndicators(.hidden)
+            .scrollDisabled(!isActive)
+            .onScrollPhaseChange { oldPhase, phase, context in
+                // A pull from the list's top returns to the clock after the finger lifts.
+                // Deceleration through the top must not change pages.
+                let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
+                if phase == .interacting {
+                    canReturnToClock = offset <= 1
+                }
+                if isActive, canReturnToClock, oldPhase == .interacting, phase != .interacting, offset < -60 {
+                    canReturnToClock = false
+                    returnToClock()
+                }
+            }
+            .background(theme.palette.background)
+            .navigationTitle("Alarms")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Donations", systemImage: "heart") { activeSheet = .support }
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(theme.palette.control)
+                    Button("Settings", systemImage: "gearshape") { activeSheet = .settings }
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(theme.palette.control)
+                }
+                ToolbarSpacer(.flexible, placement: .bottomBar)
+                ToolbarItem(placement: .bottomBar) {
+                    Button("New alarm", systemImage: "plus", action: createAlarm)
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderedProminent)
+                        .tint(theme.palette.control)
+                        .foregroundStyle(theme.palette.onControl)
+                }
             }
         }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: 640)
-        .frame(maxWidth: .infinity, alignment: .top)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .support: ClockSupportSheet()
+            case .settings: ClockSettingsView()
+            }
+        }
         .alert("Couldn't update alarm", isPresented: Binding(
             get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
         )) {
@@ -80,7 +129,6 @@ struct AlarmListPage: View {
 
 #Preview("Welcome") {
     AlarmPreviewContainer {
-        ScrollView { AlarmListPage(alarms: [], createAlarm: {}, editAlarm: { _ in }) }
-            .background(AppTheme.white.palette.background)
+        AlarmListPage(alarms: [], createAlarm: {}, editAlarm: { _ in })
     }
 }
