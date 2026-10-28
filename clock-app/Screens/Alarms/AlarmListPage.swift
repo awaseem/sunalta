@@ -13,7 +13,7 @@ struct AlarmListPage: View {
     var isActive = true
     let createAlarm: () -> Void
     let editAlarm: (AlarmRecord) -> Void
-    var returnToClock: () -> Void = {}
+    var returnToClock: (() -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -58,20 +58,21 @@ struct AlarmListPage: View {
                 if phase == .interacting {
                     canReturnToClock = offset <= 1
                 }
-                if isActive, canReturnToClock, oldPhase == .interacting, phase != .interacting, offset < -60 {
+                if isActive, let returnToClock, canReturnToClock,
+                   oldPhase == .interacting, phase != .interacting, offset < -60 {
                     canReturnToClock = false
                     returnToClock()
                 }
             }
             .background(theme.palette.background)
-            .navigationTitle("Alarms")
+            .navigationTitle(alarms.isEmpty ? "Welcome" : "Alarms")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button("Donations", systemImage: "heart") { activeSheet = .support }
+                    Button("Settings", systemImage: "gearshape") { activeSheet = .settings }
                         .labelStyle(.iconOnly)
                         .foregroundStyle(theme.palette.control)
-                    Button("Settings", systemImage: "gearshape") { activeSheet = .settings }
+                    Button("Donations", systemImage: "heart") { activeSheet = .support }
                         .labelStyle(.iconOnly)
                         .foregroundStyle(theme.palette.control)
                 }

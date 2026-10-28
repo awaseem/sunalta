@@ -2,101 +2,57 @@ import SwiftData
 import SwiftUI
 
 struct HomeScreen: View {
-    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appTheme) private var theme
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var alarmEditor: AlarmEditorDestination?
+    @State private var isLandscape = false
     @State private var isScrolling = false
     @State private var isClockVisible = true
     @State private var pagePosition = ScrollPosition(edge: .top)
-    #if DEBUG
-    // Set to true while tuning themes to show the appearance controls.
-    private static let enablesAppearanceControls = false
-    @State private var showsAppearance = false
-    @State private var appearanceAtTop = false
-    #endif
-    @State private var isEditingAppearance = false
-    @State private var weekdayAnchor: CGPoint?
-    @State private var weekdayFrame: CGRect = .zero
-    @State private var hasRevealedClock = false
+    @State private var portraitShowsAlarms = false
 
     var body: some View {
-        // RealityKit needs both the viewport height and safe-area insets for its camera placement.
+        // The renderer needs the full viewport and its safe areas for camera placement.
         GeometryReader { geometry in
-            let pageHeight = geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom
-            ScrollView(.vertical) {
-                VStack(spacing: 0) {
-                    TimelineView(.everyMinute) { context in
-                        SculptedClockView(date: context.date, isScrolling: isScrolling,
-                                         isVisible: isClockVisible && scenePhase == .active && alarmEditor == nil,
-                                         isEditingAppearance: isEditingAppearance,
-                                         contentSafeAreaInsets: UIEdgeInsets(
-                            top: geometry.safeAreaInsets.top, left: 0,
-                            bottom: geometry.safeAreaInsets.bottom, right: 0
-                        ), weekdayFrame: weekdayFrame, onWeekdayAnchorChange: { weekdayAnchor = $0 },
-                                         onContentRevealed: { hasRevealedClock = true })
-                        .overlay(alignment: .topLeading) {
-                            if let weekdayAnchor {
-                                ClockWeekdayLabel(date: context.date)
-                                    .opacity(hasRevealedClock ? 1 : 0)
-                                    .animation(.easeOut(duration: ClockEntranceAnimation.fadeDuration),
-                                               value: hasRevealedClock)
-                                    .onGeometryChange(for: CGRect.self) { geometry in
-                                        geometry.frame(in: .named("clockFace"))
-                                    } action: { weekdayFrame = $0 }
-                                    .padding(.top, 8)
-                                    .offset(x: weekdayAnchor.x, y: weekdayAnchor.y)
-                            }
-                        }
-                        .coordinateSpace(name: "clockFace")
-                    }
-                    .frame(height: pageHeight)
-                    .overlay(alignment: .bottom) {
-                        ClockAlarmHint(isActive: isClockVisible && !isScrolling && scenePhase == .active)
-                            .padding(.horizontal)
-                            .padding(.bottom, geometry.safeAreaInsets.bottom + 8)
-                    }
-                    #if DEBUG
-                    .overlay(alignment: appearanceAtTop ? .top : .bottom) {
-                        if Self.enablesAppearanceControls && showsAppearance {
-                            ThemePickerPanel(isEditing: $isEditingAppearance,
-                                             isAtTop: $appearanceAtTop,
-                                             maximumControlsHeight: geometry.size.height * 0.24) {
-                                showsAppearance = false
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, appearanceAtTop ? geometry.safeAreaInsets.top + 72 : 0)
-                            .padding(.bottom, appearanceAtTop ? 0 : geometry.safeAreaInsets.bottom + 16)
-                        }
-                    }
-                    .overlay(alignment: .topLeading) {
-                        if Self.enablesAppearanceControls {
-                            Button("Appearance", systemImage: "slider.horizontal.3") {
-                                showsAppearance.toggle()
-                            }
-                            .font(.subheadline)
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.glassProminent)
-                            .buttonBorderShape(.circle)
-                            .foregroundStyle(theme.palette.onControl)
-                            .controlSize(.large)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .padding(.top, geometry.safeAreaInsets.top)
-                            .padding()
-                        }
-                    }
-                    #endif
+            let insets = geometry.safeAreaInsets
+            let pageHeight = geometry.size.height + insets.top + insets.bottom
+            let pageWidth = geometry.size.width + insets.leading + insets.trailing
+            let columnWidth = isLandscape ? pageWidth / 2 : pageWidth
+            let layout = isLandscape
+                ? AnyLayout(HStackLayout(spacing: 0))
+                : AnyLayout(VStackLayout(spacing: 0))
+            ScrollView(isLandscape ? [] : .vertical) {
+                layout {
+                    HomeClockPage(
+                        isScrolling: !isLandscape && isScrolling,
+                        isVisible: (isLandscape || isClockVisible) && alarmEditor == nil,
+                        showsAlarmHint: !isLandscape,
+                        availableHeight: geometry.size.height,
+                        safeAreaInsets: EdgeInsets(top: insets.top, leading: insets.leading,
+                                                   bottom: insets.bottom,
+                                                   trailing: isLandscape ? 0 : insets.trailing)
+                    )
+                    .frame(width: columnWidth, height: pageHeight)
+                    .clipped()
 
-                    AlarmListPage(alarms: alarms, isActive: !isClockVisible,
-                                  createAlarm: { alarmEditor = .create },
-                                  editAlarm: { alarmEditor = .edit($0) },
-                                  returnToClock: {
-                        withAnimation(.smooth) { pagePosition.scrollTo(edge: .top) }
-                    })
-                    .frame(height: geometry.size.height)
-                    .padding(.top, geometry.safeAreaInsets.top)
-                    .padding(.bottom, geometry.safeAreaInsets.bottom)
+                    AlarmListPage(
+                        alarms: alarms, isActive: isLandscape || !isClockVisible,
+                        createAlarm: { presentEditor(.create) },
+                        editAlarm: { presentEditor(.edit($0)) },
+                        returnToClock: isLandscape ? nil : {
+                            withAnimation(reduceMotion ? nil : .smooth) {
+                                pagePosition.scrollTo(edge: .top)
+                            }
+                        }
+                    )
+                    // Keep the navigation container at the display edge so Duo
+                    // can place its toolbar in the trailing system bar region.
+                    // Its native toolbar handles the bottom safe area; outer
+                    // padding would leave a blank strip below the scroll view.
+                    .frame(width: columnWidth, height: pageHeight - insets.top)
+                    .padding(.top, insets.top)
                 }
             }
             .scrollIndicators(.hidden)
@@ -104,24 +60,63 @@ struct HomeScreen: View {
             .defaultScrollAnchor(.top)
             .scrollPosition($pagePosition)
             .scrollTargetBehavior(.paging)
-            .onScrollPhaseChange { _, phase in
+            .onScrollPhaseChange { _, phase, context in
+                guard !isLandscape else { return }
                 isScrolling = phase != .idle
+                if phase == .idle {
+                    let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
+                    portraitShowsAlarms = offset >= pageHeight / 2
+                }
             }
             .onScrollGeometryChange(for: Bool.self) { scroll in
                 scroll.contentOffset.y + scroll.contentInsets.top < pageHeight - 1
             } action: { _, visible in
-                isClockVisible = visible
+                if !isLandscape { isClockVisible = visible }
             }
-            .frame(height: pageHeight)
+            .onChange(of: isLandscape) {
+                restorePagePosition(pageHeight: pageHeight)
+            }
+            .onChange(of: pageHeight) {
+                restorePagePosition(pageHeight: pageHeight)
+            }
+            .frame(width: pageWidth, height: pageHeight)
             .ignoresSafeArea()
         }
         .background(theme.palette.background)
+        .background {
+            // Measure the viewport independently of keyboard presentation.
+            Color.clear
+                .ignoresSafeArea(.keyboard)
+                .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: {
+                    isLandscape = $0
+                }
+        }
         .fullScreenCover(item: $alarmEditor) { destination in
             AlarmEditorView(alarm: destination.alarm, theme: theme)
+                .appTheme(theme)
+        }
+    }
+
+    private func presentEditor(_ destination: AlarmEditorDestination) {
+        portraitShowsAlarms = true
+        alarmEditor = destination
+    }
+
+    private func restorePagePosition(pageHeight: CGFloat) {
+        isScrolling = false
+        if isLandscape {
+            pagePosition.scrollTo(edge: .top)
+        } else {
+            isClockVisible = !portraitShowsAlarms
+            pagePosition.scrollTo(y: portraitShowsAlarms ? pageHeight : 0)
         }
     }
 }
 
-#Preview("White theme") {
+#Preview("Portrait") {
+    AlarmPreviewContainer { HomeScreen() }
+}
+
+#Preview("Landscape", traits: .landscapeLeft) {
     AlarmPreviewContainer { HomeScreen() }
 }

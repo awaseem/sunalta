@@ -4,15 +4,18 @@ import SwiftUI
 
 struct AlarmEditorView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     @Environment(\.modelContext) private var modelContext
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     @State private var step = AlarmEditorStep.time
     @State private var draft: AlarmEditorDraft
+    @State private var isLandscape = false
     @State private var isSaving = false
     @State private var saveError: String?
-    @State private var headerHeight: CGFloat = 44
     @State private var footerHeight: CGFloat = 100
     @State private var idealFormHeight: CGFloat = 240
     private let alarm: AlarmRecord?
@@ -24,46 +27,71 @@ struct AlarmEditorView: View {
     }
 
     var body: some View {
-        // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
-        GeometryReader { geometry in
-            let layout = AlarmEditorLayoutMetrics(
-                availableHeight: geometry.size.height,
-                headerHeight: headerHeight,
-                footerHeight: footerHeight,
-                idealFormHeight: idealFormHeight
-            )
-            ZStack {
-                AlarmTimePreview(
-                    time: draft.displayTime,
-                    previewHeight: layout.previewHeight,
-                    previewTopInset: headerHeight,
-                    contentSafeAreaInsets: UIEdgeInsets(
-                        top: geometry.safeAreaInsets.top, left: 0,
-                        bottom: geometry.safeAreaInsets.bottom, right: 0
-                    )
+        NavigationStack {
+            // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
+            GeometryReader { geometry in
+                // Compact-height phones retain the stacked editor even in landscape.
+                let usesColumns = horizontalSizeClass == .regular && verticalSizeClass == .regular && isLandscape
+                let columnWidth = geometry.size.width / 2
+                let layout = AlarmEditorLayoutMetrics(
+                    availableHeight: geometry.size.height,
+                    headerHeight: 0,
+                    footerHeight: footerHeight,
+                    idealFormHeight: idealFormHeight
                 )
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
+                let previewDescription = "Alarm preview, \(draft.displayTime), \(AlarmRepeatSummary.text(for: draft.repeatDays))"
+                ZStack(alignment: .leading) {
+                    AlarmTimePreview(
+                        time: draft.displayTime,
+                        previewHeight: usesColumns ? geometry.size.height : layout.previewHeight,
+                        previewTopInset: 0,
+                        contentSafeAreaInsets: UIEdgeInsets(
+                            top: geometry.safeAreaInsets.top, left: 0,
+                            bottom: geometry.safeAreaInsets.bottom, right: 0
+                        )
+                    )
+                    .frame(width: usesColumns ? columnWidth : nil)
+                    .ignoresSafeArea()
+                    .accessibilityElement()
+                    .accessibilityLabel(previewDescription)
+                    .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
+                    .accessibilityHidden(!usesColumns)
 
-                VStack(spacing: 0) {
-                    AlarmEditorHeader(isEditing: alarm != nil, step: step.rawValue,
-                                      stepCount: AlarmEditorStep.allCases.count,
-                                      onBack: goBack, onCancel: { dismiss() })
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
-                    Color.clear
-                        .frame(height: layout.previewHeight)
-                        .allowsHitTesting(false)
-                        .accessibilityElement()
-                        .accessibilityLabel("Alarm preview, \(draft.displayTime), \(AlarmRepeatSummary.text(for: draft.repeatDays))")
-                        .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
-                    AlarmEditorStepContainer(step: step, draft: $draft, idealHeight: $idealFormHeight)
-                        .frame(height: layout.formHeight)
-                    AlarmEditorContinueButton(isFinalStep: step.next == nil, isEditing: alarm != nil,
-                                              isSaving: isSaving, onContinue: continueStep)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { footerHeight = $0 }
+                    VStack(spacing: 0) {
+                        Color.clear
+                            .frame(height: usesColumns ? 0 : layout.previewHeight)
+                            .allowsHitTesting(false)
+                            .accessibilityElement()
+                            .accessibilityLabel(previewDescription)
+                            .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
+                            .accessibilityHidden(usesColumns)
+                        AlarmEditorStepContainer(step: step, draft: $draft, idealHeight: $idealFormHeight)
+                            .frame(height: usesColumns
+                                   ? max(0, geometry.size.height - footerHeight)
+                                   : layout.formHeight)
+                        AlarmEditorContinueButton(isFinalStep: step.next == nil, isEditing: alarm != nil,
+                                                  isSaving: isSaving, onContinue: continueStep)
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { footerHeight = $0 }
+                    }
+                    .frame(maxWidth: usesColumns ? columnWidth : .infinity)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
+                .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: idealFormHeight)
             }
-            .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: idealFormHeight)
+            .background(theme.palette.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                AlarmEditorToolbar(isEditing: alarm != nil, step: step,
+                                   onBack: goBack, onCancel: { dismiss() })
+            }
+        }
+        .background {
+            // Opening the keyboard must not switch a portrait editor to columns.
+            Color.clear
+                .ignoresSafeArea(.keyboard)
+                .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: {
+                    isLandscape = $0
+                }
         }
         .disabled(isSaving)
         .interactiveDismissDisabled(isSaving)
@@ -112,4 +140,10 @@ struct AlarmEditorView: View {
 
 #Preview("New alarm") {
     AlarmPreviewContainer { AlarmEditorView() }
+}
+
+#Preview("Wide alarm editor", traits: .landscapeLeft) {
+    AlarmPreviewContainer { AlarmEditorView() }
+        .environment(\.horizontalSizeClass, .regular)
+        .environment(\.verticalSizeClass, .regular)
 }

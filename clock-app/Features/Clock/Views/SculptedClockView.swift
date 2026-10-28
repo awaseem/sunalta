@@ -9,6 +9,7 @@ struct SculptedClockView: UIViewRepresentable {
     var isScrolling = false
     var isVisible = true
     var isEditingAppearance = false
+    var showsAlarmHint = true
     var contentSafeAreaInsets: UIEdgeInsets = .zero
     var weekdayFrame: CGRect = .zero
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
@@ -30,7 +31,7 @@ struct SculptedClockView: UIViewRepresentable {
         view.update(date: date, theme: theme, insets: contentSafeAreaInsets,
                     isScrolling: isScrolling, isVisible: isVisible,
                     isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame,
-                    allowsFlybys: !reduceMotion)
+                    allowsFlybys: !reduceMotion, showsAlarmHint: showsAlarmHint)
     }
 
     static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {

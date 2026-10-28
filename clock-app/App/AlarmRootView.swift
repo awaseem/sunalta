@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AlarmRootView: View {
     @Environment(AlarmRuntime.self) private var runtime
+    @Environment(ThemeSettings.self) private var themeSettings
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -26,5 +27,7 @@ struct AlarmRootView: View {
         } message: {
             Text(runtime.errorMessage ?? "Please try again.")
         }
+        // Apply the live theme here so an isolated preview can own its appearance.
+        .appTheme(themeSettings.theme)
     }
 }
