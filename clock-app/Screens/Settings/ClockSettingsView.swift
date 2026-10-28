@@ -10,6 +10,7 @@ struct ClockSettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: sectionSpacing) {
                     SettingsAppearanceSection()
+                    SettingsClockSection()
                     SettingsSoundSection()
                     SettingsAboutSection()
                 }
@@ -42,6 +43,10 @@ struct ClockSettingsView: View {
 
 #Preview("Settings") {
     SettingsPreviewContainer(theme: .white)
+}
+
+#Preview("12-hour settings") {
+    SettingsPreviewContainer(theme: .white, timeFormat: .twelveHour)
 }
 
 #Preview("Midnight settings") {

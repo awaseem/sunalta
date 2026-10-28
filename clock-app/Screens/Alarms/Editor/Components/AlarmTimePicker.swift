@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AlarmTimePicker: View {
+    @Environment(ClockDisplaySettings.self) private var settings
+    @Environment(\.locale) private var locale
     @Binding var time: Date
     @ScaledMetric(relativeTo: .body) private var pickerHeight = 132
 
@@ -8,7 +10,7 @@ struct AlarmTimePicker: View {
         DatePicker("Alarm time", selection: $time, displayedComponents: .hourAndMinute)
             .datePickerStyle(.wheel)
             .labelsHidden()
-            .environment(\.locale, Locale(identifier: "en_GB"))
+            .environment(\.locale, settings.format.locale(overriding: locale))
             .frame(height: pickerHeight)
             .clipped()
             .frame(maxWidth: .infinity)
@@ -16,7 +18,9 @@ struct AlarmTimePicker: View {
 }
 
 #Preview {
-    @Previewable @State var time = Date.now
+    @Previewable @State var settings = ClockDisplaySettings(defaults: PreviewDefaults.make(timeFormat: .twelveHour))
+    @Previewable @State var time = Date(timeIntervalSinceReferenceDate: 12 * 3600)
     AlarmTimePicker(time: $time)
         .appTheme(.white)
+        .environment(settings)
 }

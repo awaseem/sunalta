@@ -7,6 +7,9 @@ struct AlarmEditorView: View {
     @Environment(\.appTheme) private var theme
     @Environment(\.modelContext) private var modelContext
     @Environment(AlarmRuntime.self) private var runtime
+    @Environment(ClockDisplaySettings.self) private var clockSettings
+    @Environment(\.calendar) private var calendar
+    @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -30,6 +33,8 @@ struct AlarmEditorView: View {
         NavigationStack {
             // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
             GeometryReader { geometry in
+                let display = ClockTimeDisplay(date: draft.time, format: clockSettings.format,
+                                               calendar: calendar, locale: locale)
                 // Compact-height phones retain the stacked editor even in landscape.
                 let usesColumns = horizontalSizeClass == .regular && verticalSizeClass == .regular && isLandscape
                 let columnWidth = geometry.size.width / 2
@@ -39,10 +44,10 @@ struct AlarmEditorView: View {
                     footerHeight: footerHeight,
                     idealFormHeight: idealFormHeight
                 )
-                let previewDescription = "Alarm preview, \(draft.displayTime), \(AlarmRepeatSummary.text(for: draft.repeatDays))"
+                let previewDescription = "Alarm preview, \(display.text), \(AlarmRepeatSummary.text(for: draft.repeatDays))"
                 ZStack(alignment: .leading) {
                     AlarmTimePreview(
-                        time: draft.displayTime,
+                        display: display,
                         previewHeight: usesColumns ? geometry.size.height : layout.previewHeight,
                         previewTopInset: 0,
                         contentSafeAreaInsets: UIEdgeInsets(
@@ -146,4 +151,8 @@ struct AlarmEditorView: View {
     AlarmPreviewContainer { AlarmEditorView() }
         .environment(\.horizontalSizeClass, .regular)
         .environment(\.verticalSizeClass, .regular)
+}
+
+#Preview("New alarm · AM/PM") {
+    AlarmPreviewContainer(timeFormat: .twelveHour) { AlarmEditorView() }
 }

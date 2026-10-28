@@ -4,6 +4,7 @@ import UIKit
 /// The paused Metal surface scrolls with the page while its scene stays ready for interaction.
 final class ClockPageView: UIView {
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    var onPeriodAnchorChange: ((CGPoint) -> Void)?
     var onContentRevealed: (() -> Void)?
     private let audioService: ClockAudioService?
     private var renderer: ClockRenderView?
@@ -16,8 +17,7 @@ final class ClockPageView: UIView {
     private var entrance: ClockEntranceAnimation?
     private var hasPreparedEntrance = false
     private var hasRevealedContent = false
-    private var minute: Int?
-    private var displayedDate = Date.now
+    private var display: ClockTimeDisplay?
     private var appearance: AppTheme
     private var insets: UIEdgeInsets = .zero
     private var weekdayFrame: CGRect = .zero
@@ -55,6 +55,9 @@ final class ClockPageView: UIView {
         renderer.onWeekdayAnchorChange = { [weak self] anchor in
             self?.onWeekdayAnchorChange?(anchor)
         }
+        renderer.onPeriodAnchorChange = { [weak self] anchor in
+            self?.onPeriodAnchorChange?(anchor)
+        }
         renderer.onOrbitBegan = { [weak self] in
             guard let self else { return }
             isOrbiting = true
@@ -69,7 +72,7 @@ final class ClockPageView: UIView {
         renderer.contentSafeAreaInsets = insets
         renderer.clockVerticalCenter = showsAlarmHint ? 0.4 : 0.5
         renderer.weekdayFrame = weekdayFrame
-        renderer.show(date: displayedDate)
+        if let display { renderer.show(display: display) }
         accessibilityLabel = renderer.accessibilityLabel
         return renderer
     }
@@ -77,13 +80,12 @@ final class ClockPageView: UIView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
 
-    func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
+    func update(display: ClockTimeDisplay, theme: AppTheme, insets: UIEdgeInsets,
                 isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
                 allowsFlybys: Bool, showsAlarmHint: Bool = true) {
         let beganScrolling = isScrolling && !self.isScrolling
         self.isScrolling = isScrolling
         isPageVisible = isVisible
-        displayedDate = date
         self.isEditingAppearance = isEditingAppearance
         self.allowsFlybys = allowsFlybys
         self.showsAlarmHint = showsAlarmHint
@@ -95,10 +97,9 @@ final class ClockPageView: UIView {
             renderer?.settleInteraction()
             if entrance?.isRunning == true { entrance?.finish() }
         }
-        let minute = Int(date.timeIntervalSince1970 / 60)
-        if self.minute != minute || appearance != theme || self.insets != insets
+        if self.display != display || appearance != theme || self.insets != insets
             || self.weekdayFrame != weekdayFrame {
-            self.minute = minute
+            self.display = display
             appearance = theme
             audioService?.apply(configuration: theme.audio)
             self.insets = insets
@@ -106,7 +107,7 @@ final class ClockPageView: UIView {
             renderer?.contentSafeAreaInsets = insets
             renderer?.weekdayFrame = weekdayFrame
             renderer?.applyTheme(theme)
-            renderer?.show(date: date)
+            renderer?.show(display: display)
             if let renderer { accessibilityLabel = renderer.accessibilityLabel }
         }
         updatePresentation()

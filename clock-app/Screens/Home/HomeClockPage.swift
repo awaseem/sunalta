@@ -15,36 +15,13 @@ struct HomeClockPage: View {
     @State private var appearanceAtTop = false
     #endif
     @State private var isEditingAppearance = false
-    @State private var weekdayAnchor: CGPoint?
-    @State private var weekdayFrame: CGRect = .zero
-    @State private var hasRevealedClock = false
 
     var body: some View {
-        TimelineView(.everyMinute) { context in
-            SculptedClockView(date: context.date, isScrolling: isScrolling,
-                             isVisible: isVisible && scenePhase == .active,
-                             isEditingAppearance: isEditingAppearance,
-                             showsAlarmHint: showsAlarmHint,
-                             contentSafeAreaInsets: UIEdgeInsets(
-                top: safeAreaInsets.top, left: safeAreaInsets.leading,
-                bottom: safeAreaInsets.bottom, right: safeAreaInsets.trailing
-            ), weekdayFrame: weekdayFrame, onWeekdayAnchorChange: { weekdayAnchor = $0 },
-                             onContentRevealed: { hasRevealedClock = true })
-            .overlay(alignment: .topLeading) {
-                if let weekdayAnchor {
-                    ClockWeekdayLabel(date: context.date)
-                        .opacity(hasRevealedClock ? 1 : 0)
-                        .animation(.easeOut(duration: ClockEntranceAnimation.fadeDuration),
-                                   value: hasRevealedClock)
-                        .onGeometryChange(for: CGRect.self) { geometry in
-                            geometry.frame(in: .named("clockFace"))
-                        } action: { weekdayFrame = $0 }
-                        .padding(.top, 8)
-                        .offset(x: weekdayAnchor.x, y: weekdayAnchor.y)
-                }
-            }
-            .coordinateSpace(name: "clockFace")
-        }
+        ClockFaceView(isScrolling: isScrolling,
+                      isVisible: isVisible && scenePhase == .active,
+                      isEditingAppearance: isEditingAppearance,
+                      showsAlarmHint: showsAlarmHint,
+                      contentSafeAreaInsets: safeAreaInsets)
         .overlay(alignment: .bottom) {
             if showsAlarmHint {
                 ClockAlarmHint(isActive: isVisible && !isScrolling && scenePhase == .active)
