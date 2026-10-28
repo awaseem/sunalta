@@ -23,6 +23,9 @@ final class ClockRenderView: ClockMetalView {
     var previewTopInset: CGFloat = 44 {
         didSet { if oldValue != previewTopInset { setNeedsLayout() } }
     }
+    var clockVerticalCenter: CGFloat = 0.4 {
+        didSet { if oldValue != clockVerticalCenter { setNeedsLayout() } }
+    }
     private let isAlarmPreview: Bool
     private let previewNumeral: String?
     var contentSafeAreaInsets: UIEdgeInsets = .zero {
@@ -257,7 +260,7 @@ final class ClockRenderView: ClockMetalView {
         } else if isAlarmPreview {
             centerFromTop = topInset + previewTopInset + previewHeight * 0.50
         } else {
-            centerFromTop = topInset + usableHeight * 0.40
+            centerFromTop = topInset + usableHeight * clockVerticalCenter
         }
         let centerY = visibleHeight * Float(0.5 - centerFromTop / bounds.height)
         placement.position = [0, centerY, 0]

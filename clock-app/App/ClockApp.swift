@@ -28,13 +28,23 @@ struct ClockApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AlarmRootView()
+            Group {
+                #if DEBUG && targetEnvironment(simulator)
+                // Launch with --preview-alarms to review an isolated, populated list.
+                if ProcessInfo.processInfo.arguments.contains("--preview-alarms") {
+                    AlarmPreviewContainer { HomeScreen() }
+                } else {
+                    AlarmRootView()
+                }
+                #else
+                AlarmRootView()
+                #endif
+            }
                 .environment(runtime)
                 .environment(themeSettings)
                 .environment(audioService)
                 .environment(tips)
                 .task { await tips.observeTransactions() }
-                .appTheme(themeSettings.theme)
                 .task(id: themeSettings.theme.id) {
                     await appIcon.synchronize(with: themeSettings.theme)
                 }

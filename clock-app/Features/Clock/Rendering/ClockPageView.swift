@@ -12,6 +12,7 @@ final class ClockPageView: UIView {
     private var isOrbiting = false
     private var isEditingAppearance = false
     private var allowsFlybys = true
+    private var showsAlarmHint = true
     private var entrance: ClockEntranceAnimation?
     private var hasPreparedEntrance = false
     private var hasRevealedContent = false
@@ -66,6 +67,7 @@ final class ClockPageView: UIView {
             self?.updatePresentation()
         }
         renderer.contentSafeAreaInsets = insets
+        renderer.clockVerticalCenter = showsAlarmHint ? 0.4 : 0.5
         renderer.weekdayFrame = weekdayFrame
         renderer.show(date: displayedDate)
         accessibilityLabel = renderer.accessibilityLabel
@@ -77,13 +79,15 @@ final class ClockPageView: UIView {
 
     func update(date: Date, theme: AppTheme, insets: UIEdgeInsets,
                 isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
-                allowsFlybys: Bool) {
+                allowsFlybys: Bool, showsAlarmHint: Bool = true) {
         let beganScrolling = isScrolling && !self.isScrolling
         self.isScrolling = isScrolling
         isPageVisible = isVisible
         displayedDate = date
         self.isEditingAppearance = isEditingAppearance
         self.allowsFlybys = allowsFlybys
+        self.showsAlarmHint = showsAlarmHint
+        renderer?.clockVerticalCenter = showsAlarmHint ? 0.4 : 0.5
         entrance?.reduceMotion = !allowsFlybys
         if beganScrolling {
             audioService?.stopEntrance()
@@ -106,6 +110,9 @@ final class ClockPageView: UIView {
             if let renderer { accessibilityLabel = renderer.accessibilityLabel }
         }
         updatePresentation()
+        accessibilityHint = showsAlarmHint
+            ? "Drag horizontally to change the viewing angle. Swipe up to see alarms."
+            : "Drag horizontally to change the viewing angle. Alarms are beside the clock."
     }
 
     override func layoutSubviews() {

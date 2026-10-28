@@ -5,17 +5,11 @@ struct AlarmEmptyState: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading) {
-                Text("Welcome")
-                    .font(.title2.bold())
-                    .foregroundStyle(theme.palette.foreground)
-                    .accessibilityAddTraits(.isHeader)
-                Text("Wake up your way, with alarms built around your routine.")
-                    .font(.body)
-                    .foregroundStyle(theme.palette.secondaryForeground)
-            }
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
+            Text("Wake up your way, with alarms built around your routine.")
+                .font(.body)
+                .foregroundStyle(theme.palette.secondaryForeground)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading) {
                 AlarmWelcomePoint(
