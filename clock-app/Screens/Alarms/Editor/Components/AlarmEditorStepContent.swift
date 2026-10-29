@@ -8,13 +8,7 @@ struct AlarmEditorStepContent: View {
     var body: some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
-                    if step == .time {
-                        Spacer()
-                        Text("24 H").font(.caption.weight(.medium)).foregroundStyle(theme.palette.secondaryForeground)
-                    }
-                }
+                Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
                 if step != .time {
                     Text(step.subtitle).font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
                 }

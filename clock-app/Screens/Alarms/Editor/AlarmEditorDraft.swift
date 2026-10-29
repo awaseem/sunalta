@@ -29,11 +29,6 @@ struct AlarmEditorDraft {
     func timeComponents(calendar: Calendar = .autoupdatingCurrent) -> DateComponents {
         calendar.dateComponents([.hour, .minute], from: time)
     }
-
-    var displayTime: String {
-        let components = timeComponents()
-        return AlarmTimeText.text(hour: components.hour ?? 7, minute: components.minute ?? 0)
-    }
 }
 
 extension AlarmEditorDraft {

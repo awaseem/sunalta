@@ -8,7 +8,9 @@ final class ClockRenderView: ClockMetalView {
     var onOrbitBegan: (() -> Void)?
     var onOrbitSettled: (() -> Void)?
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    var onPeriodAnchorChange: ((CGPoint) -> Void)?
     private var weekdayAnchor: CGPoint?
+    private var periodAnchor: CGPoint?
     var weekdayFrame: CGRect = .zero {
         didSet {
             if oldValue != weekdayFrame {
@@ -37,8 +39,7 @@ final class ClockRenderView: ClockMetalView {
     private var loadTask: Task<Void, Never>?
     private var materialTask: Task<Void, Never>?
     private var materialRevision = 0
-    private var displayedDate = Date.now
-    private var previewTime: String?
+    private var display: ClockTimeDisplay?
     var isReady: Bool { content != nil && materialTask == nil }
     override var isSceneReady: Bool { isReady }
     private let backdrop = ModelEntity()
@@ -267,6 +268,7 @@ final class ClockRenderView: ClockMetalView {
         cameraRestOffset = [0, -centerY, distance]
         applyViewingAngle()
         updateWeekdayAnchor()
+        updatePeriodAnchor()
         applyWeekdayLighting()
         updateFlybys()
     }
@@ -328,6 +330,23 @@ final class ClockRenderView: ClockMetalView {
         onWeekdayAnchorChange?(anchor)
     }
 
+    private func updatePeriodAnchor() {
+        guard previewNumeral == nil, bounds.height > 0, cameraRestOffset.z > 0,
+              let content, let hourDigit = content.lastHourDigit else { return }
+        let hourBounds = hourDigit.visualBounds(relativeTo: nil)
+        let clockBounds = content.root.visualBounds(relativeTo: nil)
+        let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
+        let scale = focalLength / (cameraRestOffset.z - clockBounds.max.z)
+        // Match the weekday's resting projection so the flat label stays still while orbiting.
+        let anchor = CGPoint(
+            x: bounds.midX + CGFloat(clockBounds.max.x * scale),
+            y: bounds.midY - CGFloat(hourBounds.min.y * scale)
+        )
+        guard anchor != periodAnchor else { return }
+        periodAnchor = anchor
+        onPeriodAnchorChange?(anchor)
+    }
+
     private func applyViewingAngle() {
         let orbit = orbitInteraction?.motion.orientation ?? simd_quatf(angle: 0, axis: [0, 1, 0])
         let entrance = simd_quatf(angle: entranceAngles.x, axis: [0, 1, 0])
@@ -361,31 +380,23 @@ final class ClockRenderView: ClockMetalView {
         updateFlybys()
     }
 
-    func show(date: Date) {
-        guard previewTime != nil || !Calendar.current.isDate(displayedDate, equalTo: date, toGranularity: .minute)
-            || content == nil else { return }
-        displayedDate = date
-        previewTime = nil
-        accessibilityLabel = "Time, \(date.formatted(date: .omitted, time: .shortened))"
-        updateTime()
-    }
-
-    func showAlarm(time: String) {
-        guard previewTime != time else { return }
-        previewTime = time
-        accessibilityLabel = "Alarm time, \(time)"
-        updateTime()
+    func show(display: ClockTimeDisplay) {
+        guard self.display != display else { return }
+        let previousDigits = self.display?.digits
+        self.display = display
+        accessibilityLabel = isAlarmPreview ? "Alarm time, \(display.text)" : "Time, \(display.text)"
+        // A locale or period change can update accessibility without submitting an identical scene.
+        if previousDigits != display.digits { updateTime() }
     }
 
     private func updateTime() {
         if let previewNumeral {
             content?.show(numeral: previewNumeral)
-        } else if let previewTime, let content {
-            content.show(time: previewTime)
-        } else {
-            content?.show(date: displayedDate)
+        } else if let display {
+            content?.show(time: display.digits)
         }
         updateWeekdayAnchor()
+        updatePeriodAnchor()
         applyWeekdayLighting()
         requestFrame()
     }

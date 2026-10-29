@@ -10,6 +10,7 @@ struct ThemePalette: Equatable {
     let selection: Color
     let separator: Color
     let error: Color
+    var clockPeriod: Color { foreground.opacity(0.7) }
 
     /// Derived colors follow the supplied foreground, control, and background unless overridden.
     init(

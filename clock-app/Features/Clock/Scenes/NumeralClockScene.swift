@@ -5,6 +5,7 @@ import RealityKit
 final class NumeralClockScene {
     let root = Entity()
     var firstDigit: ModelEntity? { timeSlots.first }
+    var lastHourDigit: ModelEntity? { timeSlots.count == 4 ? timeSlots[1] : nil }
     private let glyphs: [String: ModelEntity]
     private let glyphBounds: [String: BoundingBox]
     private var timeSlots: [ModelEntity] = []
@@ -38,11 +39,6 @@ final class NumeralClockScene {
             glyph.model?.materials = [material]
             applySurface(to: glyph)
         }
-    }
-
-    func show(date: Date) {
-        let time = Calendar.autoupdatingCurrent.dateComponents([.hour, .minute], from: date)
-        show(time: AlarmTimeText.text(hour: time.hour ?? 0, minute: time.minute ?? 0))
     }
 
     /// A material swatch uses the same sculpted glyph and surface as the clock face.

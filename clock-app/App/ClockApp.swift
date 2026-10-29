@@ -8,6 +8,7 @@ struct ClockApp: App {
     private let container: ModelContainer
     @State private var runtime: AlarmRuntime
     @State private var themeSettings = ThemeSettings()
+    @State private var clockSettings = ClockDisplaySettings()
     @State private var audioService = ClockAudioService()
     @State private var appIcon = ThemeAppIcon()
     @State private var tips = TipStore()
@@ -42,6 +43,7 @@ struct ClockApp: App {
             }
                 .environment(runtime)
                 .environment(themeSettings)
+                .environment(clockSettings)
                 .environment(audioService)
                 .environment(tips)
                 .task { await tips.observeTransactions() }

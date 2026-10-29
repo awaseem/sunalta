@@ -94,8 +94,4 @@ struct AlarmOccurrenceTests {
         #expect(components.hour == 3 && components.minute == 0)
     }
 
-    @Test(arguments: [(0, 0, "00:00"), (7, 5, "07:05"), (23, 59, "23:59")])
-    func clockDigitsKeepLeadingZeros(hour: Int, minute: Int, expected: String) {
-        #expect(AlarmTimeText.text(hour: hour, minute: minute) == expected)
-    }
 }

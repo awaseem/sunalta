@@ -8,7 +8,7 @@ struct ClockRenderingTests {
     @Test func settledClockDoesNotRenderUntilItsContentChanges() async throws {
         let clock = ClockRenderView(theme: .white)
         let date = Date(timeIntervalSince1970: 1_790_000_000)
-        clock.show(date: date)
+        clock.show(display: ClockTimeDisplay(date: date, format: .twentyFourHour))
         let window = try host(clock)
         defer {
             clock.stop()
@@ -20,13 +20,13 @@ struct ClockRenderingTests {
 
         // SwiftUI may update the representable without changing the displayed minute.
         for _ in 0..<10 {
-            clock.show(date: date)
+            clock.show(display: ClockTimeDisplay(date: date, format: .twentyFourHour))
             clock.applyTheme(.white)
         }
         try await Task.sleep(for: .milliseconds(500))
         #expect(clock.renderedFrameCount == settledFrames)
 
-        clock.show(date: date.addingTimeInterval(60))
+        clock.show(display: ClockTimeDisplay(date: date.addingTimeInterval(60), format: .twentyFourHour))
         try await waitForFrame(clock, after: settledFrames)
         let changedFrames = clock.renderedFrameCount
         try await Task.sleep(for: .milliseconds(200))
@@ -35,6 +35,7 @@ struct ClockRenderingTests {
 
     @Test func suspendedClockCoalescesChangesAndResumesWithoutReloading() async throws {
         let clock = ClockRenderView(theme: .white)
+        clock.show(display: ClockTimeDisplay(hour: 7, minute: 0, format: .twentyFourHour))
         let window = try host(clock)
         defer {
             clock.stop()
@@ -45,7 +46,7 @@ struct ClockRenderingTests {
         try await Task.sleep(for: .milliseconds(200))
         let suspendedFrames = clock.renderedFrameCount
         for index in 0..<20 {
-            clock.showAlarm(time: index.isMultiple(of: 2) ? "07:00" : "08:00")
+            clock.show(display: ClockTimeDisplay(hour: index.isMultiple(of: 2) ? 7 : 8, minute: 0, format: .twentyFourHour))
             clock.entranceAngles = [Float(index) * 0.01, 0]
         }
         try await Task.sleep(for: .milliseconds(200))
@@ -60,6 +61,7 @@ struct ClockRenderingTests {
 
     @Test func grassBreezeStopsRenderingWhenAmbientAnimationIsDisabled() async throws {
         let clock = ClockRenderView(theme: .grass)
+        clock.show(display: ClockTimeDisplay(hour: 7, minute: 0, format: .twentyFourHour))
         let window = try host(clock)
         defer {
             clock.stop()
@@ -84,7 +86,7 @@ struct ClockRenderingTests {
         let page = ClockPageView(theme: .white)
         let date = Date.now
         func update(scrolling: Bool, visible: Bool) {
-            page.update(date: date, theme: .white, insets: .zero,
+            page.update(display: ClockTimeDisplay(date: date, format: .twentyFourHour), theme: .white, insets: .zero,
                         isScrolling: scrolling, isVisible: visible,
                         isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
         }
@@ -116,7 +118,7 @@ struct ClockRenderingTests {
     @Test func scrollingDuringFirstFrameDoesNotLeaveClockHidden() async throws {
         let page = ClockPageView(theme: .white)
         func update(scrolling: Bool) {
-            page.update(date: .now, theme: .white, insets: .zero,
+            page.update(display: ClockTimeDisplay(date: .now, format: .twentyFourHour), theme: .white, insets: .zero,
                         isScrolling: scrolling, isVisible: true,
                         isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
         }
@@ -134,6 +136,38 @@ struct ClockRenderingTests {
             try await Task.sleep(for: .milliseconds(20))
         }
         #expect(clock.alpha == 1, "The clock must reveal after an interrupted opening")
+    }
+
+    @Test(arguments: [7, 13])
+    func changingFormatWithinTheSameMinuteUpdatesTheCachedClock(hour: Int) async throws {
+        let page = ClockPageView(theme: .white)
+        func update(_ format: ClockTimeFormat) {
+            page.update(display: ClockTimeDisplay(hour: hour, minute: 5, format: format,
+                                                 locale: Locale(identifier: "en_US")),
+                        theme: .white, insets: .zero, isScrolling: false, isVisible: true,
+                        isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
+        }
+        update(.twentyFourHour)
+        let window = try host(page)
+        defer {
+            page.stop()
+            window.isHidden = true
+        }
+        let clock = try #require(page.subviews.first as? ClockRenderView)
+        try await waitForFrame(clock, after: 0)
+        try await Task.sleep(for: .seconds(1))
+        let previousFrames = clock.renderedFrameCount
+        update(.twelveHour)
+        let expected = ClockTimeDisplay(hour: hour, minute: 5, format: .twelveHour,
+                                        locale: Locale(identifier: "en_US"))
+        #expect(page.accessibilityLabel == "Time, \(expected.text)")
+        #expect(page.subviews.first === clock)
+        if hour > 12 {
+            try await waitForFrame(clock, after: previousFrames)
+        } else {
+            try await Task.sleep(for: .milliseconds(200))
+            #expect(clock.renderedFrameCount == previousFrames)
+        }
     }
 
     private func host(_ view: UIView) throws -> UIWindow {

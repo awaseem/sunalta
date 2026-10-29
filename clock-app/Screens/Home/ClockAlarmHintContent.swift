@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ClockAlarmHintContent: View {
+    @Environment(ClockDisplaySettings.self) private var settings
+    @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var theme
     @Environment(\.calendar) private var calendar
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -77,8 +79,8 @@ struct ClockAlarmHintContent: View {
     }
 
     private func alarmDescription(for nextAlarm: Date) -> String {
-        let time = AlarmTimeText.text(hour: calendar.component(.hour, from: nextAlarm),
-                                      minute: calendar.component(.minute, from: nextAlarm))
+        let time = ClockTimeDisplay(date: nextAlarm, format: settings.format,
+                                    calendar: calendar, locale: locale).text
         if calendar.isDate(nextAlarm, inSameDayAs: now) {
             return "Today · \(time)"
         }
@@ -91,11 +93,15 @@ struct ClockAlarmHintContent: View {
 }
 
 #Preview("Upcoming alarm") {
+    @Previewable @State var settings = ClockDisplaySettings(defaults: PreviewDefaults.make())
     ClockAlarmHintContent(nextAlarm: .now.addingTimeInterval(8 * 60 * 60), now: .now, isActive: true)
         .padding()
+        .environment(settings)
 }
 
 #Preview("No alarms") {
+    @Previewable @State var settings = ClockDisplaySettings(defaults: PreviewDefaults.make())
     ClockAlarmHintContent(nextAlarm: nil, now: .now, isActive: true)
         .padding()
+        .environment(settings)
 }

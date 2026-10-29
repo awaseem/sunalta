@@ -35,6 +35,18 @@ struct AlarmEditingTests {
         return alarm
     }
 
+    @Test(arguments: [0, 12, 23])
+    func openingAndSavingAnAlarmPreservesMidnightNoonAndPMHours(hour: Int) async throws {
+        let container = try makeContainer()
+        let alarm = try AlarmRecord(hour: hour, minute: 5, isEnabled: false)
+        container.mainContext.insert(alarm)
+        try container.mainContext.save()
+        let draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
+        try await makeService(container.mainContext).update(draft, alarm: alarm)
+        let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+        #expect(saved.hour == hour && saved.minute == 5)
+    }
+
     @Test func discardingAPrefilledDraftLeavesTheRecordAndScanTargetUntouched() throws {
         let container = try makeContainer()
         let alarm = try insertAlarm(in: container.mainContext)

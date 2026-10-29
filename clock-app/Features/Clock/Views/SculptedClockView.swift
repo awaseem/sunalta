@@ -5,7 +5,7 @@ struct SculptedClockView: UIViewRepresentable {
     @Environment(\.appTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(ClockAudioService.self) private var audioService: ClockAudioService?
-    let date: Date
+    let display: ClockTimeDisplay
     var isScrolling = false
     var isVisible = true
     var isEditingAppearance = false
@@ -13,6 +13,7 @@ struct SculptedClockView: UIViewRepresentable {
     var contentSafeAreaInsets: UIEdgeInsets = .zero
     var weekdayFrame: CGRect = .zero
     var onWeekdayAnchorChange: ((CGPoint) -> Void)?
+    var onPeriodAnchorChange: ((CGPoint) -> Void)?
     var onContentRevealed: (() -> Void)?
 
     func makeUIView(context: Context) -> ClockPageView {
@@ -28,7 +29,10 @@ struct SculptedClockView: UIViewRepresentable {
                 onWeekdayAnchorChange?(anchor)
             }
         }
-        view.update(date: date, theme: theme, insets: contentSafeAreaInsets,
+        view.onPeriodAnchorChange = { anchor in
+            Task { @MainActor in onPeriodAnchorChange?(anchor) }
+        }
+        view.update(display: display, theme: theme, insets: contentSafeAreaInsets,
                     isScrolling: isScrolling, isVisible: isVisible,
                     isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame,
                     allowsFlybys: !reduceMotion, showsAlarmHint: showsAlarmHint)
