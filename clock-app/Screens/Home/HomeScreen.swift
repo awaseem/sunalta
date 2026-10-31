@@ -95,6 +95,13 @@ struct HomeScreen: View {
             AlarmEditorView(alarm: destination.alarm, theme: theme)
                 .appTheme(theme)
         }
+        .onOpenURL { url in
+            guard url == ClockWidgetPreferences.clockURL else { return }
+            alarmEditor = nil
+            portraitShowsAlarms = false
+            isClockVisible = true
+            pagePosition.scrollTo(edge: .top)
+        }
     }
 
     private func presentEditor(_ destination: AlarmEditorDestination) {

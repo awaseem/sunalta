@@ -92,6 +92,9 @@ struct AlarmListPage: View {
             case .settings: ClockSettingsView()
             }
         }
+        .onOpenURL { url in
+            if url == ClockWidgetPreferences.clockURL { activeSheet = nil }
+        }
         .alert("Couldn't update alarm", isPresented: Binding(
             get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
         )) {
