@@ -92,6 +92,31 @@ final class NumeralClockScene {
         root.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
     }
 
+#if DEBUG
+    /// The widget is lit in its final row arrangement, before capturing any layers.
+    func arrangeWidgetRow() {
+        let meshWidth = glyphBounds.values.map(\.extents.x).max() ?? 1.6
+        let surfaceWidth = surface == .grass
+            ? grassGlyphs.values.map { $0.visualBounds(relativeTo: $0).extents.x }.max() ?? meshWidth
+            : meshWidth
+        let columnWidth = max(meshWidth, surfaceWidth)
+        let gap = columnWidth * 0.054
+        let groupGap = columnWidth * 0.16
+        let rowWidth = columnWidth * 4 + gap * 3 + groupGap
+        // Fill the grass columns more fully while keeping a clear hours/minutes break.
+        let widthScale: Float = surface == .grass ? 1.16 : 1
+        for (index, glyph) in timeSlots.enumerated() {
+            guard let bounds = glyphBounds[glyph.name] else { continue }
+            let center = columnWidth / 2 + Float(index) * (columnWidth + gap)
+                + (index >= 2 ? groupGap : 0) - rowWidth / 2
+            glyph.scale = [widthScale, digitHeightScale, 1]
+            glyph.position = [center - bounds.center.x * widthScale, -bounds.center.y * digitHeightScale, 0]
+        }
+        // Leave overscan for the wider grass row's square artwork crop.
+        root.scale = SIMD3(repeating: surface == .grass ? 0.94 : 1)
+    }
+#endif
+
     func advanceBreeze(by deltaTime: Float) {
         guard surface == .grass else { return }
         grassTime += deltaTime

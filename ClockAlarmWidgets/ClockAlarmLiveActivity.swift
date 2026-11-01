@@ -4,7 +4,6 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-@main
 struct ClockAlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AlarmAttributes<ClockAlarmMetadata>.self) { context in

@@ -41,6 +41,7 @@ struct ClockApp: App {
                 AlarmRootView()
                 #endif
             }
+                .modifier(ClockWidgetSync())
                 .environment(runtime)
                 .environment(themeSettings)
                 .environment(clockSettings)
@@ -58,6 +59,7 @@ struct ClockApp: App {
                 .task {
                     #if DEBUG
                     await ThemeIconExporter.exportIfRequested()
+                    await ClockWidgetSceneExporter.exportIfRequested()
                     #endif
                 }
         }

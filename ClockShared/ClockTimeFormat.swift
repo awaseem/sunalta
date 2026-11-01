@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated enum ClockTimeFormat: String {
+nonisolated enum ClockTimeFormat: String, Codable {
     case twelveHour = "12-hour"
     case twentyFourHour = "24-hour"
 

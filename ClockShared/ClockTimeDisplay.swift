@@ -1,6 +1,6 @@
 import Foundation
 
-/// Presentation only: alarm storage and scheduling always use hours 0...23.
+/// Shared app/widget presentation; alarm storage and scheduling always use hours 0...23.
 nonisolated struct ClockTimeDisplay: Equatable {
     /// Four ASCII mesh keys, including a leading zero in either format.
     let digits: String

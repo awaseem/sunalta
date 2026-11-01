@@ -182,7 +182,7 @@ final class ClockRenderView: ClockMetalView {
         applyWeekdayLighting()
     }
 
-    private func applyWeekdayLighting() {
+    private func applyWeekdayLighting(verticalDirection: Float = 1) {
         guard !isAlarmPreview, !weekdayFrame.isEmpty, bounds.height > 0,
               cameraRestOffset.z > 0, let content,
               content.firstDigit != nil else {
@@ -207,11 +207,48 @@ final class ClockRenderView: ClockMetalView {
             -depth
         )
         let direction = Float(glow.direction * .pi / 180)
-        // Aim upward and back toward the numeral faces, with a soft cone falloff.
-        let target = source + SIMD3<Float>(sin(direction), cos(direction), -1.5)
+        // The home label shines upward; widget exports place it above the row.
+        let target = source + SIMD3<Float>(sin(direction), cos(direction) * verticalDirection, -1.5)
         weekdayLight.look(at: camera.convert(position: target, to: nil),
                           from: camera.convert(position: source, to: nil), relativeTo: nil)
     }
+
+#if DEBUG
+    /// Captures the final widget row, with the weekday shining down onto the hours.
+    func prepareWidgetArtwork(time: String, visibleSlot: Int?) throws -> CGRect {
+        guard let content, let realityRenderer, isReady else { throw CocoaError(.coderInvalidValue) }
+        for digit in content.root.children { digit.isEnabled = true }
+        content.show(time: "88:88")
+        content.arrangeWidgetRow()
+        layoutSubviews()
+        let clockBounds = content.root.visualBounds(relativeTo: nil)
+        let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
+        let scale = focalLength / (cameraRestOffset.z - clockBounds.max.z)
+        let center = CGPoint(x: bounds.midX + CGFloat(clockBounds.center.x * scale),
+                             y: bounds.midY - CGFloat(clockBounds.center.y * scale))
+        let reference = ClockWidgetComposition.numerals
+        let side = max(CGFloat(clockBounds.extents.x * scale) / reference.width,
+                       CGFloat(clockBounds.extents.y * scale) / reference.height)
+            * ClockWidgetComposition.side * 1.04
+        let crop = CGRect(x: center.x - reference.midX / ClockWidgetComposition.side * side,
+                          y: center.y - reference.midY / ClockWidgetComposition.side * side,
+                          width: side, height: side)
+        let label = ClockWidgetComposition.weekdayLight
+        let labelScale = side / ClockWidgetComposition.side
+        weekdayFrame = CGRect(x: crop.minX + label.minX * labelScale,
+                              y: crop.minY + label.minY * labelScale,
+                              width: label.width * labelScale, height: label.height * labelScale)
+        applyWeekdayLighting(verticalDirection: -1)
+        content.show(time: time)
+        content.arrangeWidgetRow()
+        for (index, digit) in content.root.children.enumerated() {
+            digit.isEnabled = visibleSlot == nil || index == visibleSlot
+        }
+        backdrop.isEnabled = false
+        realityRenderer.cameraSettings.colorBackground = .color(CGColor(gray: 0, alpha: 0))
+        return crop
+    }
+#endif
 
     private func applyMaterials() {
         guard let content else { return }
