@@ -5,6 +5,11 @@ struct AlarmEmptyState: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+            Text("Welcome")
+                .font(.largeTitle.bold())
+                .foregroundStyle(theme.palette.foreground)
+                .accessibilityAddTraits(.isHeader)
+
             Text("Wake up your way, with alarms built around your routine.")
                 .font(.body)
                 .foregroundStyle(theme.palette.secondaryForeground)
@@ -29,16 +34,16 @@ struct AlarmEmptyState: View {
                 )
             }
         }
-        .frame(maxWidth: 560)
+        .frame(maxWidth: 560, alignment: .leading)
+        .padding(.horizontal, 28)
         .frame(maxWidth: .infinity)
-        .padding(.vertical)
+        .padding(.vertical, 24)
     }
 }
 
 #Preview("No alarms") {
     ScrollView {
         AlarmEmptyState()
-            .padding(.horizontal)
     }
     .appTheme(.white)
 }
@@ -46,7 +51,6 @@ struct AlarmEmptyState: View {
 #Preview("Midnight") {
     ScrollView {
         AlarmEmptyState()
-            .padding(.horizontal)
     }
     .background(AppTheme.midnight.palette.background)
     .appTheme(.midnight)
@@ -55,7 +59,6 @@ struct AlarmEmptyState: View {
 #Preview("Large text") {
     ScrollView {
         AlarmEmptyState()
-            .padding(.horizontal)
     }
     .appTheme(.white)
     .environment(\.dynamicTypeSize, .accessibility3)

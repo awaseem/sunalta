@@ -42,9 +42,9 @@ struct AlarmListPage: View {
                             }
                         }
                         .swipeActionsContainer()
+                        .padding(.horizontal)
                     }
                 }
-                .padding(.horizontal)
                 .padding(.bottom)
                 .frame(maxWidth: 640)
                 .frame(maxWidth: .infinity, alignment: .top)
@@ -65,8 +65,9 @@ struct AlarmListPage: View {
                 }
             }
             .background(theme.palette.background)
-            .navigationTitle(alarms.isEmpty ? "Welcome" : "Alarms")
+            .navigationTitle("Alarms")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar(alarms.isEmpty ? .hidden : .visible, for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
                     Button("Settings", systemImage: "gearshape") { activeSheet = .settings }
