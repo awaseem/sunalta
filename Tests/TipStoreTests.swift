@@ -2,7 +2,7 @@ import Foundation
 import StoreKit
 import StoreKitTest
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 @Suite(.serialized)
 @MainActor

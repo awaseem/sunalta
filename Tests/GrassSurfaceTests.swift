@@ -1,6 +1,6 @@
 import RealityKit
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 @MainActor
 struct GrassSurfaceTests {

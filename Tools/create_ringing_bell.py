@@ -13,7 +13,7 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Design/Blender/RingingBell/ringing-bell.blend"
-DESTINATION = ROOT / "clock-app/Resources/RingingBell.usdz"
+DESTINATION = ROOT / "Sunalta/Resources/RingingBell.usdz"
 
 
 def empty(name, parent=None, location=(0, 0, 0)):

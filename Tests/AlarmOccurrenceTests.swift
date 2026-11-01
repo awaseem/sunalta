@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 struct AlarmOccurrenceTests {
     private var calendar: Calendar {

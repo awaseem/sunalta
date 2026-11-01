@@ -1,6 +1,6 @@
 import Testing
 import UIKit
-@testable import clock_app
+@testable import Sunalta
 
 @Suite(.serialized)
 @MainActor

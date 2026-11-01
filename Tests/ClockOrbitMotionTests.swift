@@ -1,6 +1,6 @@
 import simd
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 struct ClockOrbitMotionTests {
     @Test(arguments: [SIMD2<Float>.zero, SIMD2<Float>(0.12, -0.22)])

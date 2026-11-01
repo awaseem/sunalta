@@ -40,7 +40,7 @@ def main():
     root = Path(__file__).resolve().parent.parent
     # Validate every theme before replacing any bundled artwork.
     themes = {theme: inspect_theme(source, theme) for theme in ("white", "midnight", "grass")}
-    catalog = root / "ClockAlarmWidgets/Clock/Assets.xcassets"
+    catalog = root / "SunaltaWidgets/Clock/Assets.xcassets"
     catalog.mkdir(parents=True, exist_ok=True)
     info = {"author": "xcode", "version": 1}
     (catalog / "Contents.json").write_text(json.dumps({"info": info}, indent=2) + "\n")
@@ -56,8 +56,8 @@ def main():
     manifest = root / "Design/WidgetScenes/export-manifest.json"
     manifest.parent.mkdir(parents=True, exist_ok=True)
     manifest.write_text(json.dumps({
-        "source": "clock-app/Resources/SharpNumerals.clockmesh",
-        "sourceSHA256": hashlib.sha256((root / "clock-app/Resources/SharpNumerals.clockmesh").read_bytes()).hexdigest(),
+        "source": "Sunalta/Resources/SharpNumerals.clockmesh",
+        "sourceSHA256": hashlib.sha256((root / "Sunalta/Resources/SharpNumerals.clockmesh").read_bytes()).hexdigest(),
         "renderer": "ClockWidgetSceneExporter --export-widget-scenes; ClockRenderView",
         "appearance": "Original AppTheme materials and key lighting; weekday accent shines down from header onto hours",
         "framing": "Calendar layout from ClockWidgetComposition; row captured in place; four uniformly scaled layers",

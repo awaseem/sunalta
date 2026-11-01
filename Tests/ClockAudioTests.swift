@@ -1,7 +1,7 @@
 import AVFAudio
 import Foundation
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 @Suite(.serialized)
 @MainActor

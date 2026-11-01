@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 @MainActor
 struct AlarmPersistenceTests {

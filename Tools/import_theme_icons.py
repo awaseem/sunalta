@@ -1,9 +1,9 @@
 """Import the native Debug renderer's completed icon exports into the asset catalog.
 
 Launch a stopped Debug app with --export-theme-icons, then locate its data container:
-xcrun simctl get_app_container SIMULATOR_UDID dev.ambitionsoftware.clock-app data
+xcrun simctl get_app_container SIMULATOR_UDID dev.ambitionsoftware.sunalta data
 Run this script with that container's Documents/ThemeIcons folder after complete.txt appears.
-The App Store image is clock-app/Assets.xcassets/AppIcon.appiconset/Any.png.
+The App Store image is Sunalta/Assets.xcassets/AppIcon.appiconset/Any.png.
 """
 import argparse
 import json
@@ -35,7 +35,7 @@ for theme, _ in icons:
             parser.error(f"Tinted app icon must be grayscale: {path}")
 
 for theme, catalog in icons:
-    target = root / "clock-app" / "Assets.xcassets" / f"{catalog}.appiconset"
+    target = root / "Sunalta" / "Assets.xcassets" / f"{catalog}.appiconset"
     target.mkdir(exist_ok=True)
     images = []
     for suffix, variant in variants:

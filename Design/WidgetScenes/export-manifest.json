@@ -1,5 +1,5 @@
 {
-  "source": "clock-app/Resources/SharpNumerals.clockmesh",
+  "source": "Sunalta/Resources/SharpNumerals.clockmesh",
   "sourceSHA256": "3c806ef558de2c3a6d0f5aee80c24906fee2621bbcd5bdae47db079f47a58c86",
   "renderer": "ClockWidgetSceneExporter --export-widget-scenes; ClockRenderView",
   "appearance": "Original AppTheme materials and key lighting; weekday accent shines down from header onto hours",

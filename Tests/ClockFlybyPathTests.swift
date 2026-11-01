@@ -1,6 +1,6 @@
 import simd
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 struct ClockFlybyPathTests {
     @Test(arguments: [true, false])

@@ -1,6 +1,6 @@
 {
   "source": "Design/Blender/RingingBell/ringing-bell.blend",
-  "resource": "clock-app/Resources/RingingBell.usdz",
+  "resource": "Sunalta/Resources/RingingBell.usdz",
   "pivots": [
     "BellSwing",
     "ClapperSwing"

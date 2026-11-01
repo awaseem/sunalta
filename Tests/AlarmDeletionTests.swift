@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 import Testing
-@testable import clock_app
+@testable import Sunalta
 
 @MainActor
 struct AlarmDeletionTests {
@@ -89,7 +89,10 @@ struct AlarmDeletionTests {
         #expect(alarm.modelContext == nil)
 
         // The swipe animation can request another render after the record is detached.
-        let renderer = ImageRenderer(content: row.appTheme(.white).frame(width: 360))
+        let renderer = ImageRenderer(content: row
+            .environment(ClockDisplaySettings())
+            .appTheme(.white)
+            .frame(width: 360))
         #expect(renderer.cgImage != nil)
     }
 }

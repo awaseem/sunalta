@@ -2,7 +2,7 @@
   "source": "Design/Blender/ClockSharp/clock-sharp.blend",
   "sourceSHA256": "2d942edb3875bc58097bc2928545cb86aae56666f7aa795909b6de0f3c70d24d",
   "blenderVersion": "5.2.2 LTS",
-  "resource": "clock-app/Resources/SharpNumerals.clockmesh",
+  "resource": "Sunalta/Resources/SharpNumerals.clockmesh",
   "resourceSHA256": "3c806ef558de2c3a6d0f5aee80c24906fee2621bbcd5bdae47db079f47a58c86",
   "format": "CLKMESH2",
   "centerYOffset": 1.855999945,
