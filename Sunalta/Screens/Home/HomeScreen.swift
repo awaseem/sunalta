@@ -4,6 +4,7 @@ import SwiftUI
 struct HomeScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.appTheme) private var theme
+    @Environment(AlarmRuntime.self) private var runtime
     @Query(sort: [SortDescriptor(\AlarmRecord.hour), SortDescriptor(\AlarmRecord.minute)])
     private var alarms: [AlarmRecord]
     @State private var alarmEditor: AlarmEditorDestination?
@@ -25,15 +26,22 @@ struct HomeScreen: View {
                 : AnyLayout(VStackLayout(spacing: 0))
             ScrollView(isLandscape ? [] : .vertical) {
                 layout {
-                    HomeClockPage(
-                        isScrolling: !isLandscape && isScrolling,
-                        isVisible: (isLandscape || isClockVisible) && alarmEditor == nil,
-                        showsAlarmHint: !isLandscape,
-                        availableHeight: geometry.size.height,
-                        safeAreaInsets: EdgeInsets(top: insets.top, leading: insets.leading,
-                                                   bottom: insets.bottom,
-                                                   trailing: isLandscape ? 0 : insets.trailing)
-                    )
+                    Group {
+                        if runtime.isAlarmPresented {
+                            // Release the custom renderer while the alarm's RealityViews are visible.
+                            Color.clear
+                        } else {
+                            HomeClockPage(
+                                isScrolling: !isLandscape && isScrolling,
+                                isVisible: (isLandscape || isClockVisible) && alarmEditor == nil,
+                                showsAlarmHint: !isLandscape,
+                                availableHeight: geometry.size.height,
+                                safeAreaInsets: EdgeInsets(top: insets.top, leading: insets.leading,
+                                                           bottom: insets.bottom,
+                                                           trailing: isLandscape ? 0 : insets.trailing)
+                            )
+                        }
+                    }
                     .frame(width: columnWidth, height: pageHeight)
                     .clipped()
 
@@ -94,6 +102,12 @@ struct HomeScreen: View {
         .fullScreenCover(item: $alarmEditor) { destination in
             AlarmEditorView(alarm: destination.alarm, theme: theme)
                 .appTheme(theme)
+        }
+        .onChange(of: runtime.isAlarmPresented) { _, presented in
+            guard presented else { return }
+            alarmEditor = nil
+            portraitShowsAlarms = true
+            if !isLandscape { pagePosition.scrollTo(edge: .bottom) }
         }
         .onOpenURL { url in
             guard url == ClockWidgetPreferences.clockURL else { return }

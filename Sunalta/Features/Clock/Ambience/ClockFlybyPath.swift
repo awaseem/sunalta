@@ -10,6 +10,7 @@ nonisolated struct ClockFlybyPath {
     let height: Float
     let arc: Float
     var origin: Float = 0
+    var horizontalReach: Float = 1.25
 
     func position(at elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float) -> SIMD3<Float> {
         let progress = Float(min(max(elapsed / duration, 0), 1))
@@ -18,7 +19,7 @@ nonisolated struct ClockFlybyPath {
         let direction: Float = travelsRight ? 1 : -1
         // Begin near the middle, then gradually veer toward the chosen edge.
         let bend = 0.2 * progress + 0.8 * progress * progress
-        let x = origin + (direction * 1.25 - origin) * bend
+        let x = origin + (direction * horizontalReach - origin) * bend
         let y = height + arc * sin(.pi * progress / 2)
         return [x * viewport.x / 2 * perspective,
                 y * viewport.y / 2 * perspective,

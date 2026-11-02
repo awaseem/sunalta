@@ -78,6 +78,12 @@ struct AlarmListPage: View {
                         .foregroundStyle(theme.palette.control)
                 }
                 ToolbarSpacer(.flexible, placement: .bottomBar)
+                if runtime.activeAlarm != nil {
+                    ToolbarItem(placement: .bottomBar) {
+                        ActiveAlarmButton()
+                    }
+                    ToolbarSpacer(.flexible, placement: .bottomBar)
+                }
                 ToolbarItem(placement: .bottomBar) {
                     Button("New alarm", systemImage: "plus", action: createAlarm)
                         .labelStyle(.iconOnly)
@@ -95,6 +101,9 @@ struct AlarmListPage: View {
         }
         .onOpenURL { url in
             if url == ClockWidgetPreferences.clockURL { activeSheet = nil }
+        }
+        .onChange(of: runtime.isAlarmPresented) { _, presented in
+            if presented { activeSheet = nil }
         }
         .alert("Couldn't update alarm", isPresented: Binding(
             get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }

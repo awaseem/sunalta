@@ -4,6 +4,24 @@ A SwiftUI clock and alarm app. Open `Sunalta.xcodeproj` and run the `Sunalta` sc
 
 Sunalta uses a fresh app identity: `dev.ambitionsoftware.sunalta` for the app and `dev.ambitionsoftware.sunalta.SunaltaWidgets` for its widget extension. Register both bundle identifiers and the shared App Group `group.dev.ambitionsoftware.sunalta` for signed device builds. The URL scheme is `sunalta`, and tip product IDs use the `sunalta_tip_` prefix.
 
+## Active alarm screen
+
+Ringing and snoozed alarms remain active until stopped (or scanned, for QR/NFC alarms). Snooze keeps the alarm screen open with a resting bell and a countdown replacing the Snooze button. The native Close button returns to the alarms page without ending the session. Its primary-color, text-only “Active alarm” toolbar island reopens the session; scheduled alarms that have not rung do not show an island. A snoozed alarm that rings again brings its screen back automatically.
+
+Sixteen of each theme's home-screen creatures cross the alarm screen from left to right in two spread-out groups of eight, behind the numbers, bell, text, and controls. They fade in near the left edge and fade out near the right, following the home screen's shallow curves and staggered starts. Each bird crosses in roughly five seconds. All sixteen finish before a 2.5-second quiet pause; the next bell swing peak starts the next group. These passive flybys continue during snooze without affecting alarm behavior. Reduce Motion disables the decorative motion.
+
+For an interactive simulator check, add `--preview-active-alarm` to the Debug scheme's launch arguments. This uses an isolated in-memory alarm and simulated AlarmKit operations, with a one-minute snooze that automatically rings again. It does not schedule real system alerts. Optional arguments: `--preview-snoozed`, `--preview-alarm-island`, `--preview-12-hour`, and `--preview-scan-alarm` (QR).
+
+Check Snooze → countdown replaces the Snooze button → Close → Active alarm toolbar island → reopen → Stop. Also leave the screen closed until snooze expires, and confirm it returns to ringing. Stop should remove the island. QR/NFC alarms must still require a matching scan, including during snooze. Use a device to check real AlarmKit notifications and Lock Screen actions.
+
+Run the session regression tests with:
+
+```sh
+xcodebuild test -project Sunalta.xcodeproj -scheme Sunalta \
+  -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.0' \
+  -only-testing:SunaltaTests/AlarmSessionTests
+```
+
 ## Home Screen clock widget
 
 The initial widget supports **Small (`systemSmall`)** only. It shows an abbreviated weekday above a large single row of hours and minutes, separated by a wider gap, with an optional AM/PM label beside the weekday in 12-hour mode. It follows the app's White, Midnight, or Grass theme and clock-format settings. The weekday and time use the same entry date, calendar, locale, and time zone. All themes use four layers captured through `ClockRenderView`, preserving the home page's camera, materials, and key lighting, including Grass's actual blade geometry. The weekday accent light shines down from the header onto the tops of the hour digits. The row is captured in its final position and scales uniformly with the widget; the extension composes bundled images rather than running a 3D renderer. Custom lighting/background adjustments and animation remain app-only. Tinted and clear Home Screen appearances desaturate the same scene layers, using Midnight's lighter material for otherwise-black White numerals.

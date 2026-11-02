@@ -92,9 +92,8 @@ final class NumeralClockScene {
         root.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
     }
 
-#if DEBUG
-    /// The widget is lit in its final row arrangement, before capturing any layers.
-    func arrangeWidgetRow() {
+    /// Shared by the active alarm and the widget's captured artwork.
+    func arrangeRow() {
         let meshWidth = glyphBounds.values.map(\.extents.x).max() ?? 1.6
         let surfaceWidth = surface == .grass
             ? grassGlyphs.values.map { $0.visualBounds(relativeTo: $0).extents.x }.max() ?? meshWidth
@@ -115,7 +114,6 @@ final class NumeralClockScene {
         // Leave overscan for the wider grass row's square artwork crop.
         root.scale = SIMD3(repeating: surface == .grass ? 0.94 : 1)
     }
-#endif
 
     func advanceBreeze(by deltaTime: Float) {
         guard surface == .grass else { return }

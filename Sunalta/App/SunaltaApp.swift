@@ -32,7 +32,9 @@ struct SunaltaApp: App {
             Group {
                 #if DEBUG && targetEnvironment(simulator)
                 // Launch with --preview-alarms to review an isolated, populated list.
-                if ProcessInfo.processInfo.arguments.contains("--preview-alarms") {
+                if ProcessInfo.processInfo.arguments.contains("--preview-active-alarm") {
+                    AlarmSessionPreview()
+                } else if ProcessInfo.processInfo.arguments.contains("--preview-alarms") {
                     AlarmPreviewContainer { HomeScreen() }
                 } else {
                     AlarmRootView()

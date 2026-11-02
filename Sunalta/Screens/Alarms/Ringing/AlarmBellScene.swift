@@ -7,24 +7,24 @@ import SwiftUI
 final class AlarmBellScene {
     let root = Entity()
     private let model: Entity
+    private let subject = Entity()
     private let studio = Entity()
     private let keyLight = DirectionalLight()
-    private let camera = PerspectiveCamera()
     private var orbit = ClockOrbitMotion(restingAngles: [.pi / 6, .pi / 12])
     private var isDragging = false
     private var returnTask: Task<Void, Never>?
-    private var cameraDistance: Float = 6.5
     private let pivots: [(entity: Entity, rest: Transform, animation: AnimationResource)]
     private var playback: [AnimationPlaybackController] = []
     private var appliedTheme: AppTheme?
     private var bellMaterial: PhysicallyBasedMaterial?
     private var isRinging = false
-    private var previousSwingPhase: TimeInterval = 0
     private var revealElapsed: TimeInterval = 0
     private var grass: [Entity] = []
     private var grassTime: Float = 0
-    private static let swingDuration: TimeInterval = 2.4
-    private static let swingEnds = [swingDuration / 4, swingDuration * 3 / 4]
+    static let swingDuration: TimeInterval = 2.4
+
+    /// The renderer's clock keeps decorative bursts aligned with the visible swing.
+    var swingTime: TimeInterval? { playback.first?.time }
 
     init() async throws {
         guard let url = Bundle.main.url(forResource: "RingingBell", withExtension: "usdz") else {
@@ -56,14 +56,13 @@ final class AlarmBellScene {
             ))
             return (pivot, rest, animation.repeat())
         }
-        root.addChild(model)
+        subject.addChild(model)
         studio.components.set(ImageBasedLightComponent(source: .single(environment)))
         model.components.set(ImageBasedLightReceiverComponent(imageBasedLight: studio))
-        root.addChild(studio)
-        root.addChild(keyLight)
-
-        camera.camera.fieldOfViewInDegrees = 32
-        root.addChild(camera)
+        subject.addChild(studio)
+        subject.addChild(keyLight)
+        subject.position.y = -0.18
+        root.addChild(subject)
         updateViewingAngle()
     }
 
@@ -89,25 +88,12 @@ final class AlarmBellScene {
     func setRinging(_ ringing: Bool) {
         guard ringing != isRinging else { return }
         isRinging = ringing
-        previousSwingPhase = 0
         if ringing {
             playback = pivots.map { $0.entity.playAnimation($0.animation, transitionDuration: 0.15) }
         } else {
             playback.forEach { $0.stop() }
             playback.removeAll()
             for pivot in pivots { pivot.entity.transform = pivot.rest }
-        }
-    }
-
-    /// Read the renderer's animation clock so ripples stay aligned with the actual swing.
-    func reachedSwingEnd() -> Bool {
-        guard isRinging, let controller = playback.first else { return false }
-        let phase = controller.time.truncatingRemainder(dividingBy: Self.swingDuration)
-        let previous = previousSwingPhase
-        previousSwingPhase = phase
-        return Self.swingEnds.contains { peak in
-            if phase < previous { return peak > previous || peak <= phase }
-            return peak > previous && peak <= phase
         }
     }
 
@@ -120,14 +106,6 @@ final class AlarmBellScene {
         guard revealElapsed < duration else { return }
         revealElapsed = min(revealElapsed + deltaTime, duration)
         applyRevealMaterial()
-    }
-
-    func setViewport(_ size: CGSize) {
-        guard size.width > 0, size.height > 0 else { return }
-        let aspect = Float(size.width / size.height)
-        let visibleHeight = max(3.8, 3.4 / aspect)
-        cameraDistance = visibleHeight / (2 * tan(Float.pi * 16 / 180))
-        updateViewingAngle()
     }
 
     func drag(translation: CGSize, width: CGFloat) {
@@ -178,14 +156,13 @@ final class AlarmBellScene {
     }
 
     private func updateViewingAngle() {
-        let target = SIMD3<Float>(0, 0.18, 0)
-        camera.orientation = orbit.orientation
-        camera.position = target + orbit.orientation.act([0, 0, cameraDistance])
+        // Rotate the subject so the shared camera can keep the time row stationary.
+        root.orientation = orbit.orientation.inverse
         if let appliedTheme {
             let lightOrbit = simd_quatf(angle: -orbit.offset.x * 0.3, axis: [0, 1, 0])
                 * simd_quatf(angle: -orbit.offset.y * 0.3, axis: [1, 0, 0])
             keyLight.look(at: .zero, from: lightOrbit.act(appliedTheme.clock.lighting.lightPosition),
-                          relativeTo: root)
+                          relativeTo: subject)
         }
     }
 
