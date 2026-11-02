@@ -1,24 +1,36 @@
 import SwiftUI
 
 struct AlarmRingingHeader: View {
-    @Environment(ClockDisplaySettings.self) private var settings
-    @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var theme
     let alarm: AlarmRecord
-    // Preserve the display typography while following the user's Dynamic Type size.
-    @ScaledMetric(relativeTo: .largeTitle) private var timeFontSize = 84
+    let display: ClockTimeDisplay
+    var showsFallback: Bool
+    @Binding var timeFrame: CGRect
 
     var body: some View {
-        let time = ClockTimeDisplay(hour: alarm.hour, minute: alarm.minute,
-                                    format: settings.format, locale: locale).text
         VStack {
-            Text(time)
-                .font(.system(size: timeFontSize, design: .rounded))
-                .bold()
-                .monospacedDigit()
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
+            Color.clear
+                .aspectRatio(2, contentMode: .fit)
+                .onGeometryChange(for: CGRect.self) { geometry in
+                    geometry.frame(in: .named("alarmArtwork"))
+                } action: { timeFrame = $0 }
+                .overlay {
+                    if showsFallback {
+                        Text(display.text)
+                            .font(.largeTitle)
+                            .monospacedDigit()
+                            .foregroundStyle(theme.palette.foreground)
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Alarm time, \(display.text)")
                 .accessibilityAddTraits(.isHeader)
+            if let period = display.period {
+                Text(period)
+                    .font(.headline)
+                    .foregroundStyle(theme.palette.clockPeriod)
+                    .accessibilityHidden(true)
+            }
             if !alarm.label.isEmpty {
                 Text(alarm.label)
                     .font(.title2)

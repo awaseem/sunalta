@@ -4,7 +4,11 @@ import RealityKit
 
 @MainActor
 final class ClockFlybyController: NSObject {
-    private static let animalsPerFlock = 4
+    static let animalsPerFlock = 4
+    static let flightDurationRange = 3.8...4.4
+    static let memberStagger = 0.18
+    static let initialFlightDelay = 0.9
+    static let pauseBetweenFlights = 2.5
     let root = Entity()
     var onFrame: (() -> Void)?
     private let animals: [ClockFlybyAnimal]
@@ -52,7 +56,7 @@ final class ClockFlybyController: NSObject {
     func start() {
         guard !animals.isEmpty, nextFlightTask == nil, displayLink == nil,
               viewport.x > 0, cameraDistance > 1 else { return }
-        scheduleFlight(after: 0.9)
+        scheduleFlight(after: Self.initialFlightDelay)
     }
 
     private func scheduleFlight(after delay: Double) {
@@ -80,12 +84,12 @@ final class ClockFlybyController: NSObject {
             let side: Float = isUpperFlock ? 1 : -1
             let spread = Float(member) - Float(Self.animalsPerFlock - 1) / 2
             // Pair an upper flock with a lower flock heading toward the opposite edge.
-            let path = ClockFlybyPath(duration: .random(in: 3.8...4.4),
+            let path = ClockFlybyPath(duration: .random(in: Self.flightDurationRange),
                                      travelsRight: isUpperFlock ? travelsRight : !travelsRight,
                                      height: (height + spread * 0.08) * side,
                                      arc: (arc + Float(member) * 0.015) * side,
                                      origin: (origin + spread * 0.04) * side)
-            return (path, Double(member) * 0.18 + (isUpperFlock ? 0 : 0.12))
+            return (path, Double(member) * Self.memberStagger + (isUpperFlock ? 0 : 0.12))
         }
         flightDuration = flights.map { $0.path.duration + $0.delay }.max() ?? 0
         flightStart = nil
@@ -107,7 +111,7 @@ final class ClockFlybyController: NSObject {
             stopDisplayLink()
             root.isEnabled = false
             onFrame?()
-            scheduleFlight(after: 2.5)
+            scheduleFlight(after: Self.pauseBetweenFlights)
             return
         }
         for (animal, flight) in zip(animals, flights) {

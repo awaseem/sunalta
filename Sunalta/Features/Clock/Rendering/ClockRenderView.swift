@@ -219,7 +219,7 @@ final class ClockRenderView: ClockMetalView {
         guard let content, let realityRenderer, isReady else { throw CocoaError(.coderInvalidValue) }
         for digit in content.root.children { digit.isEnabled = true }
         content.show(time: "88:88")
-        content.arrangeWidgetRow()
+        content.arrangeRow()
         layoutSubviews()
         let clockBounds = content.root.visualBounds(relativeTo: nil)
         let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
@@ -240,7 +240,7 @@ final class ClockRenderView: ClockMetalView {
                               width: label.width * labelScale, height: label.height * labelScale)
         applyWeekdayLighting(verticalDirection: -1)
         content.show(time: time)
-        content.arrangeWidgetRow()
+        content.arrangeRow()
         for (index, digit) in content.root.children.enumerated() {
             digit.isEnabled = visibleSlot == nil || index == visibleSlot
         }

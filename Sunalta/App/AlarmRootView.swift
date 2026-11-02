@@ -4,17 +4,19 @@ struct AlarmRootView: View {
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(ThemeSettings.self) private var themeSettings
     @Environment(\.scenePhase) private var scenePhase
+    var observesAlarms = true
 
     var body: some View {
         ZStack {
-            if let alarm = runtime.activeAlarm {
+            HomeScreen()
+                .allowsHitTesting(!runtime.isAlarmPresented)
+                .accessibilityHidden(runtime.isAlarmPresented)
+            if runtime.isAlarmPresented, let alarm = runtime.activeAlarm {
                 AlarmRingingScreen(alarm: alarm)
                     .id(alarm.id)
-            } else {
-                HomeScreen()
             }
         }
-        .task { await runtime.observe() }
+        .task { if observesAlarms { await runtime.observe() } }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await runtime.refresh() } }
         }
