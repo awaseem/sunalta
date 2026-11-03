@@ -7,7 +7,7 @@ import SwiftData
 @Observable
 final class AlarmRuntime {
     nonisolated static let retryInterval: TimeInterval = 30
-    static let configurationVersion = 1
+    static let configurationVersion = 2
 
     private(set) var activeAlarm: AlarmRecord?
     private(set) var isAlarmPresented = false
@@ -49,7 +49,7 @@ final class AlarmRuntime {
             for alarm in try context.fetch(FetchDescriptor<AlarmRecord>()) {
                 guard operations[alarm.id] == nil else { continue }
                 var systemAlarms = try system.states()
-                // Upgrade alarms saved before the dismissal intents were added.
+                // Refresh saved system presentations and intents without interrupting active sessions.
                 if alarm.configurationVersion != Self.configurationVersion, alarm.isEnabled, alarm.pendingSince == nil,
                    systemAlarms[alarm.id] == .scheduled {
                     try await setEnabled(true, for: alarm)
