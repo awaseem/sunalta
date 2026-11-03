@@ -7,72 +7,56 @@ import WidgetKit
 struct ClockAlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AlarmAttributes<ClockAlarmMetadata>.self) { context in
-            AlarmCountdownContent(metadata: context.attributes.metadata, state: context.state)
-                .padding(20)
-                .activityBackgroundTint(.black)
-                .activitySystemActionForegroundColor(.orange)
+            let palette = currentPalette
+            AlarmCountdownContent(metadata: context.attributes.metadata, state: context.state, palette: palette)
+                .padding()
+                .activityBackgroundTint(palette.background)
+                .activitySystemActionForegroundColor(palette.foreground)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label(context.attributes.metadata?.title ?? "Alarm", systemImage: symbol(context))
+                    Text(context.attributes.metadata?.title ?? "Alarm")
                         .font(.headline)
+                        .foregroundStyle(.white)
                         .lineLimit(2)
                         .truncationMode(.tail)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     AlarmCountdownTime(mode: context.state.mode)
-                        .font(.title2.weight(.semibold))
+                        .font(.title2)
+                        .bold()
+                        .foregroundStyle(.white)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
+                    VStack(alignment: .leading) {
                         Text(context.attributes.metadata?.statusText ?? "Snoozed")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        AlarmCountdownAction(metadata: context.attributes.metadata, systemID: context.state.alarmID)
+                            .foregroundStyle(ThemePalette.midnight.secondaryForeground)
+                        AlarmCountdownAction(metadata: context.attributes.metadata, systemID: context.state.alarmID,
+                                             palette: .midnight)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                 }
             } compactLeading: {
-                Image(systemName: symbol(context)).foregroundStyle(.orange)
+                Image(systemName: symbol(context)).foregroundStyle(.white)
             } compactTrailing: {
                 AlarmCountdownTime(mode: context.state.mode)
                     .monospacedDigit()
                     .frame(maxWidth: 60)
+                    .foregroundStyle(.white)
             } minimal: {
-                Image(systemName: symbol(context)).foregroundStyle(.orange)
+                Image(systemName: symbol(context)).foregroundStyle(.white)
             }
-            .keylineTint(.orange)
+            .keylineTint(.white)
         }
+    }
+
+    private var currentPalette: ThemePalette {
+        guard let defaults = UserDefaults(suiteName: ClockWidgetPreferences.appGroup) else { return .white }
+        return .resolve(id: ClockWidgetPreferencesStore(defaults: defaults).load().themeID)
     }
 
     private func symbol(_ context: ActivityViewContext<AlarmAttributes<ClockAlarmMetadata>>) -> String {
         context.attributes.metadata?.scanSymbol ?? "alarm"
     }
-}
-
-
-
-
-#Preview("NFC scan reminder") {
-    AlarmCountdownContent(
-        metadata: .init(alarmID: UUID(), token: "preview", title: "Morning", scanSymbol: "wave.3.right", countdownKind: .scanReminder),
-        state: .init(alarmID: UUID(), mode: .countdown(.init(
-            totalCountdownDuration: 30, previouslyElapsedDuration: 0,
-            startDate: .now, fireDate: .now.addingTimeInterval(30)
-        )))
-    )
-    .padding(20)
-    .background(.black)
-}
-
-#Preview("Snoozed alarm") {
-    AlarmCountdownContent(
-        metadata: .init(alarmID: UUID(), token: "preview", title: "Morning", scanSymbol: nil, countdownKind: .snooze),
-        state: .init(alarmID: UUID(), mode: .countdown(.init(
-            totalCountdownDuration: 600, previouslyElapsedDuration: 0,
-            startDate: .now, fireDate: .now.addingTimeInterval(600)
-        )))
-    )
-    .padding(20)
-    .background(.black)
 }

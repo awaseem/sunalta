@@ -8,12 +8,7 @@ extension AppTheme {
         name: "Midnight",
         colorScheme: .dark,
         appIconName: "AppIconMidnight",
-        palette: ThemePalette(
-            background: Color(red: 16 / 255, green: 17 / 255, blue: 20 / 255),
-            foreground: .white,
-            selection: Color(midnightAccent),
-            surface: .white.opacity(0.07)
-        ),
+        palette: .midnight,
         clock: ClockAppearance(
             numeralColor: .white,
             lighting: ClockLightingSettings(

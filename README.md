@@ -14,6 +14,8 @@ For an interactive simulator check, add `--preview-active-alarm` to the Debug sc
 
 Check Snooze → countdown replaces the Snooze button → Close → Active alarm toolbar island → reopen → Stop. Also leave the screen closed until snooze expires, and confirm it returns to ringing. Stop should remove the island. QR/NFC alarms must still require a matching scan, including during snooze. Use a device to check real AlarmKit notifications and Lock Screen actions.
 
+The alarm countdown Live Activity uses the same White, Midnight, and Grass palette as the app, read from the shared widget preferences. Scan and stop actions use capsule controls; the Dynamic Island and system ringing alert use contrasting monochrome controls on their system-owned dark surfaces. AlarmKit controls the ringing alert's layout. Existing scheduled alarms adopt the updated alert tint on the next app refresh; active sessions are left intact. `AlarmCountdownPreview.swift` includes NFC, QR, snooze, and larger-text previews. Verify the system alert, scan reminder, and scan action on a physical device.
+
 Run the session regression tests with:
 
 ```sh

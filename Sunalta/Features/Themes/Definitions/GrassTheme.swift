@@ -8,14 +8,7 @@ extension AppTheme {
         name: "Grass",
         colorScheme: .light,
         appIconName: "AppIconGrass",
-        palette: ThemePalette(
-            background: Color(red: 0.96, green: 0.95, blue: 0.90),
-            foreground: Color(red: 0.12, green: 0.20, blue: 0.08),
-            selection: Color(grassAccent),
-            control: Color(red: 0.16, green: 0.29, blue: 0.09),
-            onControl: .white,
-            surface: Color(red: 0.20, green: 0.32, blue: 0.12).opacity(0.07)
-        ),
+        palette: .grass,
         clock: ClockAppearance(
             numeralColor: Color(red: 0.17, green: 0.29, blue: 0.07),
             ambientIntensityExponent: 0,

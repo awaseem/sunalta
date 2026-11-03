@@ -7,11 +7,7 @@ extension AppTheme {
         id: "white",
         name: "White",
         colorScheme: .light,
-        palette: ThemePalette(
-            background: .white,
-            foreground: .black,
-            selection: Color(whiteAccent)
-        ),
+        palette: .white,
         clock: ClockAppearance(
             numeralColor: .black,
             lighting: ClockLightingSettings(

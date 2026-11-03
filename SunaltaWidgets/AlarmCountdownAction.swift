@@ -5,6 +5,7 @@ import SwiftUI
 struct AlarmCountdownAction: View {
     let metadata: ClockAlarmMetadata?
     let systemID: UUID
+    let palette: ThemePalette
 
     var body: some View {
         if let metadata {
@@ -19,9 +20,14 @@ struct AlarmCountdownAction: View {
                     }
                 }
             }
+            .font(.headline)
             .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .foregroundStyle(.black)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+            .tint(palette.control)
+            .foregroundStyle(palette.onControl)
+            .fixedSize(horizontal: true, vertical: false)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
     }
 }

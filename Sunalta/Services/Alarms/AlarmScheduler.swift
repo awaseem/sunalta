@@ -42,9 +42,9 @@ enum AlarmScheduler {
         let needsScan = alarm.exitPoint != .normal
         let token = alarm.scheduleToken ?? ""
         let secondaryButton: AlarmButton? = needsScan
-            ? .init(text: alarm.exitPoint == .nfc ? "Scan NFC" : "Scan QR", textColor: .white,
+            ? .init(text: alarm.exitPoint == .nfc ? "Scan NFC" : "Scan QR", textColor: .black,
                     systemImageName: alarm.exitPoint.symbol)
-            : alarm.snoozeEnabled ? .init(text: "Snooze", textColor: .white, systemImageName: "zzz") : nil
+            : alarm.snoozeEnabled ? .init(text: "Snooze", textColor: .black, systemImageName: "zzz") : nil
         let attributes = AlarmAttributes<ClockAlarmMetadata>(
             presentation: AlarmPresentation(alert: .init(
                 title: "\(title)",
@@ -53,7 +53,8 @@ enum AlarmScheduler {
             ), countdown: duration == nil ? nil : .init(title: "\(title)")),
             metadata: .init(alarmID: alarm.id, token: token, title: title,
                             scanSymbol: needsScan ? alarm.exitPoint.symbol : nil, countdownKind: kind),
-            tintColor: .orange
+            // AlarmKit owns the dark alert surface; use Sunalta's contrasting monochrome controls.
+            tintColor: .white
         )
         return .init(
             countdownDuration: duration, schedule: schedule, attributes: attributes,
