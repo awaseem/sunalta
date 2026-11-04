@@ -15,6 +15,8 @@ The [root README](../../README.md#brand-and-product-copy) records the standard p
 
 Keep the page, SEO description, and generated sharing artwork aligned with this positioning. The footer links the creator's name to Twitter/X.
 
+The clock, introduction, and footer use a brief, staggered CSS entrance fade. Content starts partially visible and stays in the initial HTML; the effect requires neither JavaScript nor scrolling and changes no layout dimensions. Reduced-motion preferences skip the animation, and keyboard focus reveals links immediately.
+
 ## Run locally
 
 Requires Node.js 22.23.4+ (or a supported newer even-numbered release).
