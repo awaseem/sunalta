@@ -77,6 +77,25 @@ footer {
 footer a { text-decoration-thickness: 1px; }
 footer a:hover { color: #171717; }
 
+@keyframes page-enter {
+  /* Keep the first paint visible while the entrance settles to full opacity. */
+  from { opacity: .15; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .clock,
+  .about,
+  footer { animation: page-enter 480ms ease-out backwards; }
+
+  .about { animation-delay: 80ms; }
+  footer { animation-delay: 160ms; }
+
+  /* Keyboard navigation reveals links immediately, even during the entrance. */
+  .about:focus-within,
+  footer:focus-within { animation: none; }
+}
+
 .visually-hidden,
 .skip-link:not(:focus) {
   position: absolute;
