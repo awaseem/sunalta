@@ -1,0 +1,46 @@
+---
+import { getImage, Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import poster from '../assets/clock/poster.png';
+
+// Each layer is captured in its final home-screen position, preserving perspective.
+const sources = import.meta.glob<{ default: ImageMetadata }>('../assets/clock/[0-3]-*.png', { eager: true });
+const layers: Record<string, string> = {};
+await Promise.all(Object.entries(sources).map(async ([path, source]) => {
+  const key = path.split('/').at(-1)?.replace('.png', '');
+  if (!key) return;
+  const image = await getImage({ src: source.default, width: Math.min(640, source.default.width), format: 'webp', quality: 85 });
+  layers[key] = image.src;
+}));
+---
+
+<figure class="clock" data-clock data-layers={JSON.stringify(layers)}>
+  <div class="clock-art" style={`aspect-ratio: ${poster.width} / ${poster.height}`}>
+    <Image
+      class="clock-poster"
+      src={poster}
+      alt="Sunalta's sculpted black clock, showing 09:41 in two stacked rows."
+      widths={[320, Math.min(640, poster.width)]}
+      sizes="min(64vw, 22svh, 240px)"
+      format="webp"
+      quality={85}
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="clock-live" aria-hidden="true">
+      {[0, 1, 2, 3].map((slot) => (
+        <img data-slot={slot} alt="" width={poster.width} height={poster.height} decoding="async" />
+      ))}
+    </div>
+  </div>
+  <figcaption>
+    <span class="clock-weekday" data-weekday aria-hidden="true">Mon</span>
+    <time class="visually-hidden" data-time>Clock preview: 09:41</time>
+  </figcaption>
+</figure>
+
+<script>
+  import { startClock } from '../scripts/clock';
+  const clock = document.querySelector<HTMLElement>('[data-clock]');
+  if (clock) startClock(clock);
+</script>

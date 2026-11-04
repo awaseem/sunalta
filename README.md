@@ -1,8 +1,27 @@
 # Sunalta
 
-A SwiftUI clock and alarm app. Open `Sunalta.xcodeproj` and run the `Sunalta` scheme. The project currently targets iOS 27 and uses the Swift 6 language mode.
+A simple, sculpted alarm clock for iPhone, designed to get you physically out of bed. Scan an NFC tag or QR code to stop your alarm and start your day on your feet.
+
+Built with SwiftUI. Open `Sunalta.xcodeproj` and run the `Sunalta` scheme. The project currently targets iOS 27 and uses the Swift 6 language mode.
+
+The minimal Astro website lives in [`sites/sunalta`](sites/sunalta/README.md). Run `npm ci` and `npm run dev` from that directory for a local preview.
+
+`sites/` is website-only and has no Xcode target membership. Keep it outside the app, widget, and test targets' synchronized source folders and resource phases. Debug and Release also exclude the `sites` folder reference through `EXCLUDED_SOURCE_FILE_NAMES` and omit `sites` from recursive search paths; all three native targets inherit these settings. Target membership is the main boundary: Xcode's filename exclusions are not recursive, so do not add individual website files to native targets. Website source, dependencies, build output, and asset-export scripts stay separate from the iOS app; build the website with npm.
 
 Sunalta uses a fresh app identity: `dev.ambitionsoftware.sunalta` for the app and `dev.ambitionsoftware.sunalta.SunaltaWidgets` for its widget extension. Register both bundle identifiers and the shared App Group `group.dev.ambitionsoftware.sunalta` for signed device builds. The URL scheme is `sunalta`, and tip product IDs use the `sunalta_tip_` prefix.
+
+## Brand and product copy
+
+Use **Sunalta** consistently as the app name. Keep the language simple, direct, and encouraging. Lead with the sculpted clock and the practical reason to get out of bed; avoid vague promises about calm or productivity.
+
+- **Standard subheading:** A simple, sculpted alarm clock.
+- **Website description:** Get out of bed and scan an NFC tag or QR code to stop your alarm. Start your day on your feet.
+- **Closing line:** Start your day on your feet.
+- **Footer:** Made in Calgary, AB by [Ali Waseem](https://x.com/softwarecuddler).
+
+The scan requirement applies to alarms configured with an NFC or QR stop target. Product explanations should make this clear when describing setup; Sunalta also supports ordinary alarms.
+
+The website pairs this copy with the White theme's sculpted numerals and Apple's official black **Download on the App Store** badge. Use the supplied badge unchanged, at least 40 px high with one-quarter-height clear space, following [Apple's marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/). The local preview shows the badge without a link until `PUBLIC_APP_STORE_URL` is configured. See the [website README](sites/sunalta/README.md) for development, SEO, and asset details.
 
 ## Active alarm screen
 

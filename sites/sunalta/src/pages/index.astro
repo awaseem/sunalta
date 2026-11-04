@@ -1,0 +1,35 @@
+---
+import Page from '../layouts/Page.astro';
+import Clock from '../components/Clock.astro';
+
+const storeURL = import.meta.env.PUBLIC_APP_STORE_URL?.trim();
+if (storeURL && !/^https:\/\/apps\.apple\.com\//.test(storeURL)) {
+  throw new Error('PUBLIC_APP_STORE_URL must be an https://apps.apple.com/ URL.');
+}
+---
+
+<Page>
+  <main>
+    <Clock />
+    <section class="about" id="about" aria-labelledby="app-name">
+      <h1 id="app-name">Sunalta</h1>
+      <p class="tagline">A simple, sculpted alarm clock.</p>
+      <p class="description">
+        Get out of bed and scan an NFC tag or QR code to stop your alarm.
+        Start your day on your feet.
+      </p>
+      {storeURL ? (
+        <a class="app-store-badge" href={storeURL}>
+          <img src="/download-on-the-app-store.svg" alt="Download on the App Store" width="120" height="40" />
+        </a>
+      ) : (
+        <span class="app-store-badge">
+          <img src="/download-on-the-app-store.svg" alt="Download on the App Store" width="120" height="40" />
+        </span>
+      )}
+    </section>
+  </main>
+  <footer>
+    Made in Calgary, AB by <a href="https://x.com/softwarecuddler" rel="me">Ali Waseem</a>
+  </footer>
+</Page>

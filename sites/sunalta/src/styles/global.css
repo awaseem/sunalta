@@ -1,0 +1,92 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  color: #171717;
+  background: #fff;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --accent: #ff1429;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-width: 280px;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+main {
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(2rem, 6svh, 4.5rem) 1.5rem 3.5rem;
+}
+a { color: inherit; text-underline-offset: .25em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 4px; }
+::selection { background: #ff142924; }
+
+.clock {
+  /* The app's narrow portrait composition remains the same on a wide screen. */
+  width: min(64vw, 22svh, 240px);
+  margin: 0 auto;
+}
+.clock-art { position: relative; }
+.clock-art img { display: block; width: 100%; height: auto; }
+.clock-live { position: absolute; inset: 0; visibility: hidden; }
+.clock-live img { position: absolute; inset: 0; }
+.is-live .clock-poster { visibility: hidden; }
+.is-live .clock-live { visibility: visible; }
+.clock-weekday {
+  display: block;
+  margin-top: .3em;
+  margin-left: .025em;
+  color: var(--accent);
+  font-size: clamp(1.75rem, 4.8svh, 2.5rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -.045em;
+  text-shadow: 0 0 3px #ff142919, 0 0 10px #ff14290c;
+}
+
+.about {
+  text-align: center;
+  max-width: 30rem;
+  margin: clamp(3.25rem, 7svh, 5rem) auto 0;
+  scroll-margin-top: 2rem;
+}
+h1 { font-size: 1.375rem; line-height: 1.2; letter-spacing: -.045em; font-weight: 600; margin: 0; }
+.tagline { font-size: 1rem; line-height: 1.6; letter-spacing: -.02em; margin: .7rem 0 0; }
+.description { max-width: 23rem; font-size: .9375rem; line-height: 1.65; color: #737373; margin: .9rem auto 0; text-wrap: pretty; }
+.app-store-badge {
+  display: inline-block;
+  margin-top: 2rem;
+  /* Apple's badge stays unmodified, with at least one-quarter-height clear space. */
+  padding: 10px;
+  line-height: 0;
+}
+.app-store-badge img { display: block; width: auto; height: 40px; }
+footer {
+  text-align: center;
+  padding: 1.25rem 1.5rem max(1.25rem, env(safe-area-inset-bottom));
+  color: #767676;
+  background: #fff;
+  font-size: .6875rem;
+  line-height: 1.5;
+}
+footer a { text-decoration-thickness: 1px; }
+footer a:hover { color: #171717; }
+
+.visually-hidden,
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link:focus { position: absolute; z-index: 2; top: 1rem; left: 1rem; padding: .75rem; background: white; }

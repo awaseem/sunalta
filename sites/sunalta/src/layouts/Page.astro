@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Sunalta — NFC & QR alarm clock for iPhone',
+  description = 'Sunalta is a simple, sculpted alarm clock for iPhone. Get out of bed and scan an NFC tag or QR code to stop your alarm. Start your day on your feet.',
+} = Astro.props;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined;
+const socialImage = Astro.site ? new URL('/social.png', Astro.site) : undefined;
+const appSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Sunalta',
+  description,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'iOS',
+  ...(canonical && { url: canonical.href }),
+  ...(socialImage && { image: socialImage.href }),
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={canonical ? 'index, follow, max-image-preview:large' : 'noindex, nofollow'} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sunalta" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {socialImage && <meta property="og:image" content={socialImage} />}
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sunalta's sculpted black 3D clock on a white background." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {socialImage && <meta name="twitter:image" content={socialImage} />}
+    <script type="application/ld+json" set:html={JSON.stringify(appSchema).replaceAll('<', '\\u003c')} />
+  </head>
+  <body>
+    <a class="skip-link" href="#about">About Sunalta</a>
+    <slot />
+  </body>
+</html>
