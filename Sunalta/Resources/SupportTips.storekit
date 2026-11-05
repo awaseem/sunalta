@@ -18,7 +18,7 @@
       "internalID": "7808C96D",
       "localizations": [
         {
-          "description": "A small thank you to support Sunalta development.",
+          "description": "A small thank you for Sunalta.",
           "displayName": "Small Tip",
           "locale": "en_US"
         }
@@ -33,7 +33,7 @@
       "internalID": "A6C93B25",
       "localizations": [
         {
-          "description": "Support the continued development of Sunalta.",
+          "description": "Support the development of Sunalta.",
           "displayName": "Generous Tip",
           "locale": "en_US"
         }
@@ -48,7 +48,7 @@
       "internalID": "B7D04C36",
       "localizations": [
         {
-          "description": "Give extra support to the continued development of Sunalta.",
+          "description": "Give extra support to Sunalta development.",
           "displayName": "Extra Generous Tip",
           "locale": "en_US"
         }
