@@ -22,7 +22,8 @@ enum ThemeIconExporter {
                 try await render(theme: theme, to: folder.appending(path: "\(theme.id).png"))
                 var dark = theme
                 if theme.id == AppTheme.white.id {
-                    dark.palette.background = Color(white: 0.32)
+                    dark.palette.background = .black
+                    dark.clock.ambientIntensityExponent += 1
                 } else if theme.id == AppTheme.grass.id {
                     dark.palette.background = Color(red: 0.055, green: 0.085, blue: 0.035)
                 }
