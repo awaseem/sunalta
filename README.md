@@ -69,25 +69,29 @@ Support is available through the Donations button grouped with Settings at the b
 
 ### App Store Connect setup
 
-Create these products in the Sunalta record (`dev.ambitionsoftware.sunalta`) when creating the listing. The IDs must match `TipStore.productIDs` exactly.
+These consumables are configured in the [Sunalta App Store Connect record](https://appstoreconnect.apple.com/apps/6830356035/distribution/iaps) (`dev.ambitionsoftware.sunalta`). The product IDs must match `TipStore.productIDs` exactly.
 
 | Product ID | Type | Reference and display name | US base price | English description |
 | --- | --- | --- | --- | --- |
-| `sunalta_tip_small` | Consumable | Small Tip | $1.99 USD | A small thank you to support Sunalta development. |
-| `sunalta_tip_generous` | Consumable | Generous Tip | $4.99 USD | Support the continued development of Sunalta. |
-| `sunalta_tip_extra` | Consumable | Extra Generous Tip | $9.99 USD | Give extra support to the continued development of Sunalta. |
+| `sunalta_tip_small` | Consumable | Small Tip | $1.99 USD | A small thank you for Sunalta. |
+| `sunalta_tip_generous` | Consumable | Generous Tip | $4.99 USD | Support the development of Sunalta. |
+| `sunalta_tip_extra` | Consumable | Extra Generous Tip | $9.99 USD | Give extra support to Sunalta development. |
 
-1. In App Store Connect, open Sunalta → Monetization → In-App Purchases and add the three consumables. [Apple's creation guide](https://developer.apple.com/help/app-store-connect/manage-in-app-purchases/create-consumable-or-non-consumable-in-app-purchases)
-2. Add the English names and descriptions above, choose availability, and set the US base prices. Review Apple's prices for other storefronts; the app displays the localized amount returned by StoreKit. [Pricing guide](https://developer.apple.com/help/app-store-connect/manage-in-app-purchases/set-a-price-for-an-in-app-purchase)
-3. Complete the required purchase metadata and review screenshots. Suggested review note: “Optional developer tips. Open the alarms page, then the Donations heart button at the bottom left, or Settings → About → Support. All clock and alarm features remain available without a tip.”
-4. Include these initial consumables with the app version submitted for review. [Submission guide](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase)
-5. Test the configured products in Apple's sandbox before release. In the Xcode scheme, set Run → Options → StoreKit Configuration to None when testing App Store Connect products. Allow time for new product metadata to reach the sandbox.
+ASC IDs are `6830937132` (small), `6830937088` (generous), and `6830937128` (extra). Each has en-US and en-CA metadata, a US base price with Apple's automatic localized prices, availability in all 175 current storefronts, review instructions, and a screenshot of the tip screen. All three were verified as `READY_TO_SUBMIT` on November 4, 2026; they have not been submitted for review.
+
+Before release:
+
+1. Include these initial consumables with the app version submitted for review. [Submission guide](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase)
+2. Complete the app's availability and any outstanding Paid Apps agreement, tax, or banking setup in App Store Connect.
+3. Test the configured products in Apple's sandbox. In the Xcode scheme, set Run → Options → StoreKit Configuration to None **and disable the `--local-storekit` launch argument**. Allow time for new product metadata to reach the sandbox. TestFlight and App Store builds always use Apple's catalog.
 
 This is developer tipping through Apple in-app purchase under [App Review Guideline 3.1.1](https://developer.apple.com/app-store/review/guidelines/#in-app-purchase).
 
 ### Local testing
 
-`Sunalta/Resources/SupportTips.storekit` contains the three local test products and is selected in the shared scheme's Run options. Run from Xcode to use its simulated store without an App Store listing or real charges. Launching directly with `simctl` does not activate the scheme's StoreKit configuration. This file does not create products in App Store Connect or configure production payments.
+`Sunalta/Resources/SupportTips.storekit` contains the three local test products and is selected in the shared scheme's Run options. The Run and Test actions also pass `--local-storekit`. For Debug simulator builds, this starts and retains an `SKTestSession` during app initialization, before the transaction listener opens a StoreKit connection. Initializing the session later in a test can leave that connection pointed at the sandbox and return an empty product list.
+
+When using XcodeBuildMCP, pass `launchArgs: ["--local-storekit"]` to `build_run_sim`. When launching directly, use `xcrun simctl launch booted dev.ambitionsoftware.sunalta --local-storekit`. These launches do not apply Xcode's scheme options automatically. Local purchases use Apple's simulated store without real charges. The startup helper is compiled only into Debug simulator builds; device and Release builds do not link StoreKitTest.
 
 `TipStoreTests` uses `SKTestSession` to exercise the purchase flow. Run it from Xcode's Test Navigator or run:
 
@@ -99,4 +103,4 @@ xcodebuild test -project Sunalta.xcodeproj -scheme Sunalta \
 
 For manual checks, use Xcode's StoreKit transaction manager to simulate approval of pending purchases and StoreKit errors. Check cancellation, retry, rapid repeated taps, returning to the clock while approval is pending, and the thank-you screen after approval. Also check White, Midnight, and Grass themes, larger Dynamic Type, VoiceOver, and iPad sheet layouts.
 
-Keep real App Store Connect configuration for the listing step; the app displays a retryable unavailable state until products are available.
+The app displays a retryable unavailable state if Apple's catalog has no available products. The local StoreKit configuration does not create products in App Store Connect or configure production payments.

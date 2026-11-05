@@ -5,7 +5,7 @@ import StoreKit
 @MainActor
 @Observable
 final class TipStore {
-    // Create these consumable products in Sunalta's App Store Connect record before release.
+    // Must match the consumables in Sunalta's App Store Connect record and SupportTips.storekit.
     static let productIDs = ["sunalta_tip_small", "sunalta_tip_generous", "sunalta_tip_extra"]
 
     private(set) var products: [Product] = []

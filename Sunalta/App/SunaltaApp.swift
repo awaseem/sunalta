@@ -1,6 +1,9 @@
 import SwiftUI
 import SwiftData
 import AppIntents
+#if DEBUG && targetEnvironment(simulator)
+import StoreKitTest
+#endif
 
 @main
 struct SunaltaApp: App {
@@ -12,8 +15,14 @@ struct SunaltaApp: App {
     @State private var audioService = ClockAudioService()
     @State private var appIcon = ThemeAppIcon()
     @State private var tips = TipStore()
+    #if DEBUG && targetEnvironment(simulator)
+    private let localTipSession: SKTestSession?
+    #endif
 
     init() {
+        #if DEBUG && targetEnvironment(simulator)
+        localTipSession = LocalTipStoreSession.startIfRequested()
+        #endif
         do {
             let container = try AlarmStore.makeContainer()
             self.container = container
