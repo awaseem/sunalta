@@ -5,7 +5,6 @@ import SwiftUI
 struct AlarmEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var theme
-    @Environment(\.modelContext) private var modelContext
     @Environment(AlarmRuntime.self) private var runtime
     @Environment(ClockDisplaySettings.self) private var clockSettings
     @Environment(\.calendar) private var calendar
@@ -136,7 +135,7 @@ struct AlarmEditorView: View {
             if let alarm {
                 try await runtime.update(alarm, from: draft)
             } else {
-                try AlarmEditorService(context: modelContext).create(draft)
+                try await runtime.create(from: draft)
             }
             dismiss()
         } catch { saveError = error.localizedDescription }
