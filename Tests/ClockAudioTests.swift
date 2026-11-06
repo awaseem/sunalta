@@ -6,6 +6,73 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct ClockAudioTests {
+    @Test func decorativeMusicResumesWhenAnInterruptionEnds() throws {
+        let suite = "ClockAudioTests-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let (audio, player) = try makeDelayedMusic(defaults: defaults, delay: .seconds(10))
+        defer { audio.updateAmbience(isVisible: false) }
+        audio.updateAmbience(isVisible: true)
+        try #require(player.isPlaying)
+
+        audio.audioSessionDidDeactivate(wasInterrupted: true)
+        #expect(!player.isPlaying)
+        audio.audioSessionMayResume()
+        #expect(
+            player.isPlaying,
+            "Decorative music can resume without a media-player resumption recommendation")
+
+        audio.updateAmbience(isVisible: false)
+        audio.audioSessionMayResume()
+        #expect(!player.isPlaying, "Resumption must not start music in the background")
+        audio.musicEnabled = false
+        audio.updateAmbience(isVisible: true)
+        audio.audioSessionMayResume()
+        #expect(!player.isPlaying, "Resumption must respect the Music setting")
+    }
+
+    @Test func aDelayedNoninterruptionDeactivationCannotSilenceTheForegroundClock() throws {
+        let suite = "ClockAudioTests-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let (audio, player) = try makeDelayedMusic(defaults: defaults, delay: .seconds(10))
+        defer { audio.updateAmbience(isVisible: false) }
+        audio.updateAmbience(isVisible: true)
+        audio.updateAmbience(isVisible: false)
+        audio.audioSessionDidDeactivate(wasInterrupted: false)
+        #expect(!player.isPlaying, "The background clock must stay silent")
+        audio.updateAmbience(isVisible: true)
+        try #require(player.isPlaying)
+
+        // A queued session notification can be delivered after the scene becomes active.
+        audio.audioSessionDidDeactivate(wasInterrupted: false)
+
+        #expect(player.isPlaying)
+        audio.musicEnabled = false
+        audio.audioSessionDidDeactivate(wasInterrupted: false)
+        #expect(!player.isPlaying, "Recovery must respect the Music setting")
+    }
+
+    @Test func returningToTheClockRecoversWithoutAnInterruptionEndNotification() throws {
+        let suite = "ClockAudioTests-\(UUID())"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let (audio, player) = try makeDelayedMusic(defaults: defaults, delay: .seconds(10))
+        defer { audio.updateAmbience(isVisible: false) }
+        audio.updateAmbience(isVisible: true)
+        try #require(player.isPlaying)
+
+        audio.audioSessionDidDeactivate(wasInterrupted: true)
+        audio.updateAmbience(isVisible: true)
+        audio.audioSessionDidDeactivate(wasInterrupted: false)
+        #expect(!player.isPlaying, "Ordinary view updates must not restart an interrupted player")
+
+        // Audio session interruptions are not guaranteed to deliver an end notification.
+        audio.updateAmbience(isVisible: false)
+        audio.updateAmbience(isVisible: true)
+        #expect(player.isPlaying)
+    }
+
     @Test func musicWaitsAfterFinishingAndPageUpdatesCannotSkipTheGap() async throws {
         let suite = "ClockAudioTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
@@ -19,6 +86,7 @@ struct ClockAudioTests {
         try await waitForPlayback(false, player: player)
         let finishedAt = ContinuousClock.now
         for _ in 0..<5 { audio.updateAmbience(isVisible: true) }
+        audio.audioSessionDidDeactivate(wasInterrupted: false)
         #expect(!player.isPlaying)
 
         // Even a quick toggle must preserve the rest of the gap.

@@ -83,6 +83,9 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     func updateAmbience(isVisible: Bool) {
         let becameVisible = isVisible && !isClockVisible
         isClockVisible = isVisible
+        // An interruption may have no end notification. A new visit retries playback;
+        // AVAudioSession decides whether audio is available.
+        if becameVisible { isInterrupted = false }
         if becameVisible || entrancePlayer == nil { prepareEntrance() }
         if !isVisible {
             stopEntrance()
@@ -263,29 +266,41 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
         flybyPlayer?.volume = 0
     }
 
+    func audioSessionDidDeactivate(wasInterrupted: Bool) {
+        if wasInterrupted { isInterrupted = true }
+        stopFlight()
+        stopEntrance()
+        pauseAmbientPlayback()
+        // A background deactivation can arrive after the clock becomes visible again.
+        // Reconcile with current visibility, settings and any pending repeat delay.
+        if !wasInterrupted { updateAmbientPlayback() }
+    }
+
+    func audioSessionMayResume() {
+        // Decorative audio resumes with the visible clock; it has no media-player Play button.
+        isInterrupted = false
+        updateAmbientPlayback()
+        // Effects play with their next animation rather than replaying interrupted sounds.
+    }
+
     private func observeAudioSession() {
         let center = NotificationCenter.default
         let session = AVAudioSession.sharedInstance()
         let deactivations = center.notifications(named: AVAudioSession.didBecomeInactiveNotification, object: session)
             .compactMap { $0.userInfo?[AVAudioSession.deactivationContextKey] as? AVAudioSession.DeactivationContext }
         let resumptions = center.notifications(named: AVAudioSession.resumptionRecommendationNotification, object: session)
-            .compactMap { $0.userInfo?[AVAudioSession.resumptionContextKey] as? AVAudioSession.ResumptionContext }
+            .map { _ in () }
         observationTasks = [
             Task { @MainActor [weak self] in
                 for await context in deactivations {
                     guard !Task.isCancelled else { return }
-                    if context.interruptionContext != nil { self?.isInterrupted = true }
-                    self?.stopFlight()
-                    self?.stopEntrance()
-                    self?.pauseAmbientPlayback()
+                    self?.audioSessionDidDeactivate(wasInterrupted: context.interruptionContext != nil)
                 }
             },
             Task { @MainActor [weak self] in
-                for await context in resumptions {
+                for await _ in resumptions {
                     guard !Task.isCancelled else { return }
-                    self?.isInterrupted = context.recommendation != .shouldResume
-                    self?.updateAmbientPlayback()
-                    // Resume only on the next visit, never replay an interrupted flight.
+                    self?.audioSessionMayResume()
                 }
             }
         ]
