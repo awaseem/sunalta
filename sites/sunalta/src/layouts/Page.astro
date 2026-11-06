@@ -51,10 +51,21 @@ const appSchema = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     {socialImage && <meta name="twitter:image" content={socialImage} />}
-    <script type="application/ld+json" set:html={JSON.stringify(appSchema).replaceAll('<', '\\u003c')} />
+    {Astro.url.pathname === '/' && <script type="application/ld+json" set:html={JSON.stringify(appSchema).replaceAll('<', '\\u003c')} />}
   </head>
   <body>
-    <a class="skip-link" href="#about">About Sunalta</a>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <slot />
+    <footer>
+      <p>Made in Calgary, AB by <a href="https://x.com/softwarecuddler" rel="me">Ali Waseem</a></p>
+      <nav aria-label="Footer">
+        <span class="footer-divider" aria-hidden="true">·</span>
+        <a href="/privacy/" aria-current={Astro.url.pathname === '/privacy/' ? 'page' : undefined}>Privacy</a>
+        <span aria-hidden="true">·</span>
+        <a href="/support/" aria-current={Astro.url.pathname === '/support/' ? 'page' : undefined}>Support</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/awaseem/sunalta">Source code</a>
+      </nav>
+    </footer>
   </body>
 </html>

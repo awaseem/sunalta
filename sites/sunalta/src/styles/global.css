@@ -13,13 +13,12 @@
 body {
   margin: 0;
   min-width: 280px;
-  height: 100dvh;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 main {
-  min-height: 0;
-  overflow-y: auto;
+  flex: 1;
   padding: clamp(2rem, 6svh, 4.5rem) 1.5rem 3.5rem;
 }
 a { color: inherit; text-underline-offset: .25em; }
@@ -66,16 +65,42 @@ h1 { font-size: 1.375rem; line-height: 1.2; letter-spacing: -.045em; font-weight
   line-height: 0;
 }
 .app-store-badge img { display: block; width: auto; height: 40px; }
+
+.document {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.back-link { display: inline-block; margin-bottom: 2.5rem; font-size: .875rem; }
+.document h1 { font-size: 2rem; }
+.document h2 { margin: 2rem 0 .5rem; font-size: 1.125rem; line-height: 1.4; font-weight: 600; letter-spacing: -.02em; }
+.document p { margin: 1rem 0 0; text-wrap: pretty; }
+.document .document-meta { color: #737373; font-size: .8125rem; }
+
 footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: .5rem;
   text-align: center;
   padding: 1.25rem 1.5rem max(1.25rem, env(safe-area-inset-bottom));
   color: #767676;
   background: #fff;
-  font-size: .6875rem;
+  font-size: .75rem;
   line-height: 1.5;
 }
+footer nav { display: flex; align-items: baseline; gap: .5rem; }
+footer nav a { padding-block: .75rem; }
+footer p { margin: 0; }
 footer a { text-decoration-thickness: 1px; }
 footer a:hover { color: #171717; }
+
+@media (max-width: 36rem) {
+  footer { flex-direction: column; align-items: center; gap: 0; }
+  .footer-divider { display: none; }
+}
 
 @keyframes page-enter {
   /* Keep the first paint visible while the entrance settles to full opacity. */

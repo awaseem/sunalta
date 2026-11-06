@@ -13,7 +13,9 @@ Standard product copy:
 - Get out of bed and scan an NFC tag or QR code to stop your alarm. Start your day on your feet.
 - Made in Calgary, AB by [Ali Waseem](https://x.com/softwarecuddler).
 
-Keep the page, SEO description, and generated sharing artwork aligned with this positioning. The footer links the creator's name to Twitter/X.
+Keep the page, SEO description, and generated sharing artwork aligned with this positioning. The shared footer follows the page content in normal document flow, with the creator credit, Privacy, Support, and Source code links in one row separated by dots. On narrow screens the links sit below the credit. The page fills at least the viewport, placing the footer at the bottom on short pages. Longer pages grow naturally, so the whole page scrolls and the footer is reached after the content; it is never pinned over the page.
+
+The minimal `/privacy/` page describes local app data, scanning permissions, Apple-handled tips, and support correspondence. `/support/` directs visitors to [@softwarecuddler on X](https://x.com/softwarecuddler). Both pages describe Sunalta as free and open source and link to [the GitHub repository](https://github.com/awaseem/sunalta). Keep the privacy copy aligned with the app's behavior when adding data collection or services.
 
 The clock, introduction, and footer use a brief, staggered CSS entrance fade. Content starts partially visible and stays in the initial HTML; the effect requires neither JavaScript nor scrolling and changes no layout dimensions. Reduced-motion preferences skip the animation, and keyboard focus reveals links immediately.
 
@@ -48,7 +50,7 @@ Set `PUBLIC_APP_STORE_URL` to the actual `https://apps.apple.com/…` listing wh
 
 The unmodified SVG in `public/download-on-the-app-store.svg` comes from [Apple's official badge asset](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg), referenced by its [marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/). It is displayed at 120 × 40 px with at least 10 px clear space. Keep the artwork's original proportions, border, wording, and colors.
 
-The site includes static, readable HTML; descriptive title and description; a canonical URL; Open Graph and Twitter metadata; a 1200 × 630 sharing image; SoftwareApplication JSON-LD; robots.txt; and a one-page sitemap. Canonical, sharing-image URLs, and sitemap entries derive from `SITE_URL`. There are no invented ratings or pricing claims. Discoverability still depends on deploying to a public domain and search engines indexing it.
+The site includes static, readable HTML; descriptive titles and descriptions; canonical URLs; Open Graph and Twitter metadata; a 1200 × 630 sharing image; SoftwareApplication JSON-LD on the home page; robots.txt; and a sitemap covering Home, Privacy, and Support. Canonical, sharing-image URLs, and sitemap entries derive from `SITE_URL`. There are no invented ratings or pricing claims. Discoverability still depends on deploying to a public domain and search engines indexing it.
 
 ## Clock artwork
 
