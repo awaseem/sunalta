@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Shared material and lighting defaults. Themes override only the values they need.
 struct ClockAppearance: Equatable {
-    let numeralColor: Color
+    var numeralColor: Color
     var lightColor: Color = .white
     var ambientIntensityExponent: Float = -1
     var roughness: Float = 0.16
