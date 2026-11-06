@@ -6,7 +6,7 @@ This directory has no Xcode target membership and stays outside the native app, 
 
 ## Branding
 
-The [root README](../../README.md#brand-and-product-copy) records the standard product copy:
+Standard product copy:
 
 - **Sunalta**
 - **A simple, sculpted alarm clock.**
@@ -21,13 +21,24 @@ The clock, introduction, and footer use a brief, staggered CSS entrance fade. Co
 
 Requires Node.js 22.23.4+ (or a supported newer even-numbered release).
 
+From the repository root:
+
+```sh
+make website-install
+make website-dev
+```
+
+Use `make website-check` to check Astro/TypeScript and `make website-build` to build `dist/`. Stop the development server with Ctrl-C.
+
+The equivalent npm commands from this directory are:
+
 ```sh
 cd sites/sunalta
 npm ci
 npm run dev
 ```
 
-Open the local address printed by Astro. With Astro 7 the development server runs in the background; use `npx astro dev stop` to stop it. `npm run check` checks Astro/TypeScript, `npm run build` writes a static site to `dist/`, and `npm run preview` previews that build.
+Open the local address printed by Astro and use Ctrl-C in the terminal to stop the server. `npm run check` checks Astro/TypeScript and `npm run build` writes a static site to `dist/`.
 
 ## Publish later
 

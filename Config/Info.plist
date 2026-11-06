@@ -11,6 +11,8 @@
             <array><string>sunalta</string></array>
         </dict>
     </array>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>NSAlarmKitUsageDescription</key>
