@@ -93,12 +93,35 @@ final class AlarmRuntime {
         }
     }
 
+    @discardableResult
+    func create(from draft: AlarmEditorDraft) async throws -> AlarmRecord {
+        let alarm = try AlarmEditorService(context: context).create(draft)
+        let targets = alarm.stopTargets
+        do {
+            try await setEnabled(true, for: alarm)
+        } catch {
+            let operationError = error
+            do {
+                // A final save can fail after scheduling. Cancel before removing its owner.
+                if alarm.scheduleToken != nil { try cancelAlarm(alarm.id) }
+                context.delete(alarm)
+                for target in targets { context.delete(target) }
+                try context.save()
+            } catch {
+                throw AlarmRecoveryError(operationError: operationError, recoveryError: error)
+            }
+            throw operationError
+        }
+        return alarm
+    }
+
     func setEnabled(_ enabled: Bool, for alarm: AlarmRecord) async throws {
         try await perform(for: alarm.id) {
             guard alarm.pendingSince == nil else { throw SessionError.scanRequired }
             if enabled {
                 let schedule = try alarm.alarmKitSchedule()
-                try await AlarmScheduler.authorize()
+                try await self.system.authorize()
+                try Task.checkCancellation()
                 let oldToken = alarm.scheduleToken
                 let oldDate = alarm.lastCompletedAt
                 let oldVersion = alarm.configurationVersion
@@ -107,7 +130,7 @@ final class AlarmRuntime {
                 alarm.configurationVersion = Self.configurationVersion
                 do {
                     try self.context.save()
-                    try await AlarmScheduler.schedule(alarm, id: alarm.id, schedule: schedule)
+                    try await self.system.schedule(alarm, alarm.id, schedule)
                 } catch {
                     alarm.scheduleToken = oldToken
                     alarm.lastCompletedAt = oldDate
