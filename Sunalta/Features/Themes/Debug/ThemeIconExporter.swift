@@ -23,6 +23,8 @@ enum ThemeIconExporter {
                 var dark = theme
                 if theme.id == AppTheme.white.id {
                     dark.palette.background = .black
+                    // Graphite keeps the curved face legible and distinct from Midnight's white numeral.
+                    dark.clock.numeralColor = Color(white: 0.28)
                     dark.clock.ambientIntensityExponent += 1
                 } else if theme.id == AppTheme.grass.id {
                     dark.palette.background = Color(red: 0.055, green: 0.085, blue: 0.035)
