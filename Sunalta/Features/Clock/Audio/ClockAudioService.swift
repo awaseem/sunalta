@@ -9,7 +9,6 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     var musicEnabled: Bool {
         didSet {
             defaults.set(musicEnabled, forKey: Self.musicKey)
-            if musicEnabled { isResumeDeferred = false }
             updateAmbientPlayback()
         }
     }
@@ -40,10 +39,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     @ObservationIgnored private var entrancePlayer: AVAudioPlayer?
     @ObservationIgnored private var isClockVisible = false
     @ObservationIgnored private var isInterrupted = false
-    @ObservationIgnored private var isResumeDeferred = false
     @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
-
-    private var canPlayAudio: Bool { !isInterrupted && !isResumeDeferred }
 
     init(defaults: UserDefaults = .standard,
          makePlayer: @escaping @MainActor (ClockSound) throws -> AVAudioPlayer = ClockAudioService.loadPlayer) {
@@ -87,9 +83,9 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     func updateAmbience(isVisible: Bool) {
         let becameVisible = isVisible && !isClockVisible
         isClockVisible = isVisible
-        // A new visit may start audio again after an interruption has ended.
-        // An ongoing interruption still blocks playback.
-        if becameVisible { isResumeDeferred = false }
+        // An interruption may have no end notification. A new visit retries playback;
+        // AVAudioSession decides whether audio is available.
+        if becameVisible { isInterrupted = false }
         if becameVisible || entrancePlayer == nil { prepareEntrance() }
         if !isVisible {
             stopEntrance()
@@ -99,7 +95,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     }
 
     private func prepareEntrance() {
-        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, canPlayAudio,
+        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, !isInterrupted,
               ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
         do {
             try configureAudioSession()
@@ -116,7 +112,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
 
     /// Called once when the numeral entrance begins, never by interactive rotation.
     func playEntrance() {
-        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, canPlayAudio,
+        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, !isInterrupted,
               ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
               entrancePlayer?.isPlaying != true else { return }
         if entrancePlayer == nil { prepareEntrance() }
@@ -134,7 +130,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     }
 
     private func updateAmbientPlayback() {
-        guard let sound = configuration.music, isClockVisible, musicEnabled, canPlayAudio,
+        guard let sound = configuration.music, isClockVisible, musicEnabled, !isInterrupted,
               ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else {
             pauseAmbientPlayback()
             return
@@ -230,7 +226,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
 
     /// Prepare during the wait before a visit, away from the animation's first frame.
     func prepareFlight() {
-        guard let sound = configuration.flyby, soundEffectsEnabled, canPlayAudio,
+        guard let sound = configuration.flyby, soundEffectsEnabled, !isInterrupted,
               ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
         do {
             try configureAudioSession()
@@ -248,7 +244,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     }
 
     func beginFlight() {
-        guard configuration.flyby != nil, isClockVisible, soundEffectsEnabled, canPlayAudio else { return }
+        guard configuration.flyby != nil, isClockVisible, soundEffectsEnabled, !isInterrupted else { return }
         if flybyPlayer == nil { prepareFlight() }
         guard let flybyPlayer else { return }
         flybyPlayer.currentTime = 0
@@ -260,7 +256,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
 
     /// Follow the animals' existing fade envelope; frame updates never restart playback.
     func updateFlight(visibility: Float) {
-        guard let sound = configuration.flyby, soundEffectsEnabled, canPlayAudio else { return }
+        guard let sound = configuration.flyby, soundEffectsEnabled, !isInterrupted else { return }
         flybyPlayer?.volume = min(max(visibility, 0), 1) * sound.volume
     }
 
@@ -280,11 +276,11 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
         if !wasInterrupted { updateAmbientPlayback() }
     }
 
-    func audioSessionMayResume(_ recommendation: AVAudioSession.ResumptionRecommendation) {
+    func audioSessionMayResume() {
+        // Decorative audio resumes with the visible clock; it has no media-player Play button.
         isInterrupted = false
-        isResumeDeferred = recommendation != .shouldResume
         updateAmbientPlayback()
-        // Resume only on the next visit, never replay an interrupted flight.
+        // Effects play with their next animation rather than replaying interrupted sounds.
     }
 
     private func observeAudioSession() {
@@ -293,7 +289,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
         let deactivations = center.notifications(named: AVAudioSession.didBecomeInactiveNotification, object: session)
             .compactMap { $0.userInfo?[AVAudioSession.deactivationContextKey] as? AVAudioSession.DeactivationContext }
         let resumptions = center.notifications(named: AVAudioSession.resumptionRecommendationNotification, object: session)
-            .compactMap { $0.userInfo?[AVAudioSession.resumptionContextKey] as? AVAudioSession.ResumptionContext }
+            .map { _ in () }
         observationTasks = [
             Task { @MainActor [weak self] in
                 for await context in deactivations {
@@ -302,9 +298,9 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
                 }
             },
             Task { @MainActor [weak self] in
-                for await context in resumptions {
+                for await _ in resumptions {
                     guard !Task.isCancelled else { return }
-                    self?.audioSessionMayResume(context.recommendation)
+                    self?.audioSessionMayResume()
                 }
             }
         ]

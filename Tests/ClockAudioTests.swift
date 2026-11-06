@@ -6,9 +6,7 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct ClockAudioTests {
-    @Test func returningToTheClockCanResumeAfterAnInterruptionEndsWithoutAutomaticResumption()
-        throws
-    {
+    @Test func decorativeMusicResumesWhenAnInterruptionEnds() throws {
         let suite = "ClockAudioTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -18,18 +16,19 @@ struct ClockAudioTests {
         try #require(player.isPlaying)
 
         audio.audioSessionDidDeactivate(wasInterrupted: true)
-        audio.audioSessionMayResume(.shouldNotResume)
-        audio.updateAmbience(isVisible: true)
-        #expect(
-            !player.isPlaying,
-            "An ended interruption must not resume against the system recommendation")
-
-        audio.updateAmbience(isVisible: false)
-        audio.updateAmbience(isVisible: true)
-
+        #expect(!player.isPlaying)
+        audio.audioSessionMayResume()
         #expect(
             player.isPlaying,
-            "Returning to the clock is a new playback request, not a continuing interruption")
+            "Decorative music can resume without a media-player resumption recommendation")
+
+        audio.updateAmbience(isVisible: false)
+        audio.audioSessionMayResume()
+        #expect(!player.isPlaying, "Resumption must not start music in the background")
+        audio.musicEnabled = false
+        audio.updateAmbience(isVisible: true)
+        audio.audioSessionMayResume()
+        #expect(!player.isPlaying, "Resumption must respect the Music setting")
     }
 
     @Test func aDelayedNoninterruptionDeactivationCannotSilenceTheForegroundClock() throws {
@@ -54,7 +53,7 @@ struct ClockAudioTests {
         #expect(!player.isPlaying, "Recovery must respect the Music setting")
     }
 
-    @Test func foregroundingDuringAnOngoingInterruptionWaitsForPermissionToResume() throws {
+    @Test func returningToTheClockRecoversWithoutAnInterruptionEndNotification() throws {
         let suite = "ClockAudioTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -64,12 +63,13 @@ struct ClockAudioTests {
         try #require(player.isPlaying)
 
         audio.audioSessionDidDeactivate(wasInterrupted: true)
-        audio.updateAmbience(isVisible: false)
         audio.updateAmbience(isVisible: true)
         audio.audioSessionDidDeactivate(wasInterrupted: false)
-        #expect(!player.isPlaying)
+        #expect(!player.isPlaying, "Ordinary view updates must not restart an interrupted player")
 
-        audio.audioSessionMayResume(.shouldResume)
+        // Audio session interruptions are not guaranteed to deliver an end notification.
+        audio.updateAmbience(isVisible: false)
+        audio.updateAmbience(isVisible: true)
         #expect(player.isPlaying)
     }
 
