@@ -2,25 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>dev.ambitionsoftware.sunalta</string>
-            <key>CFBundleURLSchemes</key>
-            <array><string>sunalta</string></array>
-        </dict>
-    </array>
-    <key>ITSAppUsesNonExemptEncryption</key>
-    <false/>
-    <key>NSSupportsLiveActivities</key>
-    <true/>
-    <key>NSAlarmKitUsageDescription</key>
-    <string>Schedule your alarms so they ring at the times you choose, even when Silent mode or Focus is on.</string>
-    <key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
-    <array>
-        <string>A0000006472F0001</string>
-        <string>D2760000850101</string>
-    </array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.ambitionsoftware.sunalta</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>sunalta</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Schedule your alarms so they ring at the times you choose, even when Silent mode or Focus is on.</string>
+	<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
+	<array>
+		<string>A0000006472F0001</string>
+		<string>D2760000850101</string>
+	</array>
 </dict>
 </plist>
