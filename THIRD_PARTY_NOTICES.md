@@ -6,7 +6,7 @@ Source: https://github.com/awaseem/foqos
 Reference checkout: `4f6864ce9f821d0dcb873b253dfd786834a047a8`
 License: MIT, copyright (c) 2024 Ali Waseem.
 
-`Sunalta/Services/Scanning/NFCScannerUtil.swift` adapts Foqos's `Foqos/Utils/NFCScannerUtil.swift` for reading alarm stop-target identifiers. It retains MiFare, ISO15693, and ISO7816 identifier scanning, uses the current Core NFC session API, delivers callbacks on the main actor, and handles cancellation and multiple tags. Profile URL reading and tag writing are omitted. `AlarmStopTarget` also uses Foqos's code-value normalization and NFC hex format.
+`Sunalta/Features/Alarms/Scanning/NFCScannerUtil.swift` adapts Foqos's `Foqos/Utils/NFCScannerUtil.swift` for reading alarm stop-target identifiers. It retains MiFare, ISO15693, and ISO7816 identifier scanning, uses the current Core NFC session API, delivers callbacks on the main actor, and handles cancellation and multiple tags. Profile URL reading and tag writing are omitted. `AlarmStopTarget` also uses Foqos's code-value normalization and NFC hex format.
 
 The complete original notice is in `Sunalta/Licenses/Foqos-MIT.txt` and is included in the app bundle.
 
