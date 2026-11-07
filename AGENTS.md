@@ -95,6 +95,29 @@ If the Xcode MCP is configured, prefer its tools over generic alternatives when 
 
 These project-specific rules take precedence over general architecture suggestions above, including the suggestion to always move view logic into ViewModels. Preserve the upstream Swift and SwiftUI guidance unless it conflicts with this section.
 
+### Feature-first folder ownership
+
+Choose the owning feature first, then place its views, models, and services together. Do not recreate app-wide `Screens`, `Models`, or `Services` directories. Use focused subfolders only where they help navigate the feature; every feature does not need the same internal structure.
+
+| Location | Responsibility |
+| --- | --- |
+| `Sunalta/App` | App startup, dependency setup, composition across features, and app-wide preview environments. `HomeScreen`, `HomeClockPage`, and `AlarmRootView` belong here because they compose multiple features. |
+| `Sunalta/Features/Alarms` | Alarm models and domain rules, scheduling and persistence services, list, editor, ringing experience, NFC/QR scanning, and upcoming-alarm presentation. |
+| `Sunalta/Features/Clock` | Reusable clock views, rendering, scenes, interaction, materials, decorative audio and ambience, clock display preferences, and widget artwork export. |
+| `Sunalta/Features/Themes` | Theme definitions, appearance settings and controls, app-icon synchronization, and theme-icon export. |
+| `Sunalta/Features/Settings` | Settings screen, its sections, and its preview. The underlying preferences remain with their owning features. |
+| `Sunalta/Features/Support` | Support UI, tip purchases, and local StoreKit testing setup. |
+| `Sunalta/Shared` | Small app-internal primitives used across features, such as common buttons and calendar types. |
+| `AlarmShared`, `ClockShared` | Source compiled into both the app and widget extension. Preserve their target membership. |
+| `SunaltaWidgets` | Widget-extension entry point and widget/Live Activity UI. |
+| `Tests/<Feature>` | Existing test target, organized by the feature whose behavior is protected. Keep feature-specific test helpers alongside those tests. |
+
+- Keep feature-specific UI adapters with the consuming feature. For example, the alarm editor's time-preview wrappers belong to Alarms and the theme material preview belongs to Themes, while both use Clock rendering infrastructure.
+- Reuse across features does not automatically make code `Shared`. Keep substantial capabilities with their owner, such as clock rendering in Clock. Move a small primitive to `Shared` only when its consumers and responsibility justify it.
+- Feature folders are organizational boundaries within the existing app module. Folder moves do not require new frameworks, protocols, ViewModels, or changes to type names.
+- Keep resources, asset catalogs, entitlements, and licenses at their established locations unless the task requires moving them. Check script, scheme, and attribution paths when moving referenced files.
+- Xcode uses filesystem-synchronized source roots. Preserve target membership when moving files and verify the app, widget, and relevant tests after a reorganization.
+
 ### Layers and responsibilities
 
 - **Views:** Own presentation and ephemeral state. Use `@Query` for reactive SwiftData reads, `@State` for view-owned state, and `@Bindable` for editable observable models. Simple CRUD may use `@Environment(\.modelContext)` directly.

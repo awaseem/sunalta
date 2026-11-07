@@ -23,7 +23,7 @@ try {
   run('xcrun', ['swiftc', '-parse-as-library', '-D', 'DEBUG', '-module-cache-path', join(temporary, 'modules'),
     join(site, 'scripts/RenderClockAssets.swift'),
     join(repository, 'Sunalta/Features/Clock/Assets/ClockMeshReader.swift'),
-    join(repository, 'Sunalta/Features/Themes/Debug/ClockArtworkRenderer.swift'),
+    join(repository, 'Sunalta/Features/Clock/Debug/ClockArtworkRenderer.swift'),
     '-o', executable]);
   run(executable, [repository, join(site, 'src/assets/clock'), ...options]);
 } finally {
