@@ -10,13 +10,18 @@ struct SupportTipSection: View {
 
     var body: some View {
         let selectedProduct = tips.products.first { $0.id == selectedProductID } ?? tips.products.first
-        VStack {
+        let selectedTipEmoji = switch selectedProduct?.id {
+        case "sunalta_tip_generous": "🤑"
+        case "sunalta_tip_extra": "😱"
+        default: "❤️"
+        }
+        VStack(spacing: 24) {
             if tips.isLoadingProducts {
                 ProgressView("Loading tips…")
                     .padding()
             } else if let error = tips.productLoadingError {
                 Text(error)
-                    .font(.callout)
+                    .font(.subheadline)
                     .foregroundStyle(theme.palette.secondaryForeground)
                 Button("Try again") {
                     Task { await tips.loadProducts() }
@@ -24,7 +29,7 @@ struct SupportTipSection: View {
                 .frame(minHeight: 44)
             } else if !tips.products.isEmpty {
                 let layout = dynamicTypeSize.isAccessibilitySize
-                    ? AnyLayout(VStackLayout()) : AnyLayout(HStackLayout())
+                    ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
                 layout {
                     ForEach(tips.products) { product in
                         SupportTipOption(product: product, isSelected: selectedProduct?.id == product.id) {
@@ -32,31 +37,42 @@ struct SupportTipSection: View {
                         }
                     }
                 }
+                .padding(3)
+                .background(
+                    theme.palette.foreground.opacity(theme.colorScheme == .dark ? 0.18 : 0.08),
+                    in: .capsule
+                )
                 .disabled(tips.isPurchasing || tips.needsVerification)
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Tip amount")
+            }
 
-                Button {
-                    guard let selectedProduct else { return }
-                    Task { await tips.tip(selectedProduct) { try await purchase(selectedProduct) } }
-                } label: {
+            Button {
+                guard let selectedProduct else { return }
+                Task { await tips.tip(selectedProduct) { try await purchase(selectedProduct) } }
+            } label: {
+                HStack {
                     if tips.isPurchasing {
-                        Label("Completing tip…", systemImage: "hourglass")
+                        ProgressView()
+                            .tint(theme.palette.onControl)
+                            .accessibilityLabel("Completing tip…")
                     } else {
-                        Text(selectedProduct.map { "Tip \($0.displayPrice) ♥" } ?? "Leave a tip")
+                        Text(selectedProduct.map { "Tip \($0.displayPrice) \(selectedTipEmoji)" } ?? "Leave a tip")
+                            .font(.headline)
+                            .foregroundStyle(theme.palette.onControl)
                     }
                 }
-                .buttonStyle(.appCapsule(fillsWidth: true))
-                .disabled(selectedProduct == nil || tips.isPurchasing || tips.needsVerification)
-                .padding(.top)
-
+                .frame(maxWidth: .infinity, minHeight: 40)
             }
+            .frame(minHeight: 50)
+            .buttonStyle(.glassProminent)
+            .tint(theme.palette.control)
+            .disabled(selectedProduct == nil || tips.isLoadingProducts || tips.isPurchasing || tips.needsVerification)
 
             if let error = tips.purchaseError {
                 Text(error)
-                    .font(.callout)
+                    .font(.subheadline)
                     .foregroundStyle(theme.palette.error)
-                    .padding(.top)
                 if tips.needsVerification {
                     Button("Check purchase status") {
                         Task { await tips.checkUnfinishedTransactions() }
@@ -66,9 +82,8 @@ struct SupportTipSection: View {
             }
             if let message = tips.purchaseMessage {
                 Text(message)
-                    .font(.callout)
+                    .font(.subheadline)
                     .foregroundStyle(theme.palette.secondaryForeground)
-                    .padding(.top)
             }
         }
         .multilineTextAlignment(.center)

@@ -4,42 +4,67 @@ import SwiftUI
 struct ClockSupportView: View {
     @Environment(TipStore.self) private var tips
     @Environment(\.appTheme) private var theme
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ScaledMetric(relativeTo: .callout) private var sectionSpacing = 36
-    @State private var hasConfirmedTip = false
+    @State private var hasPendingCelebration = false
+    @State private var celebrationStart: Date?
     @State private var showsThankYou = false
     @AccessibilityFocusState private var thankYouFocused: Bool
 
     var body: some View {
-        Group {
-            if showsThankYou {
-                SupportThankYouView()
-                    .accessibilityFocused($thankYouFocused)
-                    .transition(.opacity)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: sectionSpacing) {
-                        SupportStoryView()
-                        SupportSocialLinks()
-                        SupportTipSection()
+        NavigationStack {
+            SupportContentView()
+                .opacity(showsThankYou ? 0 : 1)
+                .allowsHitTesting(!showsThankYou)
+                .accessibilityHidden(showsThankYou)
+                .overlay {
+                    if showsThankYou {
+                        SupportThankYouView()
+                            .id(celebrationStart)
+                            .accessibilityFocused($thankYouFocused)
+                            .transition(.opacity)
                     }
-                    .padding()
-                    .frame(maxWidth: 560)
-                    .frame(maxWidth: .infinity)
                 }
-                .scrollBounceBehavior(.basedOnSize)
+                .background(theme.palette.background)
+                .navigationTitle("Support")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close support", systemImage: "xmark") { dismiss() }
+                            .labelStyle(.iconOnly)
+                    }
+                }
+        }
+        .overlay {
+            if let celebrationStart, !reduceMotion {
+                SupportConfettiView(startDate: celebrationStart)
+                    .id(celebrationStart)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
             }
         }
-        .background(theme.palette.background)
-        .navigationTitle("Support")
-        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: tips.completedTipCount) {
-            hasConfirmedTip = true
+            hasPendingCelebration = true
             showThanksIfActive()
         }
         .onChange(of: scenePhase) { showThanksIfActive() }
-        .sensoryFeedback(.success, trigger: showsThankYou)
+        .sensoryFeedback(.success, trigger: tips.completedTipCount)
+        .task(id: celebrationStart) {
+            guard celebrationStart != nil else { return }
+            do {
+                try await Task.sleep(for: .seconds(4))
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                    showsThankYou = false
+                }
+                thankYouFocused = false
+                try await Task.sleep(for: .seconds(1))
+                celebrationStart = nil
+            } catch {
+                return
+            }
+        }
         .task {
             await tips.loadProducts()
             for await _ in Storefront.updates {
@@ -50,8 +75,10 @@ struct ClockSupportView: View {
     }
 
     private func showThanksIfActive() {
-        guard hasConfirmedTip, scenePhase == .active else { return }
-        withAnimation(reduceMotion ? nil : .easeInOut) {
+        guard hasPendingCelebration, scenePhase == .active else { return }
+        hasPendingCelebration = false
+        celebrationStart = Date()
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
             showsThankYou = true
         }
         thankYouFocused = true

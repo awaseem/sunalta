@@ -15,6 +15,8 @@ struct SupportSocialLink: View {
                     .frame(width: iconSize, height: iconSize)
                     .frame(minWidth: 44, minHeight: 44)
             }
+            // Preserve the original icon spacing with a 44-point touch target.
+            .padding(-10)
             .accessibilityLabel(title)
             .accessibilityHint("Opens the developer's profile")
         }
