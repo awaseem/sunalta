@@ -1,6 +1,8 @@
 import SwiftUI
 
 extension ThemePalette {
+    static let midnightAccent = Color.Resolved(red: 1, green: 0.74, blue: 0.04)
+
     static let white = ThemePalette(
         background: .white,
         foreground: .black,
@@ -10,7 +12,7 @@ extension ThemePalette {
     static let midnight = ThemePalette(
         background: Color(red: 16 / 255, green: 17 / 255, blue: 20 / 255),
         foreground: .white,
-        selection: Color(red: 1, green: 0.85, blue: 0.12),
+        selection: Color(midnightAccent),
         surface: .white.opacity(0.07)
     )
 

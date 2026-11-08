@@ -11,7 +11,7 @@ struct SmallClockPalette {
         case "midnight":
             background = Color(red: 16 / 255, green: 17 / 255, blue: 20 / 255)
             face = .white
-            weekday = Color(red: 1, green: 0.85, blue: 0.12)
+            weekday = Color(ThemePalette.midnightAccent)
             assetThemeID = "midnight"
         case "grass":
             background = Color(red: 0.96, green: 0.95, blue: 0.90)

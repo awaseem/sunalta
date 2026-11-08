@@ -1,8 +1,6 @@
 import SwiftUI
 
 extension AppTheme {
-    private static let midnightAccent = Color.Resolved(red: 1, green: 0.85, blue: 0.12)
-
     static let midnight = AppTheme(
         id: "midnight",
         name: "Midnight",
@@ -10,17 +8,20 @@ extension AppTheme {
         appIconName: "AppIconMidnight",
         palette: .midnight,
         clock: ClockAppearance(
-            numeralColor: .white,
+            numeralColor: Color(white: 0.78),
+            roughness: 0.32,
+            clearcoat: 0.15,
+            clearcoatRoughness: 0.3,
             lighting: ClockLightingSettings(
-                direction: 0.36, tilt: 50.24, strength: 2400, fill: 0.25
+                direction: 0.36, tilt: 50.24, strength: 750, fill: -1.7
             )
         ),
         weekday: ClockWeekdayAppearance(
             glow: ClockWeekdayGlowSettings(
-                color: midnightAccent,
+                color: ThemePalette.midnightAccent,
                 halo: 0.1,
-                brightness: 550,
-                spread: 60,
+                brightness: 350,
+                spread: 52,
                 direction: 20.36,
                 reach: 5.52
             )

@@ -10,7 +10,7 @@ struct HomeClockPage: View {
     let safeAreaInsets: EdgeInsets
     #if DEBUG
     // Set to true while tuning themes to show the appearance controls.
-    private static let enablesAppearanceControls = false
+    private static let enablesAppearanceControls = true
     @State private var showsAppearance = false
     @State private var appearanceAtTop = false
     #endif

@@ -19,20 +19,37 @@ enum ThemeIconExporter {
                 try FileManager.default.removeItem(at: completion)
             }
             for theme in AppTheme.available {
-                try await render(theme: theme, to: folder.appending(path: "\(theme.id).png"))
                 var dark = theme
                 if theme.id == AppTheme.white.id {
-                    dark.palette.background = .black
-                    // Graphite keeps the curved face legible and distinct from Midnight's white numeral.
-                    dark.clock.numeralColor = Color(white: 0.28)
-                    dark.clock.ambientIntensityExponent += 1
+                    dark.palette.background = Color(red: 0.12, green: 0.105, blue: 0.11)
+                    // Subdued neutral light and a matte finish keep the red beam saturated.
+                    dark.clock.numeralColor = Color(white: 0.55)
+                    dark.clock.roughness = 0.32
+                    dark.clock.clearcoat = 0.15
+                    dark.clock.clearcoatRoughness = 0.3
+                    dark.clock.lighting.strength = 450
+                    dark.clock.lighting.fill = -2.4
+                    // Reduce the accent intensity to preserve detail on the graphite material.
+                    dark.weekday.glow.brightness *= 0.108375
                 } else if theme.id == AppTheme.grass.id {
                     dark.palette.background = Color(red: 0.055, green: 0.085, blue: 0.035)
                 }
+                var light = theme
+                // Keep the original theme material in light mode; reserve colored light for dark icons.
+                light.weekday.glow.brightness = 0
+                try await render(theme: light, to: folder.appending(path: "\(theme.id).png"))
                 try await render(theme: dark, to: folder.appending(path: "\(theme.id)-dark.png"))
                 var tinted = theme
                 tinted.palette.background = .black
-                if theme.clock.surface == .plastic { tinted.clock = AppTheme.midnight.clock }
+                if theme.id == AppTheme.white.id {
+                    // Keep White's neutral tint artwork independent of Midnight's lantern lighting.
+                    tinted.clock = ClockAppearance(
+                        numeralColor: .white,
+                        lighting: ClockLightingSettings(direction: 0.36, tilt: 50.24, strength: 2400, fill: 0.25)
+                    )
+                    // Preserve facet contrast when mapping the pale material to grayscale.
+                    tinted.weekday.glow.brightness *= 0.1
+                }
                 try await render(theme: tinted, to: folder.appending(path: "\(theme.id)-tinted.png"), grayscale: true)
             }
             try Data("Finished".utf8).write(to: completion)
@@ -77,6 +94,25 @@ enum ThemeIconExporter {
         camera.position = [0, centerY, visibleHeight / (2 * tan(.pi / 30)) + 0.6565]
         renderer.entities.append(camera)
         renderer.activeCamera = camera
+
+        if theme.weekday.glow.brightness > 0 {
+            // Place the theme's accent light below the crop, shining up onto the numeral's curved cap.
+            let glow = theme.weekday.glow
+            let accentLight = SpotLight()
+            // Give White's red accent more presence; keep grayscale detail and Midnight's softer beam.
+            let intensityScale = theme.id == AppTheme.white.id && !grayscale ? 750.0 : 375.0
+            accentLight.light = SpotLightComponent(
+                color: UIColor(Color(glow.color)), intensity: Float(glow.brightness * intensityScale),
+                innerAngleInDegrees: Float(glow.spread * 0.35),
+                outerAngleInDegrees: Float(glow.spread), attenuationRadius: Float(glow.reach)
+            )
+            let source = SIMD3<Float>(-visibleHeight * 0.35, centerY - visibleHeight * 0.65,
+                                      (bounds?.max.z ?? 0.6565) + 2)
+            let direction = Float(glow.direction * .pi / 180)
+            let target = source + SIMD3<Float>(sin(direction), cos(direction), -1.5)
+            accentLight.look(at: target, from: source, relativeTo: nil)
+            renderer.entities.append(accentLight)
+        }
 
         let image = try await ClockArtworkRenderer.renderImage(renderer: renderer, width: width, height: height,
                                           transparent: false)
