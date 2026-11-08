@@ -1,0 +1,18 @@
+{
+  "provider": "ElevenLabs",
+  "modelID": "eleven_text_to_sound_v2",
+  "flowID": "tdqAgpc8FedBlngHuJ5o",
+  "nodeID": "SpM8DB2zFFlhTnJ0uExo",
+  "generationID": "weUxYRHhD3Q5sulFzfdC",
+  "sessionID": "1GoB8KDmbygwoz0aMtto",
+  "title": "Forest Leaves",
+  "file": "Sunalta/Features/Clock/Audio/Resources/grass-field.mp3",
+  "prompt": "Peaceful forest clearing: a gentle breeze softly rustles dry leaves in the tree canopy and nearby grass, with delicate papery flutter and natural depth. Sparse mellow songbirds far away. Warm realistic outdoor recording, calm and unobtrusive, soft even dynamics. Leaves are the main sound. No water, streams, rain, music, voices, traffic, buzzing insects, howling wind or sharp calls. Seamless loop, no intro or outro.",
+  "durationSeconds": 30,
+  "promptInfluence": 0.7,
+  "loop": true,
+  "themeMixVolume": 0.04,
+  "mixNote": "Source RMS is -36.74 dBFS. The 0.04 mix level raises the ambience by about 2.5 dB over the initial 0.03 mix, making the forest more audible while keeping it in the background.",
+  "encoding": "Original generated MP3, 44.1 kHz stereo; no transcoding.",
+  "sha256": "ecb243c7ffa133bc5eca6efead0c3d51411c9b8154cc4371781a06b2d0be020f"
+}
