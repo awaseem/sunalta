@@ -31,6 +31,7 @@ final class AlarmBellScene {
             throw CocoaError(.fileNoSuchFile)
         }
         let model = try await Entity(contentsOf: url)
+        try Task.checkCancellation()
         self.model = model
         let environment = try await ClockLightingEnvironment.load()
         try Task.checkCancellation()

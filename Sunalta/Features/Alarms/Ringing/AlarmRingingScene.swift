@@ -24,6 +24,7 @@ final class AlarmRingingScene {
 
     init() async throws {
         bell = try await AlarmBellScene()
+        try Task.checkCancellation()
         numerals = try NumeralClockScene()
         let environment = try await ClockLightingEnvironment.load()
         try Task.checkCancellation()
