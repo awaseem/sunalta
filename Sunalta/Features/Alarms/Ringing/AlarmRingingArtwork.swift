@@ -1,4 +1,5 @@
 import Combine
+import OSLog
 import RealityKit
 import SwiftUI
 
@@ -19,6 +20,7 @@ struct AlarmRingingArtwork: View {
     @State private var timeFrame = CGRect.zero
     @State private var bellFrame = CGRect.zero
     @GestureState private var isDragging = false
+    private static let logger = Logger(subsystem: "dev.ambitionsoftware.sunalta", category: "AlarmArtwork")
 
     var body: some View {
         let display = ClockTimeDisplay(hour: alarm.hour, minute: alarm.minute,
@@ -73,53 +75,50 @@ struct AlarmRingingArtwork: View {
         .defaultScrollAnchor(.center, for: .alignment)
         .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { viewportSize = $0 }
         .background {
             // Separate RealityViews can leave the animated surface frozen on iOS.
             // Both models share this renderer; SwiftUI still lays out the text and hit targets.
-            RealityView { content in
-                content.camera = .virtual
-                content.renderingEffects.cameraGrain = .disabled
-                content.renderingEffects.motionBlur = .disabled
-                content.renderingEffects.antialiasing = .multisample4X
-                do {
-                    let scene = try await AlarmRingingScene()
-                    scene.show(display: display)
-                    try await scene.apply(theme: theme)
-                    try Task.checkCancellation()
+            if scenePhase == .active, let scene {
+                RealityView { [scene] content in
+                    content.camera = .virtual
+                    content.renderingEffects.cameraGrain = .disabled
+                    content.renderingEffects.motionBlur = .disabled
+                    content.renderingEffects.antialiasing = .multisample4X
                     scene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
                     content.add(scene.root)
-                    self.scene = scene
                     let subscription = content.subscribe(to: SceneEvents.Update.self) { [weak scene] event in
                         scene?.advance(by: event.deltaTime)
                     }
                     sceneUpdates = AnyCancellable { subscription.cancel() }
-                } catch is CancellationError {
-                    // Closing the alarm cancels its decorative scene load.
-                } catch {
-                    failedToLoad = true
+                    scene.bell.setRinging(isRinging && !reduceMotion)
+                    scene.setAmbienceActive(!reduceMotion)
+                } update: { _ in
+                    scene.show(display: display)
+                    scene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
+                } placeholder: {
+                    Color.clear
                 }
-            } update: { _ in
-                scene?.show(display: display)
-                scene?.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
-            } placeholder: {
-                Color.clear
+                .realityViewCameraControls(.none)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+                .onDisappear {
+                    sceneUpdates?.cancel()
+                    sceneUpdates = nil
+                    scene.bell.setRinging(false)
+                    scene.bell.resetOrbit()
+                    scene.setAmbienceActive(false)
+                }
             }
-            .realityViewCameraControls(.none)
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { viewportSize = $0 }
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
         }
         .coordinateSpace(name: "alarmArtwork")
-        .task(id: theme) { await applyTheme() }
-        .task(id: scene != nil) { await applyTheme() }
+        // AlarmKit can present this screen while the phone is still locked. GPU-backed
+        // loading must wait for activation, and restart if the handoff interrupts it.
+        .task(id: scenePhase == .active ? theme : nil) { await loadScene(display: display) }
         .onChange(of: isDragging) { _, dragging in
             if !dragging {
                 scene?.bell.endDrag(velocity: .zero, width: bellFrame.width, reduceMotion: reduceMotion)
             }
-        }
-        .onChange(of: scene != nil) { _, _ in
-            scene?.bell.setRinging(isRinging && !reduceMotion && scenePhase == .active)
-            scene?.setAmbienceActive(!reduceMotion && scenePhase == .active)
         }
         .onChange(of: isRinging && !reduceMotion && scenePhase == .active) { _, ringing in
             scene?.bell.setRinging(ringing)
@@ -130,27 +129,30 @@ struct AlarmRingingArtwork: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { scene?.bell.resetOrbit() }
         }
-        .onAppear {
-            scene?.bell.setRinging(isRinging && !reduceMotion && scenePhase == .active)
-            scene?.setAmbienceActive(!reduceMotion && scenePhase == .active)
-            if sceneUpdates == nil, let scene, let realityScene = scene.root.scene {
-                sceneUpdates = realityScene.subscribe(to: SceneEvents.Update.self) { [weak scene] event in
-                    scene?.advance(by: event.deltaTime)
-                }
-            }
-        }
-        .onDisappear {
-            sceneUpdates?.cancel()
-            sceneUpdates = nil
-            scene?.bell.setRinging(false)
-            scene?.bell.resetOrbit()
-            scene?.setAmbienceActive(false)
-        }
     }
 
-    private func applyTheme() async {
-        do { try await scene?.apply(theme: theme) }
-        catch is CancellationError { }
-        catch { failedToLoad = true }
+    private func loadScene(display: ClockTimeDisplay) async {
+        guard scenePhase == .active else { return }
+        do {
+            try Task.checkCancellation()
+            let loadedScene: AlarmRingingScene
+            if let scene { loadedScene = scene }
+            else { loadedScene = try await AlarmRingingScene() }
+            try Task.checkCancellation()
+            loadedScene.show(display: display)
+            try await loadedScene.apply(theme: theme)
+            try Task.checkCancellation()
+            loadedScene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
+            scene = loadedScene
+            failedToLoad = false
+        } catch is CancellationError {
+            // The next activation can retry interrupted loading.
+        } catch {
+            // RealityKit may report its own loading error when cancellation interrupts
+            // GPU work. Let the next activation retry without retaining a stale failure.
+            guard !Task.isCancelled else { return }
+            Self.logger.error("Could not load alarm artwork: \(String(reflecting: error), privacy: .public)")
+            failedToLoad = true
+        }
     }
 }
