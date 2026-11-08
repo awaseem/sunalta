@@ -10,11 +10,19 @@ struct SupportTipOption: View {
     var body: some View {
         Button(action: select) {
             Text(product.displayPrice)
-                .font(.headline)
-                .padding()
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity, minHeight: 44)
-                .foregroundStyle(isSelected ? theme.palette.onControl : theme.palette.foreground)
-                .background(isSelected ? theme.palette.control : theme.palette.surface, in: .capsule)
+                .foregroundStyle(theme.palette.foreground)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(theme.colorScheme == .dark ? Color(white: 0.3) : .white)
+                    }
+                }
+                .contentShape(.capsule)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(product.displayName), \(product.displayPrice)")
