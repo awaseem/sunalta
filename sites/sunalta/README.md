@@ -46,7 +46,7 @@ Open the local address printed by Astro and use Ctrl-C in the terminal to stop t
 
 Copy `.env.example` to `.env` and set `SITE_URL` to the final public HTTPS origin. Rebuild and deploy `dist/` to any static host. No server adapter is required. Until a public origin is configured, the page and robots.txt discourage indexing and no canonical URL is emitted.
 
-Set `PUBLIC_APP_STORE_URL` to the actual `https://apps.apple.com/…` listing when available. Apple's official badge is visible in the local preview without a link; configuring the URL makes the badge clickable.
+Apple's official badge links to [Sunalta on the App Store](https://apps.apple.com/us/app/sunalta/id6830356035) by default, including in local previews. `PUBLIC_APP_STORE_URL` can optionally override the destination with another `https://apps.apple.com/…` URL; an unset or blank value uses the approved listing.
 
 The unmodified SVG in `public/download-on-the-app-store.svg` comes from [Apple's official badge asset](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg), referenced by its [marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/). It is displayed at 120 × 40 px with at least 10 px clear space. Keep the artwork's original proportions, border, wording, and colors.
 
