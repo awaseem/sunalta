@@ -1,5 +1,6 @@
 import Testing
 import UIKit
+
 @testable import Sunalta
 
 @Suite(.serialized)
@@ -26,7 +27,8 @@ struct ClockRenderingTests {
         try await Task.sleep(for: .milliseconds(500))
         #expect(clock.renderedFrameCount == settledFrames)
 
-        clock.show(display: ClockTimeDisplay(date: date.addingTimeInterval(60), format: .twentyFourHour))
+        clock.show(
+            display: ClockTimeDisplay(date: date.addingTimeInterval(60), format: .twentyFourHour))
         try await waitForFrame(clock, after: settledFrames)
         let changedFrames = clock.renderedFrameCount
         try await Task.sleep(for: .milliseconds(200))
@@ -46,7 +48,9 @@ struct ClockRenderingTests {
         try await Task.sleep(for: .milliseconds(200))
         let suspendedFrames = clock.renderedFrameCount
         for index in 0..<20 {
-            clock.show(display: ClockTimeDisplay(hour: index.isMultiple(of: 2) ? 7 : 8, minute: 0, format: .twentyFourHour))
+            clock.show(
+                display: ClockTimeDisplay(
+                    hour: index.isMultiple(of: 2) ? 7 : 8, minute: 0, format: .twentyFourHour))
             clock.entranceAngles = [Float(index) * 0.01, 0]
         }
         try await Task.sleep(for: .milliseconds(200))
@@ -86,9 +90,11 @@ struct ClockRenderingTests {
         let page = ClockPageView(theme: .white)
         let date = Date.now
         func update(scrolling: Bool, visible: Bool) {
-            page.update(display: ClockTimeDisplay(date: date, format: .twentyFourHour), theme: .white, insets: .zero,
-                        isScrolling: scrolling, isVisible: visible,
-                        isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
+            page.update(
+                display: ClockTimeDisplay(date: date, format: .twentyFourHour), theme: .white,
+                insets: .zero,
+                isScrolling: scrolling, isVisible: visible,
+                isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
         }
         update(scrolling: false, visible: true)
         let window = try host(page)
@@ -118,9 +124,11 @@ struct ClockRenderingTests {
     @Test func scrollingDuringFirstFrameDoesNotLeaveClockHidden() async throws {
         let page = ClockPageView(theme: .white)
         func update(scrolling: Bool) {
-            page.update(display: ClockTimeDisplay(date: .now, format: .twentyFourHour), theme: .white, insets: .zero,
-                        isScrolling: scrolling, isVisible: true,
-                        isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
+            page.update(
+                display: ClockTimeDisplay(date: .now, format: .twentyFourHour), theme: .white,
+                insets: .zero,
+                isScrolling: scrolling, isVisible: true,
+                isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
         }
         update(scrolling: true)
         let window = try host(page)
@@ -142,10 +150,12 @@ struct ClockRenderingTests {
     func changingFormatWithinTheSameMinuteUpdatesTheCachedClock(hour: Int) async throws {
         let page = ClockPageView(theme: .white)
         func update(_ format: ClockTimeFormat) {
-            page.update(display: ClockTimeDisplay(hour: hour, minute: 5, format: format,
-                                                 locale: Locale(identifier: "en_US")),
-                        theme: .white, insets: .zero, isScrolling: false, isVisible: true,
-                        isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
+            page.update(
+                display: ClockTimeDisplay(
+                    hour: hour, minute: 5, format: format,
+                    locale: Locale(identifier: "en_US")),
+                theme: .white, insets: .zero, isScrolling: false, isVisible: true,
+                isEditingAppearance: false, weekdayFrame: .zero, allowsFlybys: false)
         }
         update(.twentyFourHour)
         let window = try host(page)
@@ -158,8 +168,9 @@ struct ClockRenderingTests {
         try await Task.sleep(for: .seconds(1))
         let previousFrames = clock.renderedFrameCount
         update(.twelveHour)
-        let expected = ClockTimeDisplay(hour: hour, minute: 5, format: .twelveHour,
-                                        locale: Locale(identifier: "en_US"))
+        let expected = ClockTimeDisplay(
+            hour: hour, minute: 5, format: .twelveHour,
+            locale: Locale(identifier: "en_US"))
         #expect(page.accessibilityLabel == "Time, \(expected.text)")
         #expect(page.subviews.first === clock)
         if hour > 12 {

@@ -11,8 +11,10 @@ final class ClockFlybyAnimal {
     private let flapAmplitude: Float
     private let isButterfly: Bool
 
-    init(kind: ClockFlybyKind, meshes: (body: MeshResource, wing: MeshResource),
-         material: PhysicallyBasedMaterial) {
+    init(
+        kind: ClockFlybyKind, meshes: (body: MeshResource, wing: MeshResource),
+        material: PhysicallyBasedMaterial
+    ) {
         isButterfly = kind == .butterfly
         switch kind {
         case .butterfly:
@@ -42,20 +44,25 @@ final class ClockFlybyAnimal {
         for part in [body, nearWing, farWing] { part.model?.materials = [material] }
     }
 
-    func update(path: ClockFlybyPath, elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float) {
+    func update(
+        path: ClockFlybyPath, elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float
+    ) {
         guard elapsed >= 0, elapsed < path.duration else {
             root.isEnabled = false
             return
         }
-        root.position = path.position(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
-        root.orientation = path.orientation(at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
+        root.position = path.position(
+            at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
+        root.orientation = path.orientation(
+            at: elapsed, viewport: viewport, cameraDistance: cameraDistance)
         if isButterfly {
             let time = Float(elapsed)
             root.position.y += sin(time * 4.2) * viewport.y * 0.005
             root.orientation *= simd_quatf(angle: 0.65 + sin(time * 2.1) * 0.15, axis: [1, 0, 0])
         }
         root.components[OpacityComponent.self]?.opacity = path.opacity(at: elapsed)
-        let flap = sin(Float(elapsed) * .pi * 2 * flapFrequency) * flapAmplitude + (isButterfly ? 0.25 : 0)
+        let flap =
+            sin(Float(elapsed) * .pi * 2 * flapFrequency) * flapAmplitude + (isButterfly ? 0.25 : 0)
         nearWing.orientation = simd_quatf(angle: flap, axis: [1, 0, 0])
         farWing.orientation = simd_quatf(angle: .pi - flap, axis: [1, 0, 0])
         root.isEnabled = true

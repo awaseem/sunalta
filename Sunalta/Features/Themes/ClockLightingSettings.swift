@@ -9,7 +9,8 @@ struct ClockLightingSettings: Codable, Equatable {
     var lightPosition: SIMD3<Float> {
         let azimuth = direction * .pi / 180
         let tilt = self.tilt * .pi / 180
-        return SIMD3(Float(cos(azimuth) * sin(tilt)),
-                     Float(sin(azimuth) * sin(tilt)), Float(cos(tilt))) * 10
+        return SIMD3(
+            Float(cos(azimuth) * sin(tilt)),
+            Float(sin(azimuth) * sin(tilt)), Float(cos(tilt))) * 10
     }
 }

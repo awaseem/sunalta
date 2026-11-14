@@ -1,5 +1,6 @@
-import simd
 import Testing
+import simd
+
 @testable import Sunalta
 
 struct ClockFlybyPathTests {
@@ -23,13 +24,15 @@ struct ClockFlybyPathTests {
         let viewport = SIMD2<Float>(6, 14)
         let start = path.position(at: 0, viewport: viewport, cameraDistance: 66)
         for frame in 0...120 {
-            let position = path.position(at: Double(frame) / 30, viewport: viewport, cameraDistance: 66)
+            let position = path.position(
+                at: Double(frame) / 30, viewport: viewport, cameraDistance: 66)
             #expect(position.z < -66)
             #expect(position.z > -66 + ClockFlybyPath.backdropDepth)
             #expect(position.z == start.z)
         }
         // A delayed frame must finish at the exit rather than wrapping back onto the screen.
-        #expect(path.position(at: 20, viewport: viewport, cameraDistance: 66)
+        #expect(
+            path.position(at: 20, viewport: viewport, cameraDistance: 66)
                 == path.position(at: 4, viewport: viewport, cameraDistance: 66))
         #expect(path.opacity(at: 20) == 0)
     }
@@ -41,8 +44,10 @@ struct ClockFlybyPathTests {
         for frame in 0...120 {
             let elapsed = Double(frame) / 30
             let orientation = path.orientation(at: elapsed, viewport: viewport, cameraDistance: 66)
-            let before = path.position(at: max(0, elapsed - 0.01), viewport: viewport, cameraDistance: 66)
-            let after = path.position(at: min(4, elapsed + 0.01), viewport: viewport, cameraDistance: 66)
+            let before = path.position(
+                at: max(0, elapsed - 0.01), viewport: viewport, cameraDistance: 66)
+            let after = path.position(
+                at: min(4, elapsed + 0.01), viewport: viewport, cameraDistance: 66)
             let direction = simd_normalize(after - before)
             #expect(simd_dot(orientation.act([1, 0, 0]), direction) > 0.999)
             #expect(orientation.act([0, 1, 0]).y > 0)

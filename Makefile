@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help app-release lint test website-install website-dev website-check website-build
+.PHONY: help app-release format lint test website-install website-dev website-check website-build
 
 PROJECT := Sunalta.xcodeproj
 SCHEME := Sunalta
@@ -15,7 +15,10 @@ help: ## Show available commands
 app-release: ## Bump the iOS version and publish a release (VERSION=x.y.z)
 	@./Scripts/release-app.sh
 
-lint: ## Check Swift formatting in the app, widget, shared code, and unit tests
+format: ## Apply Swift formatting in the app, widget, shared code, and unit tests
+	xcrun swift-format format --in-place --recursive Sunalta SunaltaWidgets AlarmShared ClockShared Tests
+
+lint: ## Check Swift lint and formatting in the app, widget, shared code, and unit tests
 	xcrun swift-format lint --strict --recursive Sunalta SunaltaWidgets AlarmShared ClockShared Tests
 
 test: ## Run unit tests (override TEST_DESTINATION or UNIT_TEST_TARGET as needed)

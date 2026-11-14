@@ -10,8 +10,10 @@ final class AlarmSoundPreview: NSObject, AVAudioPlayerDelegate {
     private let resolver: AlarmSoundResolver
     private let makePlayer: (URL) throws -> AVAudioPlayer
 
-    init(resolver: AlarmSoundResolver = .init(),
-         makePlayer: @escaping (URL) throws -> AVAudioPlayer = { try AVAudioPlayer(contentsOf: $0) }) {
+    init(
+        resolver: AlarmSoundResolver = .init(),
+        makePlayer: @escaping (URL) throws -> AVAudioPlayer = { try AVAudioPlayer(contentsOf: $0) }
+    ) {
         self.resolver = resolver
         self.makePlayer = makePlayer
         super.init()
@@ -63,7 +65,8 @@ final class AlarmSoundPreview: NSObject, AVAudioPlayerDelegate {
     /// Stop on audio interruptions and route disconnections; resuming requires an explicit tap.
     func observeInterruptions() async {
         let notifications = NotificationCenter.default.notifications(
-            named: AVAudioSession.didBecomeInactiveNotification, object: AVAudioSession.sharedInstance()
+            named: AVAudioSession.didBecomeInactiveNotification,
+            object: AVAudioSession.sharedInstance()
         ).map { _ in true }
         for await _ in notifications {
             guard !Task.isCancelled else { return }

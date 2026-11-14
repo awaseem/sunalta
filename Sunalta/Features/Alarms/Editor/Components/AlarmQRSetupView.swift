@@ -16,12 +16,15 @@ struct AlarmQRSetupView: View {
                 Text("Scan the specific QR code you'll use to stop your alarm.")
                     .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
                     .padding(.horizontal)
-                AlarmQRCamera(scannerID: scannerID, isPaused: scanError != nil,
-                              simulatorDescription: "Scan a specific QR code on a device, or leave setup empty to use any QR code.",
-                              onScan: handleScan)
-                    .padding(.horizontal)
-                    .padding(.bottom)
-                    .onAppear(perform: checkCameraRestriction)
+                AlarmQRCamera(
+                    scannerID: scannerID, isPaused: scanError != nil,
+                    simulatorDescription:
+                        "Scan a specific QR code on a device, or leave setup empty to use any QR code.",
+                    onScan: handleScan
+                )
+                .padding(.horizontal)
+                .padding(.bottom)
+                .onAppear(perform: checkCameraRestriction)
             }
             .background(theme.palette.background)
             .navigationTitle("Set up QR code")
@@ -31,9 +34,12 @@ struct AlarmQRSetupView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .alert("Couldn't scan QR code", isPresented: Binding(
-                get: { scanError != nil }, set: { if !$0 { scanError = nil } }
-            )) {
+            .alert(
+                "Couldn't scan QR code",
+                isPresented: Binding(
+                    get: { scanError != nil }, set: { if !$0 { scanError = nil } }
+                )
+            ) {
                 if permissionDenied {
                     AppSettingsButton(onOpen: { dismiss() })
                 } else {
@@ -49,17 +55,23 @@ struct AlarmQRSetupView: View {
     private func handleScan(_ result: Result<ScanResult, ScanError>) {
         switch result {
         case .success(let scan):
-            guard draft.selection == .qrCode else { dismiss(); return }
+            guard draft.selection == .qrCode else {
+                dismiss()
+                return
+            }
             guard scan.type == .qr,
-                  AlarmStopTarget.isValidScan(codeValue: scan.string, kind: .qrCode) else {
+                AlarmStopTarget.isValidScan(codeValue: scan.string, kind: .qrCode)
+            else {
                 scanError = "This QR code is empty. Try a different code."
                 return
             }
             draft.scannedCode = .init(kind: .qrCode, value: scan.string)
             dismiss()
         case .failure:
-            permissionDenied = [.denied, .restricted].contains(AVCaptureDevice.authorizationStatus(for: .video))
-            scanError = permissionDenied
+            permissionDenied = [.denied, .restricted].contains(
+                AVCaptureDevice.authorizationStatus(for: .video))
+            scanError =
+                permissionDenied
                 ? "Allow camera access in Settings to scan your exit point's QR code."
                 : "The camera couldn't scan this QR code. Please try again."
         }
@@ -68,7 +80,8 @@ struct AlarmQRSetupView: View {
     private func checkCameraRestriction() {
         if AVCaptureDevice.authorizationStatus(for: .video) == .restricted {
             permissionDenied = true
-            scanError = "Camera access is restricted on this device. Leave setup empty to use any QR code."
+            scanError =
+                "Camera access is restricted on this device. Leave setup empty to use any QR code."
         }
     }
 }

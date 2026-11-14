@@ -20,8 +20,11 @@ struct ThemePickerPanel: View {
                     .buttonStyle(.appCapsule)
                     .accessibilityHint("Restores the selected theme's default appearance")
                 ThemeCopySettingsButton()
-                Button(isAtTop ? "Move appearance controls to bottom" : "Move appearance controls to top",
-                       systemImage: isAtTop ? "arrow.down.to.line" : "arrow.up.to.line") {
+                Button(
+                    isAtTop
+                        ? "Move appearance controls to bottom" : "Move appearance controls to top",
+                    systemImage: isAtTop ? "arrow.down.to.line" : "arrow.up.to.line"
+                ) {
                     isAtTop.toggle()
                 }
                 .labelStyle(.iconOnly)
@@ -41,15 +44,20 @@ struct ThemePickerPanel: View {
                     switch section {
                     case .theme:
                         ForEach(AppTheme.available) { option in
-                            ThemeOptionButton(theme: option, isSelected: settings.theme.id == option.id) {
+                            ThemeOptionButton(
+                                theme: option, isSelected: settings.theme.id == option.id
+                            ) {
                                 settings.select(option)
                             }
                         }
                     case .background:
-                        ColorPicker("Background color", selection: Binding(
-                            get: { settings.theme.palette.background },
-                            set: { settings.setBackground($0.resolve(in: environment)) }
-                        ), supportsOpacity: false)
+                        ColorPicker(
+                            "Background color",
+                            selection: Binding(
+                                get: { settings.theme.palette.background },
+                                set: { settings.setBackground($0.resolve(in: environment)) }
+                            ), supportsOpacity: false
+                        )
                         .font(.subheadline)
                         Text("Saved for this theme. Stays fixed as you adjust the lighting.")
                             .font(.caption)
@@ -57,9 +65,11 @@ struct ThemePickerPanel: View {
                     case .lighting:
                         ClockLightingControls(settings: $settings.lighting, isEditing: $isEditing)
                     case .finish:
-                        ClockLightingSlider(title: "Shimmer", range: 0...1,
-                                            display: settings.shimmer.formatted(.percent.precision(.fractionLength(0))),
-                                            value: $settings.shimmer, isEditing: $isEditing)
+                        ClockLightingSlider(
+                            title: "Shimmer", range: 0...1,
+                            display: settings.shimmer.formatted(
+                                .percent.precision(.fractionLength(0))),
+                            value: $settings.shimmer, isEditing: $isEditing)
                         Text("Drag across the numbers to catch the light.")
                             .font(.caption)
                             .foregroundStyle(theme.palette.secondaryForeground)
@@ -80,15 +90,19 @@ struct ThemePickerPanel: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(theme.palette.separator)
         }
-        .shadow(color: theme.panelShadow.color, radius: theme.panelShadow.radius,
-                x: theme.panelShadow.x, y: theme.panelShadow.y)
+        .shadow(
+            color: theme.panelShadow.color, radius: theme.panelShadow.radius,
+            x: theme.panelShadow.x, y: theme.panelShadow.y
+        )
         .onDisappear { isEditing = false }
     }
 }
 
 #Preview {
     ThemePickerPanel(isEditing: .constant(false), isAtTop: .constant(false), onClose: {})
-        .environment(ThemeSettings(defaults: UserDefaults(suiteName: "ThemePickerPreview") ?? .standard))
+        .environment(
+            ThemeSettings(defaults: UserDefaults(suiteName: "ThemePickerPreview") ?? .standard)
+        )
         .appTheme(.white)
         .padding()
 }

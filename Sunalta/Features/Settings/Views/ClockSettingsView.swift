@@ -54,8 +54,9 @@ struct ClockSettingsView: View {
 }
 
 #Preview("Theme without music") {
-    SettingsPreviewContainer(theme: AppTheme(
-        id: "silent-preview", name: "Silent", colorScheme: .light,
-        palette: AppTheme.white.palette
-    ))
+    SettingsPreviewContainer(
+        theme: AppTheme(
+            id: "silent-preview", name: "Silent", colorScheme: .light,
+            palette: AppTheme.white.palette
+        ))
 }

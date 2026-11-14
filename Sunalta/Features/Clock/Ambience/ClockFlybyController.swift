@@ -21,15 +21,18 @@ final class ClockFlybyController: NSObject {
     private var viewport = SIMD2<Float>.zero
     private var cameraDistance: Float = 0
 
-    init(kind: ClockFlybyKind, appearance: ClockAppearance, audioService: ClockAudioService? = nil) throws {
+    init(kind: ClockFlybyKind, appearance: ClockAppearance, audioService: ClockAudioService? = nil)
+        throws
+    {
         self.audioService = audioService
         switch kind {
         case .bird, .bat, .butterfly:
-            let meshes = switch kind {
-            case .butterfly: try ClockButterflyMesh.load()
-            case .bat: try ClockBatMesh.load()
-            default: try ClockBirdMesh.load()
-            }
+            let meshes =
+                switch kind {
+                case .butterfly: try ClockButterflyMesh.load()
+                case .bat: try ClockBatMesh.load()
+                default: try ClockBirdMesh.load()
+                }
             let material = appearance.flybyMaterial()
             animals = (0..<(Self.animalsPerFlock * 2)).map { _ in
                 ClockFlybyAnimal(kind: kind, meshes: meshes, material: material)
@@ -55,7 +58,8 @@ final class ClockFlybyController: NSObject {
 
     func start() {
         guard !animals.isEmpty, nextFlightTask == nil, displayLink == nil,
-              viewport.x > 0, cameraDistance > 1 else { return }
+            viewport.x > 0, cameraDistance > 1
+        else { return }
         scheduleFlight(after: Self.initialFlightDelay)
     }
 
@@ -84,11 +88,12 @@ final class ClockFlybyController: NSObject {
             let side: Float = isUpperFlock ? 1 : -1
             let spread = Float(member) - Float(Self.animalsPerFlock - 1) / 2
             // Pair an upper flock with a lower flock heading toward the opposite edge.
-            let path = ClockFlybyPath(duration: .random(in: Self.flightDurationRange),
-                                     travelsRight: isUpperFlock ? travelsRight : !travelsRight,
-                                     height: (height + spread * 0.08) * side,
-                                     arc: (arc + Float(member) * 0.015) * side,
-                                     origin: (origin + spread * 0.04) * side)
+            let path = ClockFlybyPath(
+                duration: .random(in: Self.flightDurationRange),
+                travelsRight: isUpperFlock ? travelsRight : !travelsRight,
+                height: (height + spread * 0.08) * side,
+                arc: (arc + Float(member) * 0.015) * side,
+                origin: (origin + spread * 0.04) * side)
             return (path, Double(member) * Self.memberStagger + (isUpperFlock ? 0 : 0.12))
         }
         flightDuration = flights.map { $0.path.duration + $0.delay }.max() ?? 0
@@ -115,8 +120,9 @@ final class ClockFlybyController: NSObject {
             return
         }
         for (animal, flight) in zip(animals, flights) {
-            animal.update(path: flight.path, elapsed: elapsed - flight.delay,
-                          viewport: viewport, cameraDistance: cameraDistance)
+            animal.update(
+                path: flight.path, elapsed: elapsed - flight.delay,
+                viewport: viewport, cameraDistance: cameraDistance)
         }
         let visibility = flights.reduce(Float.zero) { result, flight in
             max(result, flight.path.visibility(at: elapsed - flight.delay))

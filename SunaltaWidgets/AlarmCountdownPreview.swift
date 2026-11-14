@@ -9,11 +9,16 @@ struct AlarmCountdownPreview: View {
 
     var body: some View {
         AlarmCountdownContent(
-            metadata: .init(alarmID: UUID(), token: "preview", title: title,
-                            scanSymbol: scanSymbol, countdownKind: kind),
-            state: .init(alarmID: UUID(), mode: .paused(.init(
-                totalCountdownDuration: kind == .snooze ? 600 : 30, previouslyElapsedDuration: 0
-            ))),
+            metadata: .init(
+                alarmID: UUID(), token: "preview", title: title,
+                scanSymbol: scanSymbol, countdownKind: kind),
+            state: .init(
+                alarmID: UUID(),
+                mode: .paused(
+                    .init(
+                        totalCountdownDuration: kind == .snooze ? 600 : 30,
+                        previouslyElapsedDuration: 0
+                    ))),
             palette: palette
         )
         .padding()

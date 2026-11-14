@@ -5,15 +5,18 @@ extension AlarmRecord {
     func alarmKitSchedule() throws -> Alarm.Schedule {
         try validate()
         let weekdays = repeatDays.sorted { $0.rawValue < $1.rawValue }.map(\.alarmKitWeekday)
-        return .relative(.init(
-            time: .init(hour: hour, minute: minute),
-            repeats: weekdays.isEmpty ? .never : .weekly(weekdays)
-        ))
+        return .relative(
+            .init(
+                time: .init(hour: hour, minute: minute),
+                repeats: weekdays.isEmpty ? .never : .weekly(weekdays)
+            ))
     }
 }
+nonisolated
 
-private nonisolated extension ClockWeekday {
-    var alarmKitWeekday: Locale.Weekday {
+    extension ClockWeekday
+{
+    fileprivate var alarmKitWeekday: Locale.Weekday {
         switch self {
         case .sunday: .sunday
         case .monday: .monday

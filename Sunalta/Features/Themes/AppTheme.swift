@@ -34,9 +34,11 @@ struct AppTheme: Identifiable, Equatable {
         self.appIconName = appIconName
         self.palette = palette
         self.clock = clock ?? ClockAppearance(numeralColor: palette.foreground)
-        self.panelShadow = panelShadow ?? ThemeShadow(
-            color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12)
-        )
+        self.panelShadow =
+            panelShadow
+            ?? ThemeShadow(
+                color: .black.opacity(colorScheme == .dark ? 0.35 : 0.12)
+            )
         self.weekday = weekday
         self.clockFlyby = clockFlyby
         self.audio = audio

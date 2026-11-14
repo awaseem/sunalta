@@ -22,9 +22,11 @@ final class TipStore {
     @ObservationIgnored private var isObserving = false
     @ObservationIgnored private let fetchProducts: () async throws -> [Product]
 
-    init(fetchProducts: @escaping () async throws -> [Product] = {
-        try await Product.products(for: TipStore.productIDs)
-    }) {
+    init(
+        fetchProducts: @escaping () async throws -> [Product] = {
+            try await Product.products(for: TipStore.productIDs)
+        }
+    ) {
         self.fetchProducts = fetchProducts
     }
 
@@ -52,7 +54,8 @@ final class TipStore {
     /// The view supplies its scene's native SwiftUI purchase action.
     func tip(_ product: Product, purchase: () async throws -> Product.PurchaseResult) async {
         guard !isPurchasing, !isLoadingProducts, !needsVerification,
-              products.contains(where: { $0.id == product.id }) else { return }
+            products.contains(where: { $0.id == product.id })
+        else { return }
         isPurchasing = true
         purchaseError = nil
         purchaseMessage = nil
@@ -65,7 +68,8 @@ final class TipStore {
             case .userCancelled:
                 purchaseMessage = "Tip cancelled. You can keep enjoying Sunalta."
             case .pending:
-                purchaseMessage = "Your tip is awaiting approval. You can close this page and keep using Sunalta."
+                purchaseMessage =
+                    "Your tip is awaiting approval. You can close this page and keep using Sunalta."
             @unknown default:
                 purchaseError = "Couldn't complete your tip. Please try again."
             }
@@ -74,7 +78,8 @@ final class TipStore {
         } catch is CancellationError {
             return
         } catch {
-            purchaseError = "Couldn't complete your tip. Please check your connection and try again."
+            purchaseError =
+                "Couldn't complete your tip. Please check your connection and try again."
         }
     }
 
@@ -99,7 +104,9 @@ final class TipStore {
     func handleTransaction(_ result: VerificationResult<Transaction>) async {
         switch result {
         case .verified(let transaction):
-            guard Self.productIDs.contains(transaction.productID), transaction.productType == .consumable else { return }
+            guard Self.productIDs.contains(transaction.productID),
+                transaction.productType == .consumable
+            else { return }
             unverifiedTransactionIDs.remove(transaction.id)
             needsVerification = !unverifiedTransactionIDs.isEmpty
             if !needsVerification { purchaseError = nil }
@@ -116,7 +123,8 @@ final class TipStore {
             guard Self.productIDs.contains(transaction.productID) else { return }
             unverifiedTransactionIDs.insert(transaction.id)
             needsVerification = true
-            purchaseError = "Your purchase couldn't be verified yet. Check its status before trying another tip."
+            purchaseError =
+                "Your purchase couldn't be verified yet. Check its status before trying another tip."
         }
     }
 }

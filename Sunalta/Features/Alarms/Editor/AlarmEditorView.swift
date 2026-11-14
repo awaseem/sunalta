@@ -24,18 +24,21 @@ struct AlarmEditorView: View {
 
     init(alarm: AlarmRecord? = nil, theme: AppTheme = .defaultTheme) {
         self.alarm = alarm
-        _draft = State(initialValue: alarm.map { AlarmEditorDraft(alarm: $0, theme: theme) }
-                       ?? AlarmEditorDraft(theme: theme))
+        _draft = State(
+            initialValue: alarm.map { AlarmEditorDraft(alarm: $0, theme: theme) }
+                ?? AlarmEditorDraft(theme: theme))
     }
 
     var body: some View {
         NavigationStack {
             // Pass the full viewport and safe-area insets to the existing RealityKit renderer.
             GeometryReader { geometry in
-                let display = ClockTimeDisplay(date: draft.time, format: clockSettings.format,
-                                               calendar: calendar, locale: locale)
+                let display = ClockTimeDisplay(
+                    date: draft.time, format: clockSettings.format,
+                    calendar: calendar, locale: locale)
                 // Compact-height phones retain the stacked editor even in landscape.
-                let usesColumns = horizontalSizeClass == .regular && verticalSizeClass == .regular && isLandscape
+                let usesColumns =
+                    horizontalSizeClass == .regular && verticalSizeClass == .regular && isLandscape
                 let columnWidth = geometry.size.width / 2
                 let layout = AlarmEditorLayoutMetrics(
                     availableHeight: geometry.size.height,
@@ -43,7 +46,8 @@ struct AlarmEditorView: View {
                     footerHeight: footerHeight,
                     idealFormHeight: idealFormHeight
                 )
-                let previewDescription = "Alarm preview, \(display.text), \(AlarmRepeatSummary.text(for: draft.repeatDays))"
+                let previewDescription =
+                    "Alarm preview, \(display.text), \(AlarmRepeatSummary.text(for: draft.repeatDays))"
                 ZStack(alignment: .leading) {
                     AlarmTimePreview(
                         display: display,
@@ -58,7 +62,9 @@ struct AlarmEditorView: View {
                     .ignoresSafeArea()
                     .accessibilityElement()
                     .accessibilityLabel(previewDescription)
-                    .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
+                    .accessibilityHint(
+                        "Drag to change the viewing angle. Release to return to the front view."
+                    )
                     .accessibilityHidden(!usesColumns)
 
                     VStack(spacing: 0) {
@@ -67,15 +73,26 @@ struct AlarmEditorView: View {
                             .allowsHitTesting(false)
                             .accessibilityElement()
                             .accessibilityLabel(previewDescription)
-                            .accessibilityHint("Drag to change the viewing angle. Release to return to the front view.")
+                            .accessibilityHint(
+                                "Drag to change the viewing angle. Release to return to the front view."
+                            )
                             .accessibilityHidden(usesColumns)
-                        AlarmEditorStepContainer(step: step, draft: $draft, idealHeight: $idealFormHeight)
-                            .frame(height: usesColumns
-                                   ? max(0, geometry.size.height - footerHeight)
-                                   : layout.formHeight)
-                        AlarmEditorContinueButton(isFinalStep: step.next == nil, isEditing: alarm != nil,
-                                                  isSaving: isSaving, onContinue: continueStep)
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { footerHeight = $0 }
+                        AlarmEditorStepContainer(
+                            step: step, draft: $draft, idealHeight: $idealFormHeight
+                        )
+                        .frame(
+                            height: usesColumns
+                                ? max(0, geometry.size.height - footerHeight)
+                                : layout.formHeight)
+                        AlarmEditorContinueButton(
+                            isFinalStep: step.next == nil, isEditing: alarm != nil,
+                            isSaving: isSaving, onContinue: continueStep
+                        )
+                        .onGeometryChange(for: CGFloat.self) {
+                            $0.size.height
+                        } action: {
+                            footerHeight = $0
+                        }
                     }
                     .frame(maxWidth: usesColumns ? columnWidth : .infinity)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -85,23 +102,29 @@ struct AlarmEditorView: View {
             .background(theme.palette.background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                AlarmEditorToolbar(isEditing: alarm != nil, step: step,
-                                   onBack: goBack, onCancel: { dismiss() })
+                AlarmEditorToolbar(
+                    isEditing: alarm != nil, step: step,
+                    onBack: goBack, onCancel: { dismiss() })
             }
         }
         .background {
             // Opening the keyboard must not switch a portrait editor to columns.
             Color.clear
                 .ignoresSafeArea(.keyboard)
-                .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: {
+                .onGeometryChange(for: Bool.self) {
+                    $0.size.width > $0.size.height
+                } action: {
                     isLandscape = $0
                 }
         }
         .disabled(isSaving)
         .interactiveDismissDisabled(isSaving)
-        .alert("Couldn't save alarm", isPresented: Binding(
-            get: { saveError != nil }, set: { if !$0 { saveError = nil } }
-        )) {
+        .alert(
+            "Couldn't save alarm",
+            isPresented: Binding(
+                get: { saveError != nil }, set: { if !$0 { saveError = nil } }
+            )
+        ) {
             if AlarmManager.shared.authorizationState == .denied {
                 AppSettingsButton()
             }
@@ -112,8 +135,7 @@ struct AlarmEditorView: View {
     }
 
     private func goBack() {
-        if let previous = step.previous { changeStep(to: previous) }
-        else { dismiss() }
+        if let previous = step.previous { changeStep(to: previous) } else { dismiss() }
     }
 
     private func changeStep(to next: AlarmEditorStep) {
@@ -122,8 +144,9 @@ struct AlarmEditorView: View {
 
     private func continueStep() {
         guard !isSaving else { return }
-        if let next = step.next { changeStep(to: next) }
-        else {
+        if let next = step.next {
+            changeStep(to: next)
+        } else {
             isSaving = true
             Task { await save() }
         }

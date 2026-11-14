@@ -7,10 +7,14 @@ struct AlarmEditorContinueButton: View {
     let onContinue: () -> Void
 
     var body: some View {
-        Button(isSaving ? "Saving…" : isFinalStep ? (isEditing ? "Save changes" : "Create alarm") : "Continue",
-               action: onContinue)
-            .buttonStyle(.appCapsule(fillsWidth: true))
-            .padding()
-            .frame(maxWidth: 560)
+        Button(
+            isSaving
+                ? "Saving…"
+                : isFinalStep ? (isEditing ? "Save changes" : "Create alarm") : "Continue",
+            action: onContinue
+        )
+        .buttonStyle(.appCapsule(fillsWidth: true))
+        .padding()
+        .frame(maxWidth: 560)
     }
 }

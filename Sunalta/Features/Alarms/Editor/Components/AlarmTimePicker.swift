@@ -18,7 +18,8 @@ struct AlarmTimePicker: View {
 }
 
 #Preview {
-    @Previewable @State var settings = ClockDisplaySettings(defaults: PreviewDefaults.make(timeFormat: .twelveHour))
+    @Previewable @State var settings = ClockDisplaySettings(
+        defaults: PreviewDefaults.make(timeFormat: .twelveHour))
     @Previewable @State var time = Date(timeIntervalSinceReferenceDate: 12 * 3600)
     AlarmTimePicker(time: $time)
         .appTheme(.white)

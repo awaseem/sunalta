@@ -25,9 +25,11 @@ struct SettingsThemeButton: View {
                     .clipShape(.rect(cornerRadius: 20))
                     .overlay {
                         RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(isSelected ? currentTheme.palette.foreground
-                                          : currentTheme.palette.separator,
-                                          lineWidth: isSelected ? 2 : 1)
+                            .strokeBorder(
+                                isSelected
+                                    ? currentTheme.palette.foreground
+                                    : currentTheme.palette.separator,
+                                lineWidth: isSelected ? 2 : 1)
                     }
                 HStack {
                     Text(theme.name)

@@ -9,12 +9,14 @@ struct SupportTipSection: View {
     @State private var selectedProductID: String?
 
     var body: some View {
-        let selectedProduct = tips.products.first { $0.id == selectedProductID } ?? tips.products.first
-        let selectedTipEmoji = switch selectedProduct?.id {
-        case "sunalta_tip_generous": "🤑"
-        case "sunalta_tip_extra": "😱"
-        default: "❤️"
-        }
+        let selectedProduct =
+            tips.products.first { $0.id == selectedProductID } ?? tips.products.first
+        let selectedTipEmoji =
+            switch selectedProduct?.id {
+            case "sunalta_tip_generous": "🤑"
+            case "sunalta_tip_extra": "😱"
+            default: "❤️"
+            }
         VStack(spacing: 24) {
             if tips.isLoadingProducts {
                 ProgressView("Loading tips…")
@@ -28,11 +30,14 @@ struct SupportTipSection: View {
                 }
                 .frame(minHeight: 44)
             } else if !tips.products.isEmpty {
-                let layout = dynamicTypeSize.isAccessibilitySize
+                let layout =
+                    dynamicTypeSize.isAccessibilitySize
                     ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
                 layout {
                     ForEach(tips.products) { product in
-                        SupportTipOption(product: product, isSelected: selectedProduct?.id == product.id) {
+                        SupportTipOption(
+                            product: product, isSelected: selectedProduct?.id == product.id
+                        ) {
                             selectedProductID = product.id
                         }
                     }
@@ -57,9 +62,12 @@ struct SupportTipSection: View {
                             .tint(theme.palette.onControl)
                             .accessibilityLabel("Completing tip…")
                     } else {
-                        Text(selectedProduct.map { "Tip \($0.displayPrice) \(selectedTipEmoji)" } ?? "Leave a tip")
-                            .font(.headline)
-                            .foregroundStyle(theme.palette.onControl)
+                        Text(
+                            selectedProduct.map { "Tip \($0.displayPrice) \(selectedTipEmoji)" }
+                                ?? "Leave a tip"
+                        )
+                        .font(.headline)
+                        .foregroundStyle(theme.palette.onControl)
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 40)
@@ -67,7 +75,9 @@ struct SupportTipSection: View {
             .frame(minHeight: 50)
             .buttonStyle(.glassProminent)
             .tint(theme.palette.control)
-            .disabled(selectedProduct == nil || tips.isLoadingProducts || tips.isPurchasing || tips.needsVerification)
+            .disabled(
+                selectedProduct == nil || tips.isLoadingProducts || tips.isPurchasing
+                    || tips.needsVerification)
 
             if let error = tips.purchaseError {
                 Text(error)

@@ -15,14 +15,17 @@ final class AlarmFlybyController {
     private static let flockSides: [Float] = [1, -1]
 
     init(kind: ClockFlybyKind, appearance: ClockAppearance) throws {
-        let meshes = switch kind {
-        case .butterfly: try ClockButterflyMesh.load()
-        case .bat: try ClockBatMesh.load()
-        case .bird, .none: try ClockBirdMesh.load()
-        }
+        let meshes =
+            switch kind {
+            case .butterfly: try ClockButterflyMesh.load()
+            case .bat: try ClockBatMesh.load()
+            case .bird, .none: try ClockBirdMesh.load()
+            }
         let count = kind == .none ? 0 : Self.flockSides.count * Self.animalsPerFlock
         let material = appearance.flybyMaterial()
-        animals = (0..<count).map { _ in ClockFlybyAnimal(kind: kind, meshes: meshes, material: material) }
+        animals = (0..<count).map { _ in
+            ClockFlybyAnimal(kind: kind, meshes: meshes, material: material)
+        }
         flights = Array(repeating: (nil, 0), count: count)
         root.name = "Alarm crossing visitors"
         for animal in animals { root.addChild(animal.root) }
@@ -31,7 +34,9 @@ final class AlarmFlybyController {
 
     func apply(appearance: ClockAppearance) {
         let material = appearance.flybyMaterial()
-        animals.forEach { $0.apply(material: material) }
+        for animal in animals {
+            animal.apply(material: material)
+        }
     }
 
     func setViewport(_ size: CGSize) {
@@ -46,7 +51,9 @@ final class AlarmFlybyController {
 
     func burst() {
         // All sixteen finish, followed by the home screen's quiet pause before another visit.
-        guard viewport.x > 0, !animals.isEmpty, !root.isEnabled, elapsed >= nextBurstAt else { return }
+        guard viewport.x > 0, !animals.isEmpty, !root.isEnabled, elapsed >= nextBurstAt else {
+            return
+        }
         let height = Float.random(in: 0.28...0.46)
         let arc = Float.random(in: 0.08...0.16)
         let perspective = (Self.cameraDistance - ClockFlybyPath.depth) / Self.cameraDistance
@@ -57,12 +64,13 @@ final class AlarmFlybyController {
                 // A full-width pass takes roughly five seconds.
                 let duration = Double.random(in: ClockFlybyController.flightDurationRange) * 1.2
                 flights[slot] = (
-                    ClockFlybyPath(duration: duration,
-                                   travelsRight: true,
-                                   height: (height + spread * 0.06) * side / perspective,
-                                   arc: (arc + Float(member) * 0.015) * side / perspective,
-                                   origin: (-0.92 + spread * 0.04) / perspective,
-                                   horizontalReach: 0.92 / perspective),
+                    ClockFlybyPath(
+                        duration: duration,
+                        travelsRight: true,
+                        height: (height + spread * 0.06) * side / perspective,
+                        arc: (arc + Float(member) * 0.015) * side / perspective,
+                        origin: (-0.92 + spread * 0.04) / perspective,
+                        horizontalReach: 0.92 / perspective),
                     elapsed + Double(member) * ClockFlybyController.memberStagger
                         + (side < 0 ? 0.12 : 0)
                 )
@@ -76,8 +84,9 @@ final class AlarmFlybyController {
         for index in flights.indices {
             guard let path = flights[index].path else { continue }
             let flightTime = elapsed - flights[index].startsAt
-            animals[index].update(path: path, elapsed: flightTime,
-                                  viewport: viewport, cameraDistance: Self.cameraDistance)
+            animals[index].update(
+                path: path, elapsed: flightTime,
+                viewport: viewport, cameraDistance: Self.cameraDistance)
             // Perspective depth belongs to the clock camera; this scene uses one flat visitor layer.
             animals[index].root.position.z = 0
             if flightTime >= path.duration { flights[index].path = nil }

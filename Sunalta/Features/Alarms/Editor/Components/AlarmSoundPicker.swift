@@ -40,8 +40,11 @@ struct AlarmSoundPicker: View {
                 .accessibilityIdentifier("alarmSoundPicker")
 
                 if fileName != nil {
-                    Button(preview.playingSelection == selection ? "Stop preview" : "Preview sound",
-                           systemImage: preview.playingSelection == selection ? "stop.fill" : "play.fill") {
+                    Button(
+                        preview.playingSelection == selection ? "Stop preview" : "Preview sound",
+                        systemImage: preview.playingSelection == selection
+                            ? "stop.fill" : "play.fill"
+                    ) {
                         preview.toggle(selection)
                     }
                     .labelStyle(.iconOnly)

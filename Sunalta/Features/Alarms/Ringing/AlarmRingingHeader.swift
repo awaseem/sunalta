@@ -13,7 +13,9 @@ struct AlarmRingingHeader: View {
                 .aspectRatio(2, contentMode: .fit)
                 .onGeometryChange(for: CGRect.self) { geometry in
                     geometry.frame(in: .named("alarmArtwork"))
-                } action: { timeFrame = $0 }
+                } action: {
+                    timeFrame = $0
+                }
                 .overlay {
                     if showsFallback {
                         Text(display.text)

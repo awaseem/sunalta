@@ -1,6 +1,6 @@
 import AVFAudio
-import Observation
 import OSLog
+import Observation
 
 /// Owns decorative clock audio independently of the system's AlarmKit alerts.
 @MainActor
@@ -41,8 +41,11 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     @ObservationIgnored private var isInterrupted = false
     @ObservationIgnored private var observationTasks: [Task<Void, Never>] = []
 
-    init(defaults: UserDefaults = .standard,
-         makePlayer: @escaping @MainActor (ClockSound) throws -> AVAudioPlayer = ClockAudioService.loadPlayer) {
+    init(
+        defaults: UserDefaults = .standard,
+        makePlayer: @escaping @MainActor (ClockSound) throws -> AVAudioPlayer = ClockAudioService
+            .loadPlayer
+    ) {
         self.defaults = defaults
         self.makePlayer = makePlayer
         soundEffectsEnabled = defaults.object(forKey: Self.effectsKey) as? Bool ?? true
@@ -60,7 +63,8 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     func apply(configuration: ClockAudioConfiguration) {
         guard self.configuration != configuration else { return }
         if self.configuration.music != configuration.music
-            || self.configuration.musicLoopDelay != configuration.musicLoopDelay {
+            || self.configuration.musicLoopDelay != configuration.musicLoopDelay
+        {
             cancelAmbientReplay()
             ambientReplayDeadline = nil
             isAmbientPlaybackStarted = false
@@ -95,8 +99,10 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     }
 
     private func prepareEntrance() {
-        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, !isInterrupted,
-              ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
+        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled,
+            !isInterrupted,
+            ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1"
+        else { return }
         do {
             try configureAudioSession()
             if entrancePlayer == nil {
@@ -106,15 +112,18 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
                 logger.error("Could not prepare the clock entrance sound.")
             }
         } catch {
-            logger.error("Could not prepare the clock entrance sound: \(error.localizedDescription)")
+            logger.error(
+                "Could not prepare the clock entrance sound: \(error.localizedDescription)")
         }
     }
 
     /// Called once when the numeral entrance begins, never by interactive rotation.
     func playEntrance() {
-        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled, !isInterrupted,
-              ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
-              entrancePlayer?.isPlaying != true else { return }
+        guard let sound = configuration.entrance, isClockVisible, soundEffectsEnabled,
+            !isInterrupted,
+            ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1",
+            entrancePlayer?.isPlaying != true
+        else { return }
         if entrancePlayer == nil { prepareEntrance() }
         guard let entrancePlayer else { return }
         entrancePlayer.currentTime = 0
@@ -131,7 +140,8 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
 
     private func updateAmbientPlayback() {
         guard let sound = configuration.music, isClockVisible, musicEnabled, !isInterrupted,
-              ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else {
+            ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1"
+        else {
             pauseAmbientPlayback()
             return
         }
@@ -216,7 +226,9 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     private func configureAudioSession() throws {
         let session = AVAudioSession.sharedInstance()
         // Play through Silent mode without interrupting or lowering other apps' music.
-        if session.category != .playback || session.mode != .default || session.categoryOptions != .mixWithOthers {
+        if session.category != .playback || session.mode != .default
+            || session.categoryOptions != .mixWithOthers
+        {
             try session.setCategory(.playback, mode: .default, options: .mixWithOthers)
         }
         if !session.prefersInterruptionOnRouteDisconnect {
@@ -227,7 +239,8 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     /// Prepare during the wait before a visit, away from the animation's first frame.
     func prepareFlight() {
         guard let sound = configuration.flyby, soundEffectsEnabled, !isInterrupted,
-              ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1" else { return }
+            ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != "1"
+        else { return }
         do {
             try configureAudioSession()
             if flybyPlayer == nil {
@@ -244,7 +257,9 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     }
 
     func beginFlight() {
-        guard configuration.flyby != nil, isClockVisible, soundEffectsEnabled, !isInterrupted else { return }
+        guard configuration.flyby != nil, isClockVisible, soundEffectsEnabled, !isInterrupted else {
+            return
+        }
         if flybyPlayer == nil { prepareFlight() }
         guard let flybyPlayer else { return }
         flybyPlayer.currentTime = 0
@@ -286,15 +301,23 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
     private func observeAudioSession() {
         let center = NotificationCenter.default
         let session = AVAudioSession.sharedInstance()
-        let deactivations = center.notifications(named: AVAudioSession.didBecomeInactiveNotification, object: session)
-            .compactMap { $0.userInfo?[AVAudioSession.deactivationContextKey] as? AVAudioSession.DeactivationContext }
-        let resumptions = center.notifications(named: AVAudioSession.resumptionRecommendationNotification, object: session)
-            .map { _ in () }
+        let deactivations = center.notifications(
+            named: AVAudioSession.didBecomeInactiveNotification, object: session
+        )
+        .compactMap {
+            $0.userInfo?[AVAudioSession.deactivationContextKey]
+                as? AVAudioSession.DeactivationContext
+        }
+        let resumptions = center.notifications(
+            named: AVAudioSession.resumptionRecommendationNotification, object: session
+        )
+        .map { _ in () }
         observationTasks = [
             Task { @MainActor [weak self] in
                 for await context in deactivations {
                     guard !Task.isCancelled else { return }
-                    self?.audioSessionDidDeactivate(wasInterrupted: context.interruptionContext != nil)
+                    self?.audioSessionDidDeactivate(
+                        wasInterrupted: context.interruptionContext != nil)
                 }
             },
             Task { @MainActor [weak self] in
@@ -302,7 +325,7 @@ final class ClockAudioService: NSObject, AVAudioPlayerDelegate {
                     guard !Task.isCancelled else { return }
                     self?.audioSessionMayResume()
                 }
-            }
+            },
         ]
     }
 }

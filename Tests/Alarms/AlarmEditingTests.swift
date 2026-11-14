@@ -2,6 +2,7 @@ import AlarmKit
 import Foundation
 import SwiftData
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -13,21 +14,25 @@ struct AlarmEditingTests {
     }
 
     private func makeContainer() throws -> ModelContainer {
-        try ModelContainer(for: AlarmRecord.self, AlarmStopTarget.self,
-                           configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        try ModelContainer(
+            for: AlarmRecord.self, AlarmStopTarget.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     }
 
     private func makeService(_ context: ModelContext) -> AlarmEditorService {
-        AlarmEditorService(context: context, calendar: calendar, authorize: {},
-                           schedule: { _, _, _ in }, cancel: { _ in }, hasActiveSession: { _ in false })
+        AlarmEditorService(
+            context: context, calendar: calendar, authorize: {},
+            schedule: { _, _, _ in }, cancel: { _ in }, hasActiveSession: { _ in false })
     }
 
     private func insertAlarm(in context: ModelContext, enabled: Bool = true) throws -> AlarmRecord {
-        let target = try AlarmStopTarget(name: "Kitchen", kind: .qrCode, codeValue: "https://example.com/Wake\n")
-        let alarm = try AlarmRecord(hour: 6, minute: 45, label: "Early start", isEnabled: enabled,
-                                   repeatDays: [.monday, .friday], soundName: "birdsong.caf",
-                                   snoozeEnabled: false, snoozeDurationMinutes: 9,
-                                   exitPoint: .qrCode, stopTargets: [target], exitPointName: "Kitchen")
+        let target = try AlarmStopTarget(
+            name: "Kitchen", kind: .qrCode, codeValue: "https://example.com/Wake\n")
+        let alarm = try AlarmRecord(
+            hour: 6, minute: 45, label: "Early start", isEnabled: enabled,
+            repeatDays: [.monday, .friday], soundName: "birdsong.caf",
+            snoozeEnabled: false, snoozeDurationMinutes: 9,
+            exitPoint: .qrCode, stopTargets: [target], exitPointName: "Kitchen")
         alarm.scheduleToken = enabled ? "old-token" : nil
         alarm.configurationVersion = enabled ? AlarmRuntime.configurationVersion : nil
         context.insert(alarm)
@@ -43,7 +48,8 @@ struct AlarmEditingTests {
         try container.mainContext.save()
         let draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
         try await makeService(container.mainContext).update(draft, alarm: alarm)
-        let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+        let saved = try #require(
+            ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(saved.hour == hour && saved.minute == 5)
     }
 
@@ -65,7 +71,8 @@ struct AlarmEditingTests {
 
         #expect(!container.mainContext.hasChanges)
         #expect(alarm.label == "Early start" && alarm.exitPoint == .qrCode)
-        let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+        let saved = try #require(
+            ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(saved.scheduleToken == "old-token")
         #expect(saved.stopTargets.first?.codeValue == "https://example.com/Wake\n")
     }
@@ -75,7 +82,8 @@ struct AlarmEditingTests {
         let context = container.mainContext
         let alarm = try insertAlarm(in: context, enabled: false)
         let originalTarget = try #require(alarm.stopTargets.first)
-        let other = try AlarmRecord(hour: 8, minute: 0, exitPoint: .qrCode, stopTargets: [originalTarget])
+        let other = try AlarmRecord(
+            hour: 8, minute: 0, exitPoint: .qrCode, stopTargets: [originalTarget])
         context.insert(other)
         try context.save()
         var draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
@@ -107,7 +115,9 @@ struct AlarmEditingTests {
         #expect(other.acceptsScan(codeValue: "https://example.com/Wake\n", kind: .qrCode))
     }
 
-    @Test func unchangedScanTargetIsReusedAndCanBeRemovedWithoutDeletingOtherAlarmsTargets() async throws {
+    @Test func unchangedScanTargetIsReusedAndCanBeRemovedWithoutDeletingOtherAlarmsTargets()
+        async throws
+    {
         let container = try makeContainer()
         let alarm = try insertAlarm(in: container.mainContext, enabled: false)
         let targetID = try #require(alarm.stopTargets.first?.id)
@@ -120,7 +130,8 @@ struct AlarmEditingTests {
 
         draft.exitPoint.select(.normal)
         try await service.update(draft, alarm: alarm)
-        let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+        let saved = try #require(
+            ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(saved.exitPoint == .normal && saved.stopTargets.isEmpty)
     }
 
@@ -144,7 +155,8 @@ struct AlarmEditingTests {
             #expect(record.hour == 10 && record.minute == 15)
             #expect(record.scheduleToken != "old-token")
             #expect(record.soundSelection == draft.soundSelection)
-            let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+            let saved = try #require(
+                ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
             #expect(saved.scheduleToken == record.scheduleToken)
             #expect(saved.soundSelection == draft.soundSelection)
             operations.append("schedule")
@@ -158,7 +170,8 @@ struct AlarmEditingTests {
         #expect(alarm.isEnabled)
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<AlarmRecord>()) == 1)
         let runtime = AlarmRuntime(context: container.mainContext)
-        try await runtime.handleStop(alarmID: alarm.id.uuidString, systemID: alarm.id.uuidString, token: "old-token")
+        try await runtime.handleStop(
+            alarmID: alarm.id.uuidString, systemID: alarm.id.uuidString, token: "old-token")
         #expect(alarm.pendingSince == nil)
     }
 
@@ -212,12 +225,14 @@ struct AlarmEditingTests {
             try context.save()
         }
         service.cancel = { _ in Issue.record("A failed write must leave the schedule alone") }
-        service.schedule = { _, _, _ in Issue.record("A failed write must leave the schedule alone") }
+        service.schedule = { _, _, _ in Issue.record("A failed write must leave the schedule alone")
+        }
 
         await #expect(throws: CocoaError.self) { try await service.update(draft, alarm: alarm) }
 
         #expect(attempts == 2)
-        let saved = try #require(ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
+        let saved = try #require(
+            ModelContext(container).fetch(FetchDescriptor<AlarmRecord>()).first)
         #expect(alarm.label == "Early start" && saved.label == "Early start")
         #expect(alarm.soundName == "birdsong.caf" && saved.soundName == "birdsong.caf")
         #expect(alarm.scheduleToken == "old-token" && saved.scheduleToken == "old-token")
@@ -239,7 +254,9 @@ struct AlarmEditingTests {
         service.save = { _ in Issue.record("An active alarm must remain unchanged") }
         service.cancel = { _ in Issue.record("An active alarm must not be cancelled") }
 
-        await #expect(throws: AlarmRuntime.SessionError.scanRequired) { try await service.update(draft, alarm: alarm) }
+        await #expect(throws: AlarmRuntime.SessionError.scanRequired) {
+            try await service.update(draft, alarm: alarm)
+        }
         #expect(alarm.exitPoint == .qrCode && alarm.scheduleToken == "old-token")
     }
 
@@ -262,7 +279,9 @@ struct AlarmEditingTests {
     }
 
     @Test(arguments: [true, false])
-    func recoveryFailureIsReportedInsteadOfClaimingTheAlarmWasRestored(persistenceFailure: Bool) async throws {
+    func recoveryFailureIsReportedInsteadOfClaimingTheAlarmWasRestored(persistenceFailure: Bool)
+        async throws
+    {
         let container = try makeContainer()
         let alarm = try insertAlarm(in: container.mainContext)
         var service = makeService(container.mainContext)
@@ -274,6 +293,8 @@ struct AlarmEditingTests {
         var draft = AlarmEditorDraft(alarm: alarm, calendar: calendar)
         draft.name = "Unsaved"
 
-        await #expect(throws: AlarmRecoveryError.self) { try await service.update(draft, alarm: alarm) }
+        await #expect(throws: AlarmRecoveryError.self) {
+            try await service.update(draft, alarm: alarm)
+        }
     }
 }

@@ -11,14 +11,19 @@ struct AlarmEnabledToggle: View {
     let onEnabledChange: @MainActor @Sendable (Bool) -> Void
 
     var body: some View {
-        let time = ClockTimeDisplay(hour: hour, minute: minute, format: settings.format, locale: locale).text
+        let time = ClockTimeDisplay(
+            hour: hour, minute: minute, format: settings.format, locale: locale
+        ).text
         HStack {
             if isUpdating {
                 ProgressView().accessibilityLabel("Updating alarm")
             }
-            Toggle("Alarm enabled", isOn: Binding(
-                get: { isEnabled }, set: onEnabledChange
-            ))
+            Toggle(
+                "Alarm enabled",
+                isOn: Binding(
+                    get: { isEnabled }, set: onEnabledChange
+                )
+            )
             .labelsHidden()
             .tint(theme.palette.selection)
             .accessibilityLabel("Alarm at \(time)")

@@ -17,8 +17,10 @@ final class ClockDisplaySettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        format = defaults.string(forKey: Self.formatKey).flatMap(ClockTimeFormat.init(rawValue:))
+        format =
+            defaults.string(forKey: Self.formatKey).flatMap(ClockTimeFormat.init(rawValue:))
             ?? .twentyFourHour
-        showsPeriod = defaults.object(forKey: Self.periodKey) == nil || defaults.bool(forKey: Self.periodKey)
+        showsPeriod =
+            defaults.object(forKey: Self.periodKey) == nil || defaults.bool(forKey: Self.periodKey)
     }
 }

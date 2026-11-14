@@ -11,7 +11,8 @@ struct ClockWeekdayControls: View {
         VStack {
             ClockLightingSlider(
                 title: "Size", range: ClockWeekdayAppearance.sizeRange,
-                display: settings.weekday.size.formatted(.number.precision(.fractionLength(0))) + " pt",
+                display: settings.weekday.size.formatted(.number.precision(.fractionLength(0)))
+                    + " pt",
                 value: $settings.weekday.size, isEditing: $isEditing
             )
             Picker("Weight", selection: $settings.weekday.weight) {
@@ -20,14 +21,18 @@ struct ClockWeekdayControls: View {
                 }
             }
             .pickerStyle(.menu)
-            ColorPicker("Text and light color", selection: Binding(
-                get: { Color(settings.weekday.glow.color) },
-                set: { settings.weekday.glow.color = $0.resolve(in: environment) }
-            ), supportsOpacity: false)
+            ColorPicker(
+                "Text and light color",
+                selection: Binding(
+                    get: { Color(settings.weekday.glow.color) },
+                    set: { settings.weekday.glow.color = $0.resolve(in: environment) }
+                ), supportsOpacity: false
+            )
             .font(.subheadline)
             ClockLightingSlider(
                 title: "Text glow", range: 0...1,
-                display: settings.weekday.glow.halo.formatted(.percent.precision(.fractionLength(0))),
+                display: settings.weekday.glow.halo.formatted(
+                    .percent.precision(.fractionLength(0))),
                 value: $settings.weekday.glow.halo, isEditing: $isEditing
             )
             DisclosureGroup("Light on numbers") {

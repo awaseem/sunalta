@@ -14,11 +14,16 @@ struct SettingsAppearanceSection: View {
                 .font(.subheadline)
                 .foregroundStyle(theme.palette.secondaryForeground)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()),
-                                     count: dynamicTypeSize.isAccessibilitySize ? 1 : AppTheme.available.count)) {
+            LazyVGrid(
+                columns: Array(
+                    repeating: GridItem(.flexible()),
+                    count: dynamicTypeSize.isAccessibilitySize ? 1 : AppTheme.available.count)
+            ) {
                 ForEach(AppTheme.available) { option in
-                    SettingsThemeButton(theme: settings.appearance(for: option),
-                                        isSelected: settings.theme.id == option.id) {
+                    SettingsThemeButton(
+                        theme: settings.appearance(for: option),
+                        isSelected: settings.theme.id == option.id
+                    ) {
                         settings.select(option)
                     }
                 }

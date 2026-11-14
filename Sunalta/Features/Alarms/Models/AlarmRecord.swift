@@ -86,7 +86,9 @@ final class AlarmRecord {
         guard stopTargets.count <= 1 else { throw AlarmValidationError.invalidScanTarget }
         for target in stopTargets {
             try target.validate()
-            guard target.kind == selection.scanKind else { throw AlarmValidationError.invalidScanTarget }
+            guard target.kind == selection.scanKind else {
+                throw AlarmValidationError.invalidScanTarget
+            }
         }
         exitPointValue = selection.rawValue
         requiresScanToStop = selection != .normal
@@ -104,15 +106,20 @@ final class AlarmRecord {
         guard stopTargets.count <= 1 else { throw AlarmValidationError.invalidScanTarget }
         for target in stopTargets {
             try target.validate()
-            guard target.kind == exitPoint.scanKind else { throw AlarmValidationError.invalidScanTarget }
+            guard target.kind == exitPoint.scanKind else {
+                throw AlarmValidationError.invalidScanTarget
+            }
         }
     }
 
     func acceptsScan(codeValue: String, kind: AlarmStopTarget.Kind) -> Bool {
-        guard exitPoint.scanKind == kind, AlarmStopTarget.isValidScan(codeValue: codeValue, kind: kind) else {
+        guard exitPoint.scanKind == kind,
+            AlarmStopTarget.isValidScan(codeValue: codeValue, kind: kind)
+        else {
             return false
         }
-        return stopTargets.isEmpty || stopTargets.contains { $0.matches(codeValue: codeValue, kind: kind) }
+        return stopTargets.isEmpty
+            || stopTargets.contains { $0.matches(codeValue: codeValue, kind: kind) }
     }
 
     var exitPointSummary: String {
@@ -123,15 +130,19 @@ final class AlarmRecord {
         }
     }
 
-    func latestOccurrence(before date: Date = .now, calendar: Calendar = .autoupdatingCurrent) -> Date? {
-        AlarmOccurrence.latest(hour: hour, minute: minute, repeatDays: repeatDays,
-                               before: date, calendar: calendar)
+    func latestOccurrence(before date: Date = .now, calendar: Calendar = .autoupdatingCurrent)
+        -> Date?
+    {
+        AlarmOccurrence.latest(
+            hour: hour, minute: minute, repeatDays: repeatDays,
+            before: date, calendar: calendar)
     }
 
     func nextOccurrence(after date: Date, calendar: Calendar = .autoupdatingCurrent) -> Date? {
         guard isEnabled else { return nil }
-        let scheduled = AlarmOccurrence.next(hour: hour, minute: minute, repeatDays: repeatDays,
-                                              after: date, calendar: calendar)
+        let scheduled = AlarmOccurrence.next(
+            hour: hour, minute: minute, repeatDays: repeatDays,
+            after: date, calendar: calendar)
         return [scheduled, snoozedUntil, nextRetryAt].compactMap { $0 }.filter { $0 > date }.min()
     }
 }

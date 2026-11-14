@@ -10,9 +10,9 @@ enum GrassBladeMesh {
     }
 
     private struct Random {
-        var state: UInt64 = 0x4752415353
+        var state: UInt64 = 0x47_5241_5353
         mutating func next() -> Float {
-            state = state &* 6364136223846793005 &+ 1442695040888963407
+            state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
             return Float(state >> 40) / Float(1 << 24)
         }
     }
@@ -24,7 +24,9 @@ enum GrassBladeMesh {
         var maximum = SIMD3<Float>(repeating: -.greatestFiniteMagnitude)
         let contents = source.contents
         for instance in contents.instances {
-            guard let model = contents.models.first(where: { $0.id == instance.model }) else { continue }
+            guard let model = contents.models.first(where: { $0.id == instance.model }) else {
+                continue
+            }
             let transform = instance.transform
             let normalTransform = simd_transpose(simd_inverse(transform))
             for part in model.parts {
@@ -51,9 +53,11 @@ enum GrassBladeMesh {
                     area += triangleArea
                     let faceNormal = simd_normalize(cross)
                     let directions = vertices.map { index in
-                        normals.flatMap { $0.indices.contains(index) ? $0[index] : nil } ?? faceNormal
+                        normals.flatMap { $0.indices.contains(index) ? $0[index] : nil }
+                            ?? faceNormal
                     }
-                    triangles.append(Triangle(positions: points, normals: directions, cumulativeArea: area))
+                    triangles.append(
+                        Triangle(positions: points, normals: directions, cumulativeArea: area))
                 }
             }
         }
@@ -78,16 +82,22 @@ enum GrassBladeMesh {
             var high = triangles.count - 1
             while low < high {
                 let middle = (low + high) / 2
-                if triangles[middle].cumulativeArea < sample { low = middle + 1 } else { high = middle }
+                if triangles[middle].cumulativeArea < sample {
+                    low = middle + 1
+                } else {
+                    high = middle
+                }
             }
             let triangle = triangles[low]
             let u = sqrt(random.next())
             let v = random.next()
             let weights = SIMD3(1 - u, u * (1 - v), u * v)
-            let root = triangle.positions[0] * weights.x + triangle.positions[1] * weights.y
+            let root =
+                triangle.positions[0] * weights.x + triangle.positions[1] * weights.y
                 + triangle.positions[2] * weights.z
-            let normal = simd_normalize(triangle.normals[0] * weights.x
-                + triangle.normals[1] * weights.y + triangle.normals[2] * weights.z)
+            let normal = simd_normalize(
+                triangle.normals[0] * weights.x
+                    + triangle.normals[1] * weights.y + triangle.normals[2] * weights.z)
             let reference: SIMD3<Float> = abs(normal.y) < 0.9 ? [0, 1, 0] : [1, 0, 0]
             let tangent = simd_normalize(simd_cross(normal, reference))
             let bitangent = simd_cross(normal, tangent)
@@ -102,14 +112,18 @@ enum GrassBladeMesh {
             let middle = base + direction * height * 0.55
             let tip = base + direction * height + (upward * 0.18 + lean * 0.2) * height
             let vertex = UInt32(positions.count)
-            positions += [base - side * width, base + side * width,
-                          middle - side * width * 0.55, middle + side * width * 0.55, tip]
+            positions += [
+                base - side * width, base + side * width,
+                middle - side * width * 0.55, middle + side * width * 0.55, tip,
+            ]
             // Soft normals keep each small blade from looking like a hard plastic shard.
             normals += Array(repeating: simd_normalize(normal + direction), count: 5)
             let shade = random.next()
             coordinates += [[shade, 0], [shade, 0], [shade, 0.55], [shade, 0.55], [shade, 1]]
-            indices += [vertex, vertex + 1, vertex + 2, vertex + 1, vertex + 3, vertex + 2,
-                        vertex + 2, vertex + 3, vertex + 4]
+            indices += [
+                vertex, vertex + 1, vertex + 2, vertex + 1, vertex + 3, vertex + 2,
+                vertex + 2, vertex + 3, vertex + 4,
+            ]
         }
         var descriptor = MeshDescriptor(name: "Batched grass blades")
         descriptor.positions = .init(positions)

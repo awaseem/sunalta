@@ -9,7 +9,6 @@ final class AlarmStopTarget {
     private(set) var codeValue: String
     var alarms: [AlarmRecord] = []
 
-
     var kind: Kind? { Kind(rawValue: kindValue) }
 
     init(name: String, kind: Kind, codeValue: String) throws {
@@ -32,7 +31,8 @@ final class AlarmStopTarget {
     }
 
     static func isValidScan(codeValue: String, kind: Kind) -> Bool {
-        !normalizedCodeValue(codeValue, kind: kind).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !normalizedCodeValue(codeValue, kind: kind).trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
     }
 
     static func nfcIdentifier(from data: Data) -> String {

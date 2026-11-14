@@ -52,9 +52,10 @@ final class AlarmBellScene {
                 transform.rotation = rest.rotation * simd_quatf(angle: angle, axis: axis)
                 return transform
             }
-            let animation = try AnimationResource.generate(with: SampledAnimation(
-                frames: frames, frameInterval: 1 / 60, bindTarget: .transform
-            ))
+            let animation = try AnimationResource.generate(
+                with: SampledAnimation(
+                    frames: frames, frameInterval: 1 / 60, bindTarget: .transform
+                ))
             return (pivot, rest, animation.repeat())
         }
         subject.addChild(model)
@@ -70,10 +71,13 @@ final class AlarmBellScene {
     func apply(theme: AppTheme) throws {
         guard theme != appliedTheme else { return }
         if theme.clock.surface == .grass, grass.isEmpty,
-           let shell = model.findEntity(named: "BellShell") {
+            let shell = model.findEntity(named: "BellShell")
+        {
             try addGrass(to: shell)
         } else if theme.clock.surface != .grass {
-            grass.forEach { $0.removeFromParent() }
+            for entity in grass {
+                entity.removeFromParent()
+            }
             grass.removeAll()
         }
         appliedTheme = theme
@@ -90,9 +94,13 @@ final class AlarmBellScene {
         guard ringing != isRinging else { return }
         isRinging = ringing
         if ringing {
-            playback = pivots.map { $0.entity.playAnimation($0.animation, transitionDuration: 0.15) }
+            playback = pivots.map {
+                $0.entity.playAnimation($0.animation, transitionDuration: 0.15)
+            }
         } else {
-            playback.forEach { $0.stop() }
+            for controller in playback {
+                controller.stop()
+            }
             playback.removeAll()
             for pivot in pivots { pivot.entity.transform = pivot.rest }
         }
@@ -116,7 +124,8 @@ final class AlarmBellScene {
             orbit.beginDrag()
             isDragging = true
         }
-        orbit.drag(translation: [Float(translation.width), Float(translation.height)], width: Float(width))
+        orbit.drag(
+            translation: [Float(translation.width), Float(translation.height)], width: Float(width))
         updateViewingAngle()
     }
 
@@ -127,12 +136,12 @@ final class AlarmBellScene {
             resetOrbit()
             return
         }
-        orbit.release(velocity: [Float(velocity.width), Float(velocity.height)], width: Float(width))
+        orbit.release(
+            velocity: [Float(velocity.width), Float(velocity.height)], width: Float(width))
         returnTask = Task { @MainActor [weak self] in
             var previous = ContinuousClock.now
             while !Task.isCancelled {
-                do { try await Task.sleep(for: .milliseconds(16)) }
-                catch { return }
+                do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
                 guard let self else { return }
                 let now = ContinuousClock.now
                 let elapsed = previous.duration(to: now).components
@@ -160,17 +169,20 @@ final class AlarmBellScene {
         // Rotate the subject so the shared camera can keep the time row stationary.
         root.orientation = orbit.orientation.inverse
         if let appliedTheme {
-            let lightOrbit = simd_quatf(angle: -orbit.offset.x * 0.3, axis: [0, 1, 0])
+            let lightOrbit =
+                simd_quatf(angle: -orbit.offset.x * 0.3, axis: [0, 1, 0])
                 * simd_quatf(angle: -orbit.offset.y * 0.3, axis: [1, 0, 0])
-            keyLight.look(at: .zero, from: lightOrbit.act(appliedTheme.clock.lighting.lightPosition),
-                          relativeTo: subject)
+            keyLight.look(
+                at: .zero, from: lightOrbit.act(appliedTheme.clock.lighting.lightPosition),
+                relativeTo: subject)
         }
     }
 
     private func apply(material: PhysicallyBasedMaterial, to entity: Entity) {
         guard entity.name != GrassSurface.entityName else { return }
         if var component = entity.components[ModelComponent.self] {
-            component.materials = Array(repeating: material, count: max(component.materials.count, 1))
+            component.materials = Array(
+                repeating: material, count: max(component.materials.count, 1))
             entity.components.set(component)
         }
         for child in entity.children { apply(material: material, to: child) }

@@ -3,7 +3,8 @@ import WidgetKit
 
 struct SmallClockWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: ClockWidgetPreferences.kind, provider: SmallClockProvider()) { entry in
+        StaticConfiguration(kind: ClockWidgetPreferences.kind, provider: SmallClockProvider()) {
+            entry in
             SmallClockWidgetView(date: entry.date, preferences: entry.preferences)
         }
         .configurationDisplayName("Clock")

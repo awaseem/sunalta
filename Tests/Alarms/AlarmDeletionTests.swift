@@ -2,13 +2,15 @@ import Foundation
 import SwiftData
 import SwiftUI
 import Testing
+
 @testable import Sunalta
 
 @MainActor
 struct AlarmDeletionTests {
     private func makeContainer() throws -> ModelContainer {
-        try ModelContainer(for: AlarmRecord.self, AlarmStopTarget.self,
-                           configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        try ModelContainer(
+            for: AlarmRecord.self, AlarmStopTarget.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     }
 
     @Test func deletionCancelsAllSchedulesAndPreservesSharedScanTargets() async throws {
@@ -16,7 +18,8 @@ struct AlarmDeletionTests {
         let context = container.mainContext
         let target = try AlarmStopTarget(name: "Kitchen", kind: .qrCode, codeValue: "wake-up")
         let alarm = try AlarmRecord(hour: 7, minute: 0, exitPoint: .qrCode, stopTargets: [target])
-        let otherAlarm = try AlarmRecord(hour: 8, minute: 0, exitPoint: .qrCode, stopTargets: [target])
+        let otherAlarm = try AlarmRecord(
+            hour: 8, minute: 0, exitPoint: .qrCode, stopTargets: [target])
         alarm.retryAlarmIDs = [UUID(), UUID()]
         context.insert(alarm)
         context.insert(otherAlarm)
@@ -69,7 +72,9 @@ struct AlarmDeletionTests {
         var cancelledIDs: [UUID] = []
         let runtime = AlarmRuntime(context: container.mainContext) { cancelledIDs.append($0) }
 
-        await #expect(throws: AlarmRuntime.SessionError.scanRequired) { try await runtime.delete(alarm) }
+        await #expect(throws: AlarmRuntime.SessionError.scanRequired) {
+            try await runtime.delete(alarm)
+        }
 
         #expect(cancelledIDs.isEmpty)
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<AlarmRecord>()) == 1)
@@ -79,8 +84,9 @@ struct AlarmDeletionTests {
         let container = try makeContainer()
         let context = container.mainContext
         let target = try AlarmStopTarget(name: "Kitchen", kind: .qrCode, codeValue: "wake-up")
-        let alarm = try AlarmRecord(hour: 7, minute: 0, repeatDays: [.tuesday, .thursday],
-                                   exitPoint: .qrCode, stopTargets: [target])
+        let alarm = try AlarmRecord(
+            hour: 7, minute: 0, repeatDays: [.tuesday, .thursday],
+            exitPoint: .qrCode, stopTargets: [target])
         context.insert(alarm)
         try context.save()
         let row = AlarmRow(alarm: alarm, onEdit: {})
@@ -89,10 +95,12 @@ struct AlarmDeletionTests {
         #expect(alarm.modelContext == nil)
 
         // The swipe animation can request another render after the record is detached.
-        let renderer = ImageRenderer(content: row
-            .environment(ClockDisplaySettings())
-            .appTheme(.white)
-            .frame(width: 360))
+        let renderer = ImageRenderer(
+            content:
+                row
+                .environment(ClockDisplaySettings())
+                .appTheme(.white)
+                .frame(width: 360))
         #expect(renderer.cgImage != nil)
     }
 }

@@ -10,7 +10,8 @@ struct AlarmEditorStepContent: View {
             VStack(alignment: .leading) {
                 Text(step.title).font(.title2.bold()).accessibilityAddTraits(.isHeader)
                 if step != .time {
-                    Text(step.subtitle).font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
+                    Text(step.subtitle).font(.subheadline).foregroundStyle(
+                        theme.palette.secondaryForeground)
                 }
             }
             .padding(.horizontal)
@@ -28,10 +29,12 @@ struct AlarmEditorStepContent: View {
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
             case .snooze:
-                AlarmSnoozeOptions(snoozeEnabled: $draft.snoozeEnabled, snoozeMinutes: $draft.snoozeMinutes)
-                    .padding(.horizontal)
-                    .frame(maxWidth: 560)
-                    .frame(maxWidth: .infinity)
+                AlarmSnoozeOptions(
+                    snoozeEnabled: $draft.snoozeEnabled, snoozeMinutes: $draft.snoozeMinutes
+                )
+                .padding(.horizontal)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity)
             case .exitPoint:
                 AlarmExitPointOptions(draft: $draft.exitPoint)
             case .name:

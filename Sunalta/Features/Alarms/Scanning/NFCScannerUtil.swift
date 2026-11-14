@@ -37,7 +37,8 @@ extension NFCScannerUtil: @preconcurrency NFCTagReaderSessionDelegate {
         guard nfcSession === session else { return }
         nfcSession = nil
         if let error = error as? NFCReaderError,
-           error.code == .readerSessionInvalidationErrorUserCanceled {
+            error.code == .readerSessionInvalidationErrorUserCanceled
+        {
             return
         }
         onError?(error.localizedDescription)
@@ -84,10 +85,10 @@ extension NFCScannerUtil: @preconcurrency NFCTagReaderSessionDelegate {
     private static func connect(_ session: NFCTagReaderSession, to tag: NFCTag) async throws {
         // The SDK's async overlay sends non-Sendable NFC objects off this actor.
         // Start the connection on the delegate's main queue; only the continuation crosses it.
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        try await withCheckedThrowingContinuation {
+            (continuation: CheckedContinuation<Void, Error>) in
             session.connect(to: tag) { error in
-                if let error { continuation.resume(throwing: error) }
-                else { continuation.resume() }
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
             }
         }
     }

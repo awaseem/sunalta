@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -10,16 +11,18 @@ struct ThemeAppIconTests {
         var resumeFirstChange: CheckedContinuation<Void, Never>?
         let (started, continuation) = AsyncStream<Void>.makeStream()
         defer { continuation.finish() }
-        let icon = ThemeAppIcon(canUpdate: { true }, currentName: { current }) { name in
-            requests.append(name)
-            if requests.count == 1 {
-                await withCheckedContinuation { resume in
-                    resumeFirstChange = resume
-                    continuation.yield(())
+        let icon = ThemeAppIcon(
+            canUpdate: { true }, currentName: { current },
+            setName: { name in
+                requests.append(name)
+                if requests.count == 1 {
+                    await withCheckedContinuation { resume in
+                        resumeFirstChange = resume
+                        continuation.yield(())
+                    }
                 }
-            }
-            current = name
-        }
+                current = name
+            })
         let firstChange = Task { await icon.synchronize(with: .midnight) }
         var events = started.makeAsyncIterator()
         await events.next()
@@ -37,11 +40,13 @@ struct ThemeAppIconTests {
     @Test func failedChangeCanRetryWithoutLoopingOrRepeatingSuccessfulChanges() async {
         var current: String?
         var attempts = 0
-        let icon = ThemeAppIcon(canUpdate: { true }, currentName: { current }) { name in
-            attempts += 1
-            if attempts == 1 { throw CocoaError(.featureUnsupported) }
-            current = name
-        }
+        let icon = ThemeAppIcon(
+            canUpdate: { true }, currentName: { current },
+            setName: { name in
+                attempts += 1
+                if attempts == 1 { throw CocoaError(.featureUnsupported) }
+                current = name
+            })
 
         await icon.synchronize(with: .grass)
         #expect(attempts == 1)
@@ -56,10 +61,12 @@ struct ThemeAppIconTests {
         var isActive = false
         var current: String?
         var requests: [String?] = []
-        let icon = ThemeAppIcon(canUpdate: { isActive }, currentName: { current }) { name in
-            requests.append(name)
-            current = name
-        }
+        let icon = ThemeAppIcon(
+            canUpdate: { isActive }, currentName: { current },
+            setName: { name in
+                requests.append(name)
+                current = name
+            })
 
         await icon.synchronize(with: .midnight)
         await icon.synchronize(with: .grass)

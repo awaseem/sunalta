@@ -8,8 +8,10 @@ struct ThemeCopySettingsButton: View {
     @State private var copyFailed = false
 
     var body: some View {
-        Button(copied ? "Settings copied" : "Copy settings",
-               systemImage: copied ? "checkmark" : "doc.on.doc") {
+        Button(
+            copied ? "Settings copied" : "Copy settings",
+            systemImage: copied ? "checkmark" : "doc.on.doc"
+        ) {
             do {
                 UIPasteboard.general.string = try settings.exportText(in: environment)
                 copied = true

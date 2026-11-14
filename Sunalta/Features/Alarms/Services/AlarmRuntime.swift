@@ -19,8 +19,10 @@ final class AlarmRuntime {
     private let cancelAlarm: @MainActor (UUID) throws -> Void
     private var operations: [UUID: (id: UUID, task: Task<Void, Error>)] = [:]
 
-    init(context: ModelContext, system: AlarmRuntimeSystem = .init(),
-         cancelAlarm: @escaping @MainActor (UUID) throws -> Void = AlarmScheduler.cancel(id:)) {
+    init(
+        context: ModelContext, system: AlarmRuntimeSystem = .init(),
+        cancelAlarm: @escaping @MainActor (UUID) throws -> Void = AlarmScheduler.cancel(id:)
+    ) {
         self.context = context
         self.system = system
         self.cancelAlarm = cancelAlarm
@@ -50,24 +52,29 @@ final class AlarmRuntime {
                 guard operations[alarm.id] == nil else { continue }
                 var systemAlarms = try system.states()
                 // Refresh saved system presentations and intents without interrupting active sessions.
-                if alarm.configurationVersion != Self.configurationVersion, alarm.isEnabled, alarm.pendingSince == nil,
-                   systemAlarms[alarm.id] == .scheduled {
+                if alarm.configurationVersion != Self.configurationVersion, alarm.isEnabled,
+                    alarm.pendingSince == nil,
+                    systemAlarms[alarm.id] == .scheduled
+                {
                     try await setEnabled(true, for: alarm)
                     systemAlarms = try system.states()
                 }
                 let ids = Set([alarm.id] + alarm.retryAlarmIDs)
                 let isRinging = systemAlarms.contains {
                     ids.contains($0.key) && $0.value == .alerting
-                        && acceptsCallback(alarm, sourceID: $0.key, token: alarm.scheduleToken ?? "")
+                        && acceptsCallback(
+                            alarm, sourceID: $0.key, token: alarm.scheduleToken ?? "")
                 }
                 if isRinging { try activate(alarm) }
-                let isCountingDown = alarm.exitPoint == .normal
+                let isCountingDown =
+                    alarm.exitPoint == .normal
                     && (systemAlarms[alarm.id] == .countdown || systemAlarms[alarm.id] == .paused)
                 if isCountingDown {
                     // Recover snoozes started from the system UI, including older saved sessions.
                     if alarm.pendingSince == nil { alarm.pendingSince = .now }
                     if alarm.snoozedUntil == nil {
-                        alarm.snoozedUntil = .now.addingTimeInterval(TimeInterval(alarm.snoozeDurationMinutes * 60))
+                        alarm.snoozedUntil = .now.addingTimeInterval(
+                            TimeInterval(alarm.snoozeDurationMinutes * 60))
                     }
                 }
                 if alarm.pendingSince != nil, !isRinging {
@@ -76,9 +83,14 @@ final class AlarmRuntime {
                         if alarm.exitPoint == .normal {
                             // Re-read after serialization: a snooze or new alert may have arrived.
                             let state = try self.system.states()[alarm.id]
-                            if state == .alerting { try self.activate(alarm) }
-                            else if state != .countdown && state != .paused { try self.complete(alarm) }
-                        } else { try await self.ensureRetry(alarm) }
+                            if state == .alerting {
+                                try self.activate(alarm)
+                            } else if state != .countdown && state != .paused {
+                                try self.complete(alarm)
+                            }
+                        } else {
+                            try await self.ensureRetry(alarm)
+                        }
                     }
                 }
                 if operations[alarm.id] == nil {
@@ -185,9 +197,13 @@ final class AlarmRuntime {
     }
 
     func handleStop(alarmID: String, systemID: String, token: String) async throws {
-        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else { return }
+        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else {
+            return
+        }
         try await perform(for: id) {
-            guard let alarm = try self.alarm(id), self.acceptsCallback(alarm, sourceID: sourceID, token: token) else { return }
+            guard let alarm = try self.alarm(id),
+                self.acceptsCallback(alarm, sourceID: sourceID, token: token)
+            else { return }
             try self.activate(alarm)
             if alarm.exitPoint == .normal {
                 try self.complete(alarm)
@@ -200,10 +216,13 @@ final class AlarmRuntime {
     }
 
     func openScanner(alarmID: String, systemID: String, token: String) async throws {
-        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else { return }
+        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else {
+            return
+        }
         try await perform(for: id) {
             guard let alarm = try self.alarm(id), alarm.exitPoint != .normal,
-                  self.acceptsCallback(alarm, sourceID: sourceID, token: token) else { return }
+                self.acceptsCallback(alarm, sourceID: sourceID, token: token)
+            else { return }
             try self.activate(alarm)
             try await self.ensureScanReminderIfNeeded(alarm)
             self.activeAlarm = alarm
@@ -227,10 +246,13 @@ final class AlarmRuntime {
     }
 
     func snooze(alarmID: String, systemID: String, token: String) async throws {
-        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else { return }
+        guard let id = UUID(uuidString: alarmID), let sourceID = UUID(uuidString: systemID) else {
+            return
+        }
         try await perform(for: id) {
             guard let alarm = try self.alarm(id), alarm.snoozeEnabled,
-                  self.acceptsCallback(alarm, sourceID: sourceID, token: token) else { return }
+                self.acceptsCallback(alarm, sourceID: sourceID, token: token)
+            else { return }
             try await self.startSnooze(alarm)
         }
     }
@@ -253,7 +275,9 @@ final class AlarmRuntime {
         try showPendingAlarm()
     }
 
-    func finish(_ alarm: AlarmRecord, code: String? = nil, kind: AlarmStopTarget.Kind? = nil) async throws {
+    func finish(_ alarm: AlarmRecord, code: String? = nil, kind: AlarmStopTarget.Kind? = nil)
+        async throws
+    {
         try await perform(for: alarm.id) {
             guard alarm.pendingSince != nil else { return }
             if alarm.exitPoint != .normal {
@@ -277,14 +301,17 @@ final class AlarmRuntime {
         try await ensureRetry(alarm)
     }
 
-    private func ensureRetry(_ alarm: AlarmRecord, stoppedID: UUID? = nil,
-                             duration: TimeInterval = retryInterval,
-                             kind: ClockAlarmMetadata.CountdownKind = .scanReminder,
-                             replace: Bool = false) async throws {
+    private func ensureRetry(
+        _ alarm: AlarmRecord, stoppedID: UUID? = nil,
+        duration: TimeInterval = retryInterval,
+        kind: ClockAlarmMetadata.CountdownKind = .scanReminder,
+        replace: Bool = false
+    ) async throws {
         let systemAlarms = try system.states()
         if !replace, let id = alarm.retryAlarmIDs.last, id != stoppedID,
-           let date = alarm.nextRetryAt, date > .now,
-           systemAlarms[id] == .scheduled || systemAlarms[id] == .countdown {
+            let date = alarm.nextRetryAt, date > .now,
+            systemAlarms[id] == .scheduled || systemAlarms[id] == .countdown
+        {
             return
         }
 
@@ -341,7 +368,9 @@ final class AlarmRuntime {
         alarm.snoozedUntil = nil
         alarm.isEnabled = true
         try context.save()
-        if activeAlarm?.pendingSince == nil || activeAlarm?.id == alarm.id || activeAlarm?.snoozedUntil != nil {
+        if activeAlarm?.pendingSince == nil || activeAlarm?.id == alarm.id
+            || activeAlarm?.snoozedUntil != nil
+        {
             let changesAlarm = activeAlarm?.id != alarm.id
             activeAlarm = alarm
             if startsAlert || changesAlarm {
@@ -376,7 +405,8 @@ final class AlarmRuntime {
         let pending = try context.fetch(descriptor)
         let current = pending.first { $0.id == activeAlarm?.id }
         // A ringing alarm takes priority over a snooze, but a snooze remains reachable.
-        let next = current.flatMap { $0.snoozedUntil == nil ? $0 : nil }
+        let next =
+            current.flatMap { $0.snoozedUntil == nil ? $0 : nil }
             ?? pending.first { $0.snoozedUntil == nil }
             ?? current ?? pending.first
         if next?.id != activeAlarm?.id {
@@ -386,7 +416,9 @@ final class AlarmRuntime {
         }
     }
 
-    private func perform(for id: UUID, action: @escaping @MainActor () async throws -> Void) async throws {
+    private func perform(for id: UUID, action: @escaping @MainActor () async throws -> Void)
+        async throws
+    {
         // Intents and camera callbacks can arrive while scheduling is suspended.
         // Serialize per alarm so a late retry cannot survive a successful scan.
         let previous = operations[id]?.task

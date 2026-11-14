@@ -12,7 +12,9 @@ struct AlarmExitPointOptions: View {
             ScrollView(.horizontal) {
                 HStack {
                     ForEach(AlarmExitPoint.allCases) { option in
-                        AlarmExitPointOptionButton(option: option, isSelected: draft.selection == option) {
+                        AlarmExitPointOptionButton(
+                            option: option, isSelected: draft.selection == option
+                        ) {
                             select(option)
                         }
                     }
@@ -24,12 +26,14 @@ struct AlarmExitPointOptions: View {
             .scrollBounceBehavior(.basedOnSize)
 
             if draft.selection != .normal {
-                AlarmScanSetup(selection: draft.selection, isConfigured: draft.scannedCode != nil,
-                               onScan: startScan, onClear: { draft.scannedCode = nil })
-                    .padding(.top, 8)
-                    .padding(.horizontal)
-                    .frame(maxWidth: 560)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                AlarmScanSetup(
+                    selection: draft.selection, isConfigured: draft.scannedCode != nil,
+                    onScan: startScan, onClear: { draft.scannedCode = nil }
+                )
+                .padding(.top, 8)
+                .padding(.horizontal)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 Text(draft.selection.detail)
                     .font(.subheadline)
@@ -43,9 +47,12 @@ struct AlarmExitPointOptions: View {
         .sheet(isPresented: $showsQRSetup) {
             AlarmQRSetupView(draft: $draft)
         }
-        .alert("Couldn't scan NFC tag", isPresented: Binding(
-            get: { scanError != nil }, set: { if !$0 { scanError = nil } }
-        )) {
+        .alert(
+            "Couldn't scan NFC tag",
+            isPresented: Binding(
+                get: { scanError != nil }, set: { if !$0 { scanError = nil } }
+            )
+        ) {
             Button("OK", role: .cancel) { scanError = nil }
         } message: {
             Text(scanError ?? "Please try again.")
@@ -60,8 +67,7 @@ struct AlarmExitPointOptions: View {
     }
 
     private func startScan() {
-        if draft.selection == .nfc { scanNFC() }
-        else { showsQRSetup = true }
+        if draft.selection == .nfc { scanNFC() } else { showsQRSetup = true }
     }
 
     private func scanNFC() {

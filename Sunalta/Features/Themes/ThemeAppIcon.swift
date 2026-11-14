@@ -12,7 +12,8 @@ final class ThemeAppIcon {
 
     init(
         canUpdate: @escaping () -> Bool = {
-            UIApplication.shared.supportsAlternateIcons && UIApplication.shared.applicationState == .active
+            UIApplication.shared.supportsAlternateIcons
+                && UIApplication.shared.applicationState == .active
         },
         currentName: @escaping () -> String? = { UIApplication.shared.alternateIconName },
         setName: @escaping (String?) async throws -> Void = {

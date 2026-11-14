@@ -11,11 +11,14 @@ struct AlarmQRCamera: View {
 
     var body: some View {
         #if targetEnvironment(simulator)
-        ContentUnavailableView("Camera scanning needs an iPhone", systemImage: "qrcode.viewfinder",
-                               description: Text(simulatorDescription))
+            ContentUnavailableView(
+                "Camera scanning needs an iPhone", systemImage: "qrcode.viewfinder",
+                description: Text(simulatorDescription))
         #else
-        CodeScannerView(codeTypes: [.qr], scanMode: .once, showViewfinder: true,
-                        requiresPhotoOutput: false, isPaused: isPaused, completion: onScan)
+            CodeScannerView(
+                codeTypes: [.qr], scanMode: .once, showViewfinder: true,
+                requiresPhotoOutput: false, isPaused: isPaused, completion: onScan
+            )
             .id(scannerID)
             .clipShape(.rect(cornerRadius: 20))
         #endif

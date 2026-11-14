@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 struct AlarmOccurrenceTests {
@@ -12,15 +13,19 @@ struct AlarmOccurrenceTests {
     @Test func nextOneTimeAlarmMovesToTomorrowAfterItsTimePasses() throws {
         let now = try Date("2026-10-08T08:00:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-09T07:00:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.next(hour: 7, minute: 0, repeatDays: [],
-                                    after: now, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.next(
+                hour: 7, minute: 0, repeatDays: [],
+                after: now, calendar: calendar) == expected)
     }
 
     @Test func nextWeeklyAlarmChoosesTheNearestDayAcrossTheWeekend() throws {
         let now = try Date("2026-10-09T08:00:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-12T07:30:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.next(hour: 7, minute: 30, repeatDays: [.monday, .friday],
-                                    after: now, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.next(
+                hour: 7, minute: 30, repeatDays: [.monday, .friday],
+                after: now, calendar: calendar) == expected)
     }
 
     @Test func nextAlarmCanStillBeTodayInTheLocalTimeZone() throws {
@@ -28,8 +33,10 @@ struct AlarmOccurrenceTests {
         calendar.timeZone = try #require(TimeZone(identifier: "America/Edmonton"))
         let now = try Date("2026-10-08T12:59:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-08T13:00:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.next(hour: 7, minute: 0, repeatDays: [.thursday],
-                                    after: now, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.next(
+                hour: 7, minute: 0, repeatDays: [.thursday],
+                after: now, calendar: calendar) == expected)
     }
 
     @Test func nextAlarmKeepsTheUpcomingDayAcrossASpringClockChange() throws {
@@ -37,8 +44,10 @@ struct AlarmOccurrenceTests {
         calendar.timeZone = try #require(TimeZone(identifier: "America/Edmonton"))
         let now = try Date("2026-03-07T19:00:00Z", strategy: .iso8601)
         let expected = try Date("2026-03-08T09:00:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.next(hour: 2, minute: 30, repeatDays: [.sunday],
-                                    after: now, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.next(
+                hour: 2, minute: 30, repeatDays: [.sunday],
+                after: now, calendar: calendar) == expected)
     }
 
     @MainActor
@@ -62,15 +71,19 @@ struct AlarmOccurrenceTests {
     @Test func dailyOccurrenceUsesThePreviousDayBeforeAlarmTime() throws {
         let before = try Date("2026-10-08T06:59:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-07T07:00:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.latest(hour: 7, minute: 0, repeatDays: [],
-                                       before: before, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.latest(
+                hour: 7, minute: 0, repeatDays: [],
+                before: before, calendar: calendar) == expected)
     }
 
     @Test func weeklyOccurrenceSelectsTheLatestConfiguredDay() throws {
         let before = try Date("2026-10-08T08:00:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-07T07:30:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.latest(hour: 7, minute: 30, repeatDays: [.monday, .wednesday],
-                                       before: before, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.latest(
+                hour: 7, minute: 30, repeatDays: [.monday, .wednesday],
+                before: before, calendar: calendar) == expected)
     }
 
     @Test func occurrenceRespectsTheInjectedTimeZone() throws {
@@ -78,17 +91,20 @@ struct AlarmOccurrenceTests {
         calendar.timeZone = try #require(TimeZone(identifier: "America/Edmonton"))
         let before = try Date("2026-10-08T14:00:00Z", strategy: .iso8601)
         let expected = try Date("2026-10-08T13:00:00Z", strategy: .iso8601)
-        #expect(AlarmOccurrence.latest(hour: 7, minute: 0, repeatDays: [],
-                                       before: before, calendar: calendar) == expected)
+        #expect(
+            AlarmOccurrence.latest(
+                hour: 7, minute: 0, repeatDays: [],
+                before: before, calendar: calendar) == expected)
     }
 
     @Test func springClockChangeKeepsAnOccurrenceForASkippedTime() throws {
         var calendar = calendar
         calendar.timeZone = try #require(TimeZone(identifier: "America/Edmonton"))
         let before = try Date("2026-03-08T11:00:00Z", strategy: .iso8601)
-        let occurrence = try #require(AlarmOccurrence.latest(
-            hour: 2, minute: 30, repeatDays: [.sunday], before: before, calendar: calendar
-        ))
+        let occurrence = try #require(
+            AlarmOccurrence.latest(
+                hour: 2, minute: 30, repeatDays: [.sunday], before: before, calendar: calendar
+            ))
         let components = calendar.dateComponents([.month, .day, .hour, .minute], from: occurrence)
         #expect(components.month == 3 && components.day == 8)
         #expect(components.hour == 3 && components.minute == 0)

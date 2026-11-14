@@ -2,22 +2,26 @@ import AlarmKit
 import Foundation
 import SwiftData
 import Testing
+
 @testable import Sunalta
 
 @MainActor
 struct AlarmSessionTests {
     private func fixture(exitPoint: AlarmExitPoint = .normal) throws
-        -> (ModelContainer, AlarmRecord, AlarmSessionSystem, AlarmRuntime) {
-        let container = try ModelContainer(for: AlarmRecord.self, AlarmStopTarget.self,
-                                            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        -> (ModelContainer, AlarmRecord, AlarmSessionSystem, AlarmRuntime)
+    {
+        let container = try ModelContainer(
+            for: AlarmRecord.self, AlarmStopTarget.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         let alarm = try AlarmRecord(hour: 7, minute: 0, exitPoint: exitPoint)
         alarm.configurationVersion = AlarmRuntime.configurationVersion
         container.mainContext.insert(alarm)
         try container.mainContext.save()
         let system = AlarmSessionSystem()
         system.states[alarm.id] = .alerting
-        let runtime = AlarmRuntime(context: container.mainContext, system: system.operations,
-                                   cancelAlarm: { system.states[$0] = nil })
+        let runtime = AlarmRuntime(
+            context: container.mainContext, system: system.operations,
+            cancelAlarm: { system.states[$0] = nil })
         return (container, alarm, system, runtime)
     }
 
@@ -136,8 +140,9 @@ struct AlarmSessionTests {
         await runtime.refresh()
         try await runtime.snooze(alarm)
         let deadline = alarm.snoozedUntil
-        let reloaded = AlarmRuntime(context: ModelContext(container), system: system.operations,
-                                    cancelAlarm: { system.states[$0] = nil })
+        let reloaded = AlarmRuntime(
+            context: ModelContext(container), system: system.operations,
+            cancelAlarm: { system.states[$0] = nil })
         await reloaded.refresh()
         #expect(reloaded.activeAlarm?.id == alarm.id && reloaded.isAlarmPresented)
         #expect(reloaded.activeAlarm?.snoozedUntil == deadline)
@@ -154,16 +159,21 @@ struct AlarmSessionTests {
     }
 
     @Test(arguments: [AlarmExitPoint.normal, .qrCode, .nfc])
-    func stoppingDuringSnoozeClearsTheSessionAndAllOwnedCountdowns(exitPoint: AlarmExitPoint) async throws {
+    func stoppingDuringSnoozeClearsTheSessionAndAllOwnedCountdowns(exitPoint: AlarmExitPoint)
+        async throws
+    {
         let (container, alarm, system, runtime) = try fixture(exitPoint: exitPoint)
         defer { withExtendedLifetime(container) {} }
         await runtime.refresh()
         try await runtime.snooze(alarm)
         if exitPoint != .normal {
-            await #expect(throws: AlarmRuntime.SessionError.wrongScan) { try await runtime.finish(alarm) }
+            await #expect(throws: AlarmRuntime.SessionError.wrongScan) {
+                try await runtime.finish(alarm)
+            }
             #expect(runtime.activeAlarm?.id == alarm.id)
         }
-        try await runtime.finish(alarm, code: exitPoint == .nfc ? "0ABC" : "wake-up", kind: exitPoint.scanKind)
+        try await runtime.finish(
+            alarm, code: exitPoint == .nfc ? "0ABC" : "wake-up", kind: exitPoint.scanKind)
         #expect(runtime.activeAlarm == nil && !runtime.isAlarmPresented)
         #expect(system.states.isEmpty && alarm.retryAlarmIDs.isEmpty)
         let savedContext = ModelContext(container)

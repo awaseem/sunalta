@@ -17,17 +17,22 @@ struct AlarmSnoozeOptions: View {
                 .padding(18)
                 .background(theme.palette.surface, in: .rect(cornerRadius: 18))
             if snoozeEnabled {
-                Text("Snooze duration").font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
+                Text("Snooze duration").font(.subheadline).foregroundStyle(
+                    theme.palette.secondaryForeground)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 10) {
                     ForEach(durations, id: \.self) { minutes in
-                        Button { snoozeMinutes = minutes } label: {
+                        Button {
+                            snoozeMinutes = minutes
+                        } label: {
                             Text("\(minutes) min")
                                 .font(.body.weight(.medium))
                                 .frame(maxWidth: .infinity, minHeight: 52)
                                 .background(theme.palette.surface, in: .rect(cornerRadius: 16))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(snoozeMinutes == minutes ? theme.palette.selection : .clear, lineWidth: 2)
+                                        .stroke(
+                                            snoozeMinutes == minutes
+                                                ? theme.palette.selection : .clear, lineWidth: 2)
                                 }
                         }
                         .buttonStyle(.plain)

@@ -32,10 +32,11 @@ struct SculptedClockView: UIViewRepresentable {
         view.onPeriodAnchorChange = { anchor in
             Task { @MainActor in onPeriodAnchorChange?(anchor) }
         }
-        view.update(display: display, theme: theme, insets: contentSafeAreaInsets,
-                    isScrolling: isScrolling, isVisible: isVisible,
-                    isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame,
-                    allowsFlybys: !reduceMotion, showsAlarmHint: showsAlarmHint)
+        view.update(
+            display: display, theme: theme, insets: contentSafeAreaInsets,
+            isScrolling: isScrolling, isVisible: isVisible,
+            isEditingAppearance: isEditingAppearance, weekdayFrame: weekdayFrame,
+            allowsFlybys: !reduceMotion, showsAlarmHint: showsAlarmHint)
     }
 
     static func dismantleUIView(_ view: ClockPageView, coordinator: ()) {

@@ -9,7 +9,7 @@ enum PreviewDefaults {
         defaults.register(defaults: [
             "clockTimeFormat": timeFormat.rawValue,
             "showClockPeriod": true,
-            "selectedThemeID": "white"
+            "selectedThemeID": "white",
         ])
         return defaults
     }

@@ -10,15 +10,17 @@ enum ClockBatMesh {
         if let cached { return cached }
         let sections: [(x: Float, y: Float, height: Float, width: Float)] = [
             (-3, 0, 1.2, 1.2), (-1, 0, 2.5, 1.7),
-            (1.5, 0.3, 2.2, 1.7), (2.8, 0.6, 1.4, 1.2)
+            (1.5, 0.3, 2.2, 1.7), (2.8, 0.6, 1.4, 1.2),
         ]
         var points: [SIMD3<Float>] = []
         var faces: [[Int]] = []
         for section in sections {
             for index in 0..<8 {
                 let angle = Float(index) * .pi / 4
-                points.append([section.x, section.y + cos(angle) * section.height,
-                               sin(angle) * section.width])
+                points.append([
+                    section.x, section.y + cos(angle) * section.height,
+                    sin(angle) * section.width,
+                ])
             }
         }
         for section in 0..<(sections.count - 1) {
@@ -49,7 +51,7 @@ enum ClockBatMesh {
             [-0.5, -0.15, 7.4], [-1.4, -0.15, 7.3], [-2.7, -0.15, 8],
             [-2.2, -0.15, 5.9], [-2.3, -0.15, 5], [-4.2, -0.15, 5.5],
             [-3.4, -0.15, 4.1], [-3.5, -0.15, 3.3], [-5, -0.15, 2.3],
-            [-3.1, -0.15, 1.3], [-2.5, -0.15, 0.8], [-2.4, -0.15, 0]
+            [-3.1, -0.15, 1.3], [-2.5, -0.15, 0.8], [-2.4, -0.15, 0],
         ]
         let count = outline.count
         points = outline + outline.map { $0 + SIMD3(0, 0.3, 0) }

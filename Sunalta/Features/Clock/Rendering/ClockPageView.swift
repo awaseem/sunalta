@@ -40,7 +40,8 @@ final class ClockPageView: UIView {
             hasPreparedEntrance = true
             // Keep the surface drawable while waiting for its first completed frame.
             renderer.alpha = 0.001
-            let animation = ClockEntranceAnimation(reduceMotion: !allowsFlybys) { [weak renderer] opacity, angles in
+            let animation = ClockEntranceAnimation(reduceMotion: !allowsFlybys) {
+                [weak renderer] opacity, angles in
                 renderer?.alpha = opacity
                 renderer?.entranceAngles = angles
             } onCompletion: { [weak self] in
@@ -80,9 +81,11 @@ final class ClockPageView: UIView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(theme:)") }
 
-    func update(display: ClockTimeDisplay, theme: AppTheme, insets: UIEdgeInsets,
-                isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
-                allowsFlybys: Bool, showsAlarmHint: Bool = true) {
+    func update(
+        display: ClockTimeDisplay, theme: AppTheme, insets: UIEdgeInsets,
+        isScrolling: Bool, isVisible: Bool, isEditingAppearance: Bool, weekdayFrame: CGRect,
+        allowsFlybys: Bool, showsAlarmHint: Bool = true
+    ) {
         let beganScrolling = isScrolling && !self.isScrolling
         self.isScrolling = isScrolling
         isPageVisible = isVisible
@@ -98,7 +101,8 @@ final class ClockPageView: UIView {
             if entrance?.isRunning == true { entrance?.finish() }
         }
         if self.display != display || appearance != theme || self.insets != insets
-            || self.weekdayFrame != weekdayFrame {
+            || self.weekdayFrame != weekdayFrame
+        {
             self.display = display
             appearance = theme
             audioService?.apply(configuration: theme.audio)
@@ -111,7 +115,8 @@ final class ClockPageView: UIView {
             if let renderer { accessibilityLabel = renderer.accessibilityLabel }
         }
         updatePresentation()
-        accessibilityHint = showsAlarmHint
+        accessibilityHint =
+            showsAlarmHint
             ? "Drag horizontally to change the viewing angle. Swipe up to see alarms."
             : "Drag horizontally to change the viewing angle. Alarms are beside the clock."
     }
@@ -151,7 +156,8 @@ final class ClockPageView: UIView {
         guard let renderer else { return }
         let wasActive = renderer.isRenderingEnabled
         renderer.isRenderingEnabled = isActive
-        renderer.allowsAmbientAnimation = isActive && allowsFlybys && !isScrolling && !isOrbiting
+        renderer.allowsAmbientAnimation =
+            isActive && allowsFlybys && !isScrolling && !isOrbiting
             && !isEditingAppearance && entrance == nil
         if !isActive && wasActive {
             isOrbiting = false
@@ -179,7 +185,8 @@ final class ClockPageView: UIView {
 
     private func updateAmbientAudio() {
         audioService?.updateAmbience(
-            isVisible: window != nil && isPageVisible && hasRevealedContent && renderer?.isReady == true
+            isVisible: window != nil && isPageVisible && hasRevealedContent
+                && renderer?.isReady == true
         )
     }
 }

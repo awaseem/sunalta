@@ -11,7 +11,9 @@ struct SupportEntranceAnimation: ViewModifier {
             .opacity(isVisible || reduceMotion ? 1 : 0)
             .offset(y: isVisible || reduceMotion ? 0 : 30)
             .onAppear {
-                withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.6).delay(delay)) {
+                withAnimation(
+                    reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.6).delay(delay)
+                ) {
                     isVisible = true
                 }
             }
