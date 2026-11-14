@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   pull_request:
@@ -12,6 +12,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  swift-lint:
+    name: Swift lint and formatting
+    runs-on: xcode-27
+    timeout-minutes: 10
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check Swift lint and formatting
+        run: make lint
+
   ios-tests:
     name: iOS tests
     # This image includes the iOS 27 SDK and simulator required by the project.
