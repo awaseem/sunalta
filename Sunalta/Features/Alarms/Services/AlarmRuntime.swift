@@ -205,7 +205,7 @@ final class AlarmRuntime {
             guard let alarm = try self.alarm(id), alarm.exitPoint != .normal,
                   self.acceptsCallback(alarm, sourceID: sourceID, token: token) else { return }
             try self.activate(alarm)
-            try await self.quietForScan(alarm)
+            try await self.ensureScanReminderIfNeeded(alarm)
             self.activeAlarm = alarm
             self.isAlarmPresented = true
             self.scanRequestID = UUID()
@@ -215,7 +215,7 @@ final class AlarmRuntime {
     func prepareToScan(_ alarm: AlarmRecord) async throws {
         try await perform(for: alarm.id) {
             guard alarm.pendingSince != nil, alarm.exitPoint != .normal else { return }
-            try await self.quietForScan(alarm)
+            try await self.ensureScanReminderIfNeeded(alarm)
         }
     }
 
@@ -265,11 +265,16 @@ final class AlarmRuntime {
         }
     }
 
-    private func quietForScan(_ alarm: AlarmRecord) async throws {
-        // Schedule the next alert before silencing anything. Scanning again doesn't
-        // extend an existing quiet window, and leaving the app doesn't cancel it.
+    private func ensureScanReminderIfNeeded(_ alarm: AlarmRecord) async throws {
+        // Scanning must leave the original alert or a ringing reminder audible.
+        // Recover a reminder only if the system has already stopped the alert.
+        let ids = Set([alarm.id] + alarm.retryAlarmIDs)
+        let systemAlarms = try system.states()
+        guard !systemAlarms.contains(where: { ids.contains($0.key) && $0.value == .alerting })
+        else {
+            return
+        }
         try await ensureRetry(alarm)
-        try system.silence(alarm.id)
     }
 
     private func ensureRetry(_ alarm: AlarmRecord, stoppedID: UUID? = nil,

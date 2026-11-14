@@ -21,6 +21,71 @@ struct AlarmSessionTests {
         return (container, alarm, system, runtime)
     }
 
+    @Test(arguments: [AlarmExitPoint.nfc, .qrCode])
+    func startingAScanKeepsTheAlarmRingingUntilAValidScan(exitPoint: AlarmExitPoint) async throws {
+        let (container, alarm, system, runtime) = try fixture(exitPoint: exitPoint)
+        defer { withExtendedLifetime(container) {} }
+        let kind = try #require(exitPoint.scanKind)
+        let code = exitPoint == .nfc ? "0ABC" : "wake-up"
+        let target = try AlarmStopTarget(name: "Dismissal", kind: kind, codeValue: code)
+        try alarm.setExitPoint(exitPoint, stopTargets: [target])
+        await runtime.refresh()
+
+        try await runtime.prepareToScan(alarm)
+        #expect(system.states[alarm.id] == .alerting && alarm.retryAlarmIDs.isEmpty)
+
+        try await runtime.openScanner(
+            alarmID: alarm.id.uuidString, systemID: alarm.id.uuidString, token: "")
+        #expect(runtime.scanRequestID != nil && runtime.isAlarmPresented)
+        #expect(system.states[alarm.id] == .alerting && alarm.retryAlarmIDs.isEmpty)
+
+        await #expect(throws: AlarmRuntime.SessionError.wrongScan) {
+            try await runtime.finish(
+                alarm, code: exitPoint == .nfc ? "0ABD" : "wrong-code", kind: kind)
+        }
+        runtime.hideActiveAlarm()
+        await runtime.refresh()
+        #expect(alarm.pendingSince != nil && system.states[alarm.id] == .alerting)
+
+        try await runtime.finish(alarm, code: code, kind: kind)
+        #expect(alarm.pendingSince == nil && system.states.isEmpty)
+    }
+
+    @Test(arguments: [AlarmExitPoint.nfc, .qrCode])
+    func startingAScanDoesNotReplaceAnAlertingReminder(exitPoint: AlarmExitPoint) async throws {
+        let (container, alarm, system, runtime) = try fixture(exitPoint: exitPoint)
+        defer { withExtendedLifetime(container) {} }
+        try await runtime.handleStop(
+            alarmID: alarm.id.uuidString, systemID: alarm.id.uuidString, token: "")
+        let reminderID = try #require(alarm.retryAlarmIDs.last)
+        alarm.nextRetryAt = .now.addingTimeInterval(-1)
+        system.states[reminderID] = .alerting
+
+        try await runtime.openScanner(
+            alarmID: alarm.id.uuidString, systemID: reminderID.uuidString, token: "")
+        try await runtime.prepareToScan(alarm)
+        #expect(runtime.scanRequestID != nil && runtime.isAlarmPresented)
+        #expect(system.states[reminderID] == .alerting)
+        #expect(alarm.retryAlarmIDs == [reminderID] && system.states.count == 1)
+    }
+
+    @Test(arguments: [AlarmExitPoint.nfc, .qrCode])
+    func openingScannerRecoversAReminderIfTheSystemAlreadyStoppedTheAlert(
+        exitPoint: AlarmExitPoint
+    ) async throws {
+        let (container, alarm, system, runtime) = try fixture(exitPoint: exitPoint)
+        defer { withExtendedLifetime(container) {} }
+        system.states[alarm.id] = nil
+
+        try await runtime.openScanner(
+            alarmID: alarm.id.uuidString, systemID: alarm.id.uuidString, token: "")
+        let reminderID = try #require(alarm.retryAlarmIDs.last)
+        let deadline = try #require(alarm.nextRetryAt)
+        try await runtime.prepareToScan(alarm)
+        #expect(system.states[reminderID] == .countdown && alarm.pendingSince != nil)
+        #expect(alarm.retryAlarmIDs == [reminderID] && alarm.nextRetryAt == deadline)
+    }
+
     @Test(arguments: [AlarmExitPoint.normal, .qrCode, .nfc])
     func snoozeKeepsTheScreenAndPersistedSessionAlive(exitPoint: AlarmExitPoint) async throws {
         let (container, alarm, _, runtime) = try fixture(exitPoint: exitPoint)
