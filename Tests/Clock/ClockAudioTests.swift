@@ -83,8 +83,10 @@ struct ClockAudioTests {
         audio.updateAmbience(isVisible: true)
         try #require(player.isPlaying, "The first play should start without the repeat delay")
 
-        player.currentTime = player.duration - 0.1
-        try await waitForPlayback(false, player: player)
+        // Playback can stop before AVAudioPlayer delivers its completion callback.
+        // Deliver completion explicitly so this test starts inside the repeat gap.
+        player.stop()
+        audio.audioPlayerDidFinishPlaying(player, successfully: true)
         let finishedAt = ContinuousClock.now
         for _ in 0..<5 { audio.updateAmbience(isVisible: true) }
         audio.audioSessionDidDeactivate(wasInterrupted: false)
@@ -108,8 +110,8 @@ struct ClockAudioTests {
         defer { audio.updateAmbience(isVisible: false) }
         audio.updateAmbience(isVisible: true)
         try #require(player.isPlaying)
-        player.currentTime = player.duration - 0.1
-        try await waitForPlayback(false, player: player)
+        player.stop()
+        audio.audioPlayerDidFinishPlaying(player, successfully: true)
 
         switch reason {
         case "hiddenClock": audio.updateAmbience(isVisible: false)
