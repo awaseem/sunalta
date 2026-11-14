@@ -9,7 +9,8 @@ enum ClockGlyphAssets {
 
     static func load() throws -> [String: ModelEntity] {
         if let cache { return cache.mapValues { $0.clone(recursive: true) } }
-        guard let url = Bundle.main.url(forResource: "SharpNumerals", withExtension: "clockmesh") else {
+        guard let url = Bundle.main.url(forResource: "SharpNumerals", withExtension: "clockmesh")
+        else {
             throw CocoaError(.fileNoSuchFile)
         }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
@@ -22,18 +23,22 @@ enum ClockGlyphAssets {
             var glyphs: [String: ModelEntity] = [:]
             for _ in 0..<11 {
                 let code = try reader.uint32()
-                guard let scalar = UnicodeScalar(code), "0123456789:".unicodeScalars.contains(scalar) else {
+                guard let scalar = UnicodeScalar(code),
+                    "0123456789:".unicodeScalars.contains(scalar)
+                else {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 let key = String(scalar)
                 let vertexCount = Int(try reader.uint32())
                 let indexCount = Int(try reader.uint32())
                 guard glyphs[key] == nil, vertexCount > 0, vertexCount <= 1_000_000,
-                      indexCount > 0, indexCount <= 6_000_000, indexCount.isMultiple(of: 3) else {
+                    indexCount > 0, indexCount <= 6_000_000, indexCount.isMultiple(of: 3)
+                else {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 var descriptor = MeshDescriptor(name: "Sharp Blender glyph \(key)")
-                descriptor.positions = MeshBuffers.Positions(try reader.vectors3(count: vertexCount))
+                descriptor.positions = MeshBuffers.Positions(
+                    try reader.vectors3(count: vertexCount))
                 descriptor.normals = MeshBuffers.Normals(try reader.vectors3(count: vertexCount))
                 try reader.require(indexCount * 4)
                 let indices = try (0..<indexCount).map { _ -> UInt32 in
@@ -42,7 +47,8 @@ enum ClockGlyphAssets {
                     return index
                 }
                 descriptor.primitives = .triangles(indices)
-                glyphs[key] = ModelEntity(mesh: try MeshResource.generate(from: [descriptor]), materials: [])
+                glyphs[key] = ModelEntity(
+                    mesh: try MeshResource.generate(from: [descriptor]), materials: [])
             }
             guard reader.offset == bytes.count else { throw CocoaError(.fileReadCorruptFile) }
             return glyphs

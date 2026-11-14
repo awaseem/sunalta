@@ -9,15 +9,19 @@ struct SmallClockProvider: TimelineProvider {
         completion(entry())
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SmallClockEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SmallClockEntry>) -> Void)
+    {
         let current = entry()
         let schedule = ClockWidgetSchedule(now: current.date)
-        let entries = schedule.dates.map { SmallClockEntry(date: $0, preferences: current.preferences) }
+        let entries = schedule.dates.map {
+            SmallClockEntry(date: $0, preferences: current.preferences)
+        }
         completion(Timeline(entries: entries, policy: .after(schedule.refreshDate)))
     }
 
     private func entry() -> SmallClockEntry {
-        let preferences = UserDefaults(suiteName: ClockWidgetPreferences.appGroup)
+        let preferences =
+            UserDefaults(suiteName: ClockWidgetPreferences.appGroup)
             .map { ClockWidgetPreferencesStore(defaults: $0).load() } ?? ClockWidgetPreferences()
         return SmallClockEntry(date: .now, preferences: preferences)
     }

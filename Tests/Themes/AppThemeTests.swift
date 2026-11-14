@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -89,9 +90,10 @@ struct AppThemeTests {
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let settings = ThemeSettings(defaults: defaults)
-        let other = AppTheme(id: "other", name: "Other", colorScheme: .light,
-                             palette: AppTheme.white.palette, clock: AppTheme.white.clock,
-                             panelShadow: AppTheme.white.panelShadow)
+        let other = AppTheme(
+            id: "other", name: "Other", colorScheme: .light,
+            palette: AppTheme.white.palette, clock: AppTheme.white.clock,
+            panelShadow: AppTheme.white.panelShadow)
         settings.lighting.direction = -90
         settings.shimmer = 0.2
         settings.weekday.size = 28
@@ -154,9 +156,10 @@ struct AppThemeTests {
     @Test func lightingChangesPreserveTheAuthoredFinishUntilShimmerIsCustomized() {
         var clock = AppTheme.white.clock
         clock.roughness = 0.8
-        let theme = AppTheme(id: "matte", name: "Matte", colorScheme: .light,
-                             palette: AppTheme.white.palette, clock: clock,
-                             panelShadow: AppTheme.white.panelShadow)
+        let theme = AppTheme(
+            id: "matte", name: "Matte", colorScheme: .light,
+            palette: AppTheme.white.palette, clock: clock,
+            panelShadow: AppTheme.white.panelShadow)
         let adjustments = ThemeAdjustments(lighting: ClockLightingSettings(direction: 90))
 
         #expect(adjustments.applying(to: theme).clock.roughness == 0.8)

@@ -21,8 +21,10 @@ struct AlarmRingingScreen: View {
 
     var body: some View {
         NavigationStack {
-            AlarmRingingArtwork(alarm: alarm, isRinging: !isSnoozed && !showsQRScanner,
-                                isWorking: isWorking, scanError: scanError)
+            AlarmRingingArtwork(
+                alarm: alarm, isRinging: !isSnoozed && !showsQRScanner,
+                isWorking: isWorking, scanError: scanError
+            )
             .safeAreaInset(edge: .bottom) {
                 GlassEffectContainer {
                     HStack(alignment: .bottom) {
@@ -32,7 +34,8 @@ struct AlarmRingingScreen: View {
                             Button("Snooze", action: snooze)
                                 .buttonStyle(.appCapsule(fillsWidth: true))
                                 .disabled(isWorking)
-                                .accessibilityLabel("Snooze for \(alarm.snoozeDurationMinutes) minutes")
+                                .accessibilityLabel(
+                                    "Snooze for \(alarm.snoozeDurationMinutes) minutes")
                         }
                         VStack {
                             if alarm.exitPoint != .normal {
@@ -41,7 +44,9 @@ struct AlarmRingingScreen: View {
                                     .foregroundStyle(theme.palette.secondaryForeground)
                                     .multilineTextAlignment(.center)
                             }
-                            AlarmStopButton(exitPoint: alarm.exitPoint, isWorking: isWorking, onStop: startAction)
+                            AlarmStopButton(
+                                exitPoint: alarm.exitPoint, isWorking: isWorking,
+                                onStop: startAction)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -60,7 +65,9 @@ struct AlarmRingingScreen: View {
                         .labelStyle(.iconOnly)
                         .foregroundStyle(theme.palette.control)
                         .disabled(isWorking)
-                        .accessibilityHint("Keeps this alarm active. Reopen it from the alarms toolbar.")
+                        .accessibilityHint(
+                            "Keeps this alarm active. Reopen it from the alarms toolbar."
+                        )
                         .accessibilityIdentifier("hide-active-alarm")
                 }
             }
@@ -80,8 +87,7 @@ struct AlarmRingingScreen: View {
         scanError = nil
         Task {
             defer { isWorking = false }
-            do { try await runtime.snooze(alarm) }
-            catch { scanError = error.localizedDescription }
+            do { try await runtime.snooze(alarm) } catch { scanError = error.localizedDescription }
         }
     }
 
@@ -103,8 +109,8 @@ struct AlarmRingingScreen: View {
                     nfcScanner.onError = { scanError = $0 }
                     nfcScanner.onTagScanned = { scan in
                         Task {
-                            do { try await runtime.finish(alarm, code: scan.id, kind: .nfc) }
-                            catch { scanError = error.localizedDescription }
+                            do { try await runtime.finish(alarm, code: scan.id, kind: .nfc) } catch
+                            { scanError = error.localizedDescription }
                         }
                     }
                     nfcScanner.scan(alarmName: alarm.label.isEmpty ? "your alarm" : alarm.label)

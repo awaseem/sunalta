@@ -7,9 +7,12 @@ struct AlarmTimeLabel: View {
     let minute: Int
 
     var body: some View {
-        Text(ClockTimeDisplay(hour: hour, minute: minute, format: settings.format, locale: locale).text)
-            .font(.largeTitle)
-            .fontDesign(.rounded)
-            .monospacedDigit()
+        Text(
+            ClockTimeDisplay(hour: hour, minute: minute, format: settings.format, locale: locale)
+                .text
+        )
+        .font(.largeTitle)
+        .fontDesign(.rounded)
+        .monospacedDigit()
     }
 }

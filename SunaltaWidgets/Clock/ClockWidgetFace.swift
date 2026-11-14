@@ -15,7 +15,9 @@ struct ClockWidgetFace: View {
             ForEach(digits.filter(\.isNumber).enumerated(), id: \.offset) { slot, digit in
                 Image("ClockFace-\(assetTheme)-\(slot)-\(digit)")
                     .resizable()
-                    .widgetAccentedRenderingMode(renderingMode == .fullColor ? .fullColor : .desaturated)
+                    .widgetAccentedRenderingMode(
+                        renderingMode == .fullColor ? .fullColor : .desaturated
+                    )
                     .scaledToFit()
                     .accessibilityHidden(true)
             }

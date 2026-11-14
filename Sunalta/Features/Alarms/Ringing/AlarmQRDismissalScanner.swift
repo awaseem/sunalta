@@ -18,13 +18,18 @@ struct AlarmQRDismissalScanner: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text(alarm.stopTargets.isEmpty ? "Scan any QR code to end this alarm." : "Scan the QR code you chose for this alarm.")
-                    .font(.subheadline)
-                    .foregroundStyle(theme.palette.secondaryForeground)
-                    .multilineTextAlignment(.center)
-                AlarmQRCamera(scannerID: scannerID, isPaused: isFinishing || scanError != nil,
-                              simulatorDescription: "Scan your alarm's QR code using your iPhone's camera.",
-                              onScan: handleScan)
+                Text(
+                    alarm.stopTargets.isEmpty
+                        ? "Scan any QR code to end this alarm."
+                        : "Scan the QR code you chose for this alarm."
+                )
+                .font(.subheadline)
+                .foregroundStyle(theme.palette.secondaryForeground)
+                .multilineTextAlignment(.center)
+                AlarmQRCamera(
+                    scannerID: scannerID, isPaused: isFinishing || scanError != nil,
+                    simulatorDescription: "Scan your alarm's QR code using your iPhone's camera.",
+                    onScan: handleScan)
                 if let message = scanError {
                     Text(message).font(.subheadline).foregroundStyle(theme.palette.error)
                     if cameraDenied {
@@ -59,7 +64,8 @@ struct AlarmQRDismissalScanner: View {
             isFinishing = true
             Task { await finishScan(scan.string) }
         case .failure:
-            scanError = cameraDenied
+            scanError =
+                cameraDenied
                 ? "Allow camera access in Settings to scan your QR code."
                 : "The camera couldn't read this code. Try again."
         }

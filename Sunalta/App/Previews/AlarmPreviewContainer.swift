@@ -7,7 +7,9 @@ struct AlarmPreviewContainer<Content: View>: View {
     private let timeFormat: ClockTimeFormat
     private let content: () -> Content
 
-    init(timeFormat: ClockTimeFormat = .twentyFourHour, @ViewBuilder content: @escaping () -> Content) {
+    init(
+        timeFormat: ClockTimeFormat = .twentyFourHour, @ViewBuilder content: @escaping () -> Content
+    ) {
         container = Result { try AlarmPreviewData.makeContainer() }
         self.content = content
         self.timeFormat = timeFormat
@@ -16,10 +18,12 @@ struct AlarmPreviewContainer<Content: View>: View {
     var body: some View {
         switch container {
         case .success(let container):
-            AlarmPreviewEnvironment(container: container, timeFormat: timeFormat, content: content())
+            AlarmPreviewEnvironment(
+                container: container, timeFormat: timeFormat, content: content())
         case .failure(let error):
-            ContentUnavailableView("Preview unavailable", systemImage: "exclamationmark.triangle",
-                                   description: Text(error.localizedDescription))
+            ContentUnavailableView(
+                "Preview unavailable", systemImage: "exclamationmark.triangle",
+                description: Text(error.localizedDescription))
         }
     }
 }

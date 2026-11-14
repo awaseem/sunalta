@@ -13,14 +13,17 @@ struct SettingsSoundSection: View {
             VStack(spacing: 0) {
                 if theme.audio.music != nil {
                     Toggle(isOn: $audioService.musicEnabled) {
-                        SettingsSoundLabel(title: "Music", detail: "Background ambience", systemImage: "music.note")
+                        SettingsSoundLabel(
+                            title: "Music", detail: "Background ambience", systemImage: "music.note"
+                        )
                     }
                     .padding(.vertical, 12)
                     Divider().overlay(theme.palette.separator)
                 }
                 Toggle(isOn: $audioService.soundEffectsEnabled) {
-                    SettingsSoundLabel(title: "Sound Effects", detail: "Clock and nature sounds",
-                                       systemImage: "speaker.wave.2")
+                    SettingsSoundLabel(
+                        title: "Sound Effects", detail: "Clock and nature sounds",
+                        systemImage: "speaker.wave.2")
                 }
                 .padding(.vertical, 12)
             }

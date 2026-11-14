@@ -5,8 +5,9 @@ struct AlarmRingingPreview: View {
 
     init(exitPoint: AlarmExitPoint, snoozeEnabled: Bool = true, snoozed: Bool = false) {
         alarm = Result {
-            let alarm = try AlarmRecord(hour: 7, minute: 0, label: "Morning",
-                                        snoozeEnabled: snoozeEnabled, exitPoint: exitPoint)
+            let alarm = try AlarmRecord(
+                hour: 7, minute: 0, label: "Morning",
+                snoozeEnabled: snoozeEnabled, exitPoint: exitPoint)
             if snoozed { alarm.snoozedUntil = .now.addingTimeInterval(9 * 60) }
             return alarm
         }

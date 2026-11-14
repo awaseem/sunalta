@@ -17,7 +17,8 @@ struct SupportThankYouView: View {
                     .foregroundStyle(.pink)
                     .scaleEffect(isPulsing && !reduceMotion ? 1.12 : 1)
                     .animation(
-                        reduceMotion ? nil : .easeInOut(duration: 0.55).repeatForever(autoreverses: true),
+                        reduceMotion
+                            ? nil : .easeInOut(duration: 0.55).repeatForever(autoreverses: true),
                         value: isPulsing
                     )
                     .accessibilityHidden(true)

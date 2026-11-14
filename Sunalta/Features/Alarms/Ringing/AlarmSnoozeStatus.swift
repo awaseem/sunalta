@@ -12,7 +12,9 @@ struct AlarmSnoozeStatus: View {
             .foregroundStyle(theme.palette.control)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .accessibilityLabel("Snooze time remaining")
-            .accessibilityValue(Text(timerInterval: Date.distantPast...until, countsDown: true, showsHours: false))
+            .accessibilityValue(
+                Text(timerInterval: Date.distantPast...until, countsDown: true, showsHours: false)
+            )
             .accessibilityIdentifier("alarm-snooze-status")
     }
 }

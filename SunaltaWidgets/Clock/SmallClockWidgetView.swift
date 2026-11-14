@@ -12,7 +12,8 @@ struct SmallClockWidgetView: View {
         let display = ClockTimeDisplay(
             date: date, format: preferences.timeFormat, calendar: calendar, locale: locale
         )
-        let weekdayStyle = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
+        let weekdayStyle = Date.FormatStyle(
+            locale: locale, calendar: calendar, timeZone: calendar.timeZone)
         ClockWidgetCalendarLayout {
             ClockWidgetFace(digits: display.digits, themeID: palette.assetThemeID)
             HStack(alignment: .firstTextBaseline) {

@@ -12,20 +12,25 @@ struct AlarmScanSetup: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(isConfigured
-                 ? "Only this \(scanType) can stop your alarm."
-                 : "Any \(scanType) can stop your alarm.")
-                .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
+            Text(
+                isConfigured
+                    ? "Only this \(scanType) can stop your alarm."
+                    : "Any \(scanType) can stop your alarm."
+            )
+            .font(.subheadline).foregroundStyle(theme.palette.secondaryForeground)
             Button(action: onScan) {
-                Text(isConfigured
-                     ? "Change specific \(isNFC ? "tag" : "code") to stop alarm"
-                     : "Set specific \(isNFC ? "tag" : "code") to stop alarm")
-                    .underline()
-                    .font(.subheadline)
-                    .frame(minHeight: 44, alignment: .topLeading)
-                    .contentShape(.rect)
+                Text(
+                    isConfigured
+                        ? "Change specific \(isNFC ? "tag" : "code") to stop alarm"
+                        : "Set specific \(isNFC ? "tag" : "code") to stop alarm"
+                )
+                .underline()
+                .font(.subheadline)
+                .frame(minHeight: 44, alignment: .topLeading)
+                .contentShape(.rect)
             }
-            .accessibilityLabel(isConfigured ? "Replace \(scanType)" : "Set a specific \(scanType) to stop alarm")
+            .accessibilityLabel(
+                isConfigured ? "Replace \(scanType)" : "Set a specific \(scanType) to stop alarm")
             if isConfigured {
                 Button(action: onClear) {
                     Text("Use any \(scanType)")

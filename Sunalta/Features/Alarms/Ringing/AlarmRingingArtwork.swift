@@ -20,30 +20,37 @@ struct AlarmRingingArtwork: View {
     @State private var timeFrame = CGRect.zero
     @State private var bellFrame = CGRect.zero
     @GestureState private var isDragging = false
-    private static let logger = Logger(subsystem: "dev.ambitionsoftware.sunalta", category: "AlarmArtwork")
+    private static let logger = Logger(
+        subsystem: "dev.ambitionsoftware.sunalta", category: "AlarmArtwork")
 
     var body: some View {
-        let display = ClockTimeDisplay(hour: alarm.hour, minute: alarm.minute,
-                                       format: settings.format, locale: locale)
+        let display = ClockTimeDisplay(
+            hour: alarm.hour, minute: alarm.minute,
+            format: settings.format, locale: locale)
         ScrollView {
             VStack(spacing: 24) {
-                AlarmRingingHeader(alarm: alarm, display: display, showsFallback: failedToLoad,
-                                   timeFrame: $timeFrame)
+                AlarmRingingHeader(
+                    alarm: alarm, display: display, showsFallback: failedToLoad,
+                    timeFrame: $timeFrame)
                 Color.clear
                     .frame(height: 260)
                     .onGeometryChange(for: CGRect.self) { geometry in
                         geometry.frame(in: .named("alarmArtwork"))
-                    } action: { bellFrame = $0 }
+                    } action: {
+                        bellFrame = $0
+                    }
                     .contentShape(.rect)
                     .highPriorityGesture(
                         DragGesture()
                             .updating($isDragging) { _, dragging, _ in dragging = true }
                             .onChanged { value in
-                                scene?.bell.drag(translation: value.translation, width: bellFrame.width)
+                                scene?.bell.drag(
+                                    translation: value.translation, width: bellFrame.width)
                             }
                             .onEnded { value in
-                                scene?.bell.endDrag(velocity: value.velocity, width: bellFrame.width,
-                                                    reduceMotion: reduceMotion)
+                                scene?.bell.endDrag(
+                                    velocity: value.velocity, width: bellFrame.width,
+                                    reduceMotion: reduceMotion)
                             }
                     )
                     .overlay {
@@ -55,7 +62,9 @@ struct AlarmRingingArtwork: View {
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("3D alarm bell")
-                    .accessibilityHint("Drag to look around the bell. Release to return to its starting angle.")
+                    .accessibilityHint(
+                        "Drag to look around the bell. Release to return to its starting angle."
+                    )
                     .accessibilityIdentifier("alarm-bell")
                 VStack(spacing: 12) {
                     if isWorking { ProgressView() }
@@ -75,7 +84,11 @@ struct AlarmRingingArtwork: View {
         .defaultScrollAnchor(.center, for: .alignment)
         .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onGeometryChange(for: CGSize.self) { $0.size } action: { viewportSize = $0 }
+        .onGeometryChange(for: CGSize.self) {
+            $0.size
+        } action: {
+            viewportSize = $0
+        }
         .background {
             // Separate RealityViews can leave the animated surface frozen on iOS.
             // Both models share this renderer; SwiftUI still lays out the text and hit targets.
@@ -85,9 +98,11 @@ struct AlarmRingingArtwork: View {
                     content.renderingEffects.cameraGrain = .disabled
                     content.renderingEffects.motionBlur = .disabled
                     content.renderingEffects.antialiasing = .multisample4X
-                    scene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
+                    scene.setLayout(
+                        viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
                     content.add(scene.root)
-                    let subscription = content.subscribe(to: SceneEvents.Update.self) { [weak scene] event in
+                    let subscription = content.subscribe(to: SceneEvents.Update.self) {
+                        [weak scene] event in
                         scene?.advance(by: event.deltaTime)
                     }
                     sceneUpdates = AnyCancellable { subscription.cancel() }
@@ -95,7 +110,8 @@ struct AlarmRingingArtwork: View {
                     scene.setAmbienceActive(!reduceMotion)
                 } update: { _ in
                     scene.show(display: display)
-                    scene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
+                    scene.setLayout(
+                        viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
                 } placeholder: {
                     Color.clear
                 }
@@ -117,7 +133,8 @@ struct AlarmRingingArtwork: View {
         .task(id: scenePhase == .active ? theme : nil) { await loadScene(display: display) }
         .onChange(of: isDragging) { _, dragging in
             if !dragging {
-                scene?.bell.endDrag(velocity: .zero, width: bellFrame.width, reduceMotion: reduceMotion)
+                scene?.bell.endDrag(
+                    velocity: .zero, width: bellFrame.width, reduceMotion: reduceMotion)
             }
         }
         .onChange(of: isRinging && !reduceMotion && scenePhase == .active) { _, ringing in
@@ -136,13 +153,17 @@ struct AlarmRingingArtwork: View {
         do {
             try Task.checkCancellation()
             let loadedScene: AlarmRingingScene
-            if let scene { loadedScene = scene }
-            else { loadedScene = try await AlarmRingingScene() }
+            if let scene {
+                loadedScene = scene
+            } else {
+                loadedScene = try await AlarmRingingScene()
+            }
             try Task.checkCancellation()
             loadedScene.show(display: display)
             try await loadedScene.apply(theme: theme)
             try Task.checkCancellation()
-            loadedScene.setLayout(viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
+            loadedScene.setLayout(
+                viewport: viewportSize, timeFrame: timeFrame, bellFrame: bellFrame)
             scene = loadedScene
             failedToLoad = false
         } catch is CancellationError {
@@ -151,7 +172,8 @@ struct AlarmRingingArtwork: View {
             // RealityKit may report its own loading error when cancellation interrupts
             // GPU work. Let the next activation retry without retaining a stale failure.
             guard !Task.isCancelled else { return }
-            Self.logger.error("Could not load alarm artwork: \(String(reflecting: error), privacy: .public)")
+            Self.logger.error(
+                "Could not load alarm artwork: \(String(reflecting: error), privacy: .public)")
             failedToLoad = true
         }
     }

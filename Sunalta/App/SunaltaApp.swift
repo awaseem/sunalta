@@ -1,8 +1,9 @@
-import SwiftUI
-import SwiftData
 import AppIntents
+import SwiftData
+import SwiftUI
+
 #if DEBUG && targetEnvironment(simulator)
-import StoreKitTest
+    import StoreKitTest
 #endif
 
 @main
@@ -16,12 +17,12 @@ struct SunaltaApp: App {
     @State private var appIcon = ThemeAppIcon()
     @State private var tips = TipStore()
     #if DEBUG && targetEnvironment(simulator)
-    private let localTipSession: SKTestSession?
+        private let localTipSession: SKTestSession?
     #endif
 
     init() {
         #if DEBUG && targetEnvironment(simulator)
-        localTipSession = LocalTipStoreSession.startIfRequested()
+            localTipSession = LocalTipStoreSession.startIfRequested()
         #endif
         do {
             let container = try AlarmStore.makeContainer()
@@ -40,39 +41,39 @@ struct SunaltaApp: App {
         WindowGroup {
             Group {
                 #if DEBUG && targetEnvironment(simulator)
-                // Launch with --preview-alarms to review an isolated, populated list.
-                if ProcessInfo.processInfo.arguments.contains("--preview-active-alarm") {
-                    AlarmSessionPreview()
-                } else if ProcessInfo.processInfo.arguments.contains("--preview-alarms") {
-                    AlarmPreviewContainer { HomeScreen() }
-                } else {
-                    AlarmRootView()
-                }
+                    // Launch with --preview-alarms to review an isolated, populated list.
+                    if ProcessInfo.processInfo.arguments.contains("--preview-active-alarm") {
+                        AlarmSessionPreview()
+                    } else if ProcessInfo.processInfo.arguments.contains("--preview-alarms") {
+                        AlarmPreviewContainer { HomeScreen() }
+                    } else {
+                        AlarmRootView()
+                    }
                 #else
-                AlarmRootView()
+                    AlarmRootView()
                 #endif
             }
-                .modifier(ClockWidgetSync())
-                .environment(runtime)
-                .environment(themeSettings)
-                .environment(clockSettings)
-                .environment(audioService)
-                .environment(tips)
-                .task { await tips.observeTransactions() }
-                .task(id: themeSettings.theme.id) {
+            .modifier(ClockWidgetSync())
+            .environment(runtime)
+            .environment(themeSettings)
+            .environment(clockSettings)
+            .environment(audioService)
+            .environment(tips)
+            .task { await tips.observeTransactions() }
+            .task(id: themeSettings.theme.id) {
+                await appIcon.synchronize(with: themeSettings.theme)
+            }
+            .task(id: scenePhase) {
+                if scenePhase == .active {
                     await appIcon.synchronize(with: themeSettings.theme)
                 }
-                .task(id: scenePhase) {
-                    if scenePhase == .active {
-                        await appIcon.synchronize(with: themeSettings.theme)
-                    }
-                }
-                .task {
-                    #if DEBUG
+            }
+            .task {
+                #if DEBUG
                     await ThemeIconExporter.exportIfRequested()
                     await ClockWidgetSceneExporter.exportIfRequested()
-                    #endif
-                }
+                #endif
+            }
         }
         .modelContainer(container)
     }

@@ -2,6 +2,7 @@ import Foundation
 import StoreKit
 import StoreKitTest
 import Testing
+
 @testable import Sunalta
 
 @Suite(.serialized)
@@ -14,8 +15,11 @@ struct TipStoreTests {
         session.disableDialogs = true
         // The local StoreKit daemon can take a moment to activate a new configuration.
         let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while try await Product.products(for: TipStore.productIDs).count != TipStore.productIDs.count {
-            try #require(ContinuousClock.now < deadline, "Local StoreKit products did not become available")
+        while try await Product.products(for: TipStore.productIDs).count
+            != TipStore.productIDs.count
+        {
+            try #require(
+                ContinuousClock.now < deadline, "Local StoreKit products did not become available")
             try await Task.sleep(for: .milliseconds(50))
         }
         return session
@@ -88,7 +92,8 @@ struct TipStoreTests {
         let store = TipStore()
         await store.loadProducts()
         let product = try #require(store.products.first)
-        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .purchase)
+        try await session.setSimulatedError(
+            .generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .purchase)
         await store.tip(product) { try await product.purchase() }
         #expect(store.completedTipCount == 0 && store.purchaseError != nil)
         #expect(!store.isPurchasing)
@@ -147,7 +152,8 @@ struct TipStoreTests {
         let store = TipStore()
         await store.loadProducts()
         try #require(!store.products.isEmpty)
-        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
+        try await session.setSimulatedError(
+            .generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
         await store.loadProducts()
         #expect(store.products.isEmpty && store.productLoadingError != nil)
         try await session.setSimulatedError(nil, forAPI: .loadProducts)

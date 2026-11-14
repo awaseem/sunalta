@@ -14,8 +14,10 @@ final class ClockEntranceAnimation: NSObject {
     private var displayLink: CADisplayLink?
     private var startedAt: CFTimeInterval?
 
-    init(reduceMotion: Bool, onFrame: @escaping (CGFloat, SIMD2<Float>) -> Void,
-         onCompletion: @escaping () -> Void) {
+    init(
+        reduceMotion: Bool, onFrame: @escaping (CGFloat, SIMD2<Float>) -> Void,
+        onCompletion: @escaping () -> Void
+    ) {
         self.reduceMotion = reduceMotion
         self.onFrame = onFrame
         self.onCompletion = onCompletion

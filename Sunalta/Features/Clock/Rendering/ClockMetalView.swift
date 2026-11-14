@@ -68,10 +68,11 @@ class ClockMetalView: MTKView {
 
     override func draw(_ rect: CGRect) {
         guard needsFrame, isRenderingEnabled, isSceneReady, window != nil,
-              bounds.width > 0, bounds.height > 0, framesInFlight < 2,
-              let realityRenderer, let renderFinished,
-              let presentation = presentationQueue?.makeCommandBuffer(),
-              let drawable = currentDrawable else { return }
+            bounds.width > 0, bounds.height > 0, framesInFlight < 2,
+            let realityRenderer, let renderFinished,
+            let presentation = presentationQueue?.makeCommandBuffer(),
+            let drawable = currentDrawable
+        else { return }
         let now = CACurrentMediaTime()
         // Resuming after minutes at rest must not advance a simulation by minutes.
         let deltaTime = min(now - (lastFrameTime ?? (now - 1 / 60)), 1 / 30)
@@ -80,7 +81,8 @@ class ClockMetalView: MTKView {
         framesInFlight += 1
         frameNumber += 1
         do {
-            let output = try RealityRenderer.CameraOutput(.singleProjection(colorTexture: drawable.texture))
+            let output = try RealityRenderer.CameraOutput(
+                .singleProjection(colorTexture: drawable.texture))
             try realityRenderer.updateAndRender(
                 deltaTime: deltaTime, cameraOutput: output,
                 actionsAfterRender: [.signal(renderFinished, value: frameNumber)]

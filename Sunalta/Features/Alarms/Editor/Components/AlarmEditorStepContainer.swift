@@ -10,10 +10,18 @@ struct AlarmEditorStepContainer: View {
         ViewThatFits(in: .vertical) {
             AlarmEditorStepContent(step: step, draft: $draft)
                 .fixedSize(horizontal: false, vertical: true)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { idealHeight = $0 }
+                .onGeometryChange(for: CGFloat.self) {
+                    $0.size.height
+                } action: {
+                    idealHeight = $0
+                }
             ScrollView {
                 AlarmEditorStepContent(step: step, draft: $draft)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { idealHeight = $0 }
+                    .onGeometryChange(for: CGFloat.self) {
+                        $0.size.height
+                    } action: {
+                        idealHeight = $0
+                    }
             }
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize)

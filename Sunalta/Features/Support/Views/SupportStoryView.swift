@@ -10,8 +10,12 @@ struct SupportStoryView: View {
                 .accessibilityAddTraits(.isHeader)
 
             VStack(alignment: .leading, spacing: 16) {
-                Text("Sunalta started as a small attempt to make focus feel easier and more intentional. Every person who uses it, shares it, reviews it, or supports it helps keep that idea alive.")
-                Text("If this has helped you, consider leaving a review, telling a friend, or making a small donation.")
+                Text(
+                    "Sunalta started as a small attempt to make focus feel easier and more intentional. Every person who uses it, shares it, reviews it, or supports it helps keep that idea alive."
+                )
+                Text(
+                    "If this has helped you, consider leaving a review, telling a friend, or making a small donation."
+                )
             }
         }
         .font(.callout)

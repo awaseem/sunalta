@@ -44,7 +44,8 @@ final class NumeralClockScene {
     /// A material swatch uses the same sculpted glyph and surface as the clock face.
     func show(numeral: String) {
         guard displayedTime != numeral, let prototype = glyphs[numeral],
-              let bounds = glyphBounds[numeral] else { return }
+            let bounds = glyphBounds[numeral]
+        else { return }
         displayedTime = numeral
         for glyph in timeSlots { glyph.removeFromParent() }
         let glyph = prototype.clone(recursive: true)
@@ -83,11 +84,14 @@ final class NumeralClockScene {
                 if let material { glyph.model?.materials = [material] }
                 applySurface(to: glyph)
             }
-            let columnCenter = (index.isMultiple(of: 2) ? -1 : Float(1)) * (columnWidth + digitGap) / 2
+            let columnCenter =
+                (index.isMultiple(of: 2) ? -1 : Float(1)) * (columnWidth + digitGap) / 2
             let rowCenter = (index < 2 ? 1 : Float(-1)) * (rowHeight + rowGap) / 2
             glyph.scale = [1, digitHeightScale, 1]
-            glyph.position = [columnCenter - bounds.center.x,
-                              rowCenter - bounds.center.y * digitHeightScale, 0]
+            glyph.position = [
+                columnCenter - bounds.center.x,
+                rowCenter - bounds.center.y * digitHeightScale, 0,
+            ]
         }
         root.scale = SIMD3(repeating: min(1, 3.8 / (2 * columnWidth + digitGap)))
     }
@@ -95,8 +99,10 @@ final class NumeralClockScene {
     /// Shared by the active alarm and the widget's captured artwork.
     func arrangeRow() {
         let meshWidth = glyphBounds.values.map(\.extents.x).max() ?? 1.6
-        let surfaceWidth = surface == .grass
-            ? grassGlyphs.values.map { $0.visualBounds(relativeTo: $0).extents.x }.max() ?? meshWidth
+        let surfaceWidth =
+            surface == .grass
+            ? grassGlyphs.values.map { $0.visualBounds(relativeTo: $0).extents.x }.max()
+                ?? meshWidth
             : meshWidth
         let columnWidth = max(meshWidth, surfaceWidth)
         let gap = columnWidth * 0.054
@@ -106,10 +112,13 @@ final class NumeralClockScene {
         let widthScale: Float = surface == .grass ? 1.16 : 1
         for (index, glyph) in timeSlots.enumerated() {
             guard let bounds = glyphBounds[glyph.name] else { continue }
-            let center = columnWidth / 2 + Float(index) * (columnWidth + gap)
+            let center =
+                columnWidth / 2 + Float(index) * (columnWidth + gap)
                 + (index >= 2 ? groupGap : 0) - rowWidth / 2
             glyph.scale = [widthScale, digitHeightScale, 1]
-            glyph.position = [center - bounds.center.x * widthScale, -bounds.center.y * digitHeightScale, 0]
+            glyph.position = [
+                center - bounds.center.x * widthScale, -bounds.center.y * digitHeightScale, 0,
+            ]
         }
         // Leave overscan for the wider grass row's square artwork crop.
         root.scale = SIMD3(repeating: surface == .grass ? 0.94 : 1)

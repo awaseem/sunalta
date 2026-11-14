@@ -9,13 +9,16 @@ struct AlarmRow: View {
     private let onEdit: () -> Void
     private let onEnabledChange: @MainActor @Sendable (Bool) -> Void
 
-    init(alarm: AlarmRecord, isUpdating: Bool = false, onEdit: @escaping () -> Void,
-         onEnabledChange: @escaping @MainActor @Sendable (Bool) -> Void = { _ in }) {
+    init(
+        alarm: AlarmRecord, isUpdating: Bool = false, onEdit: @escaping () -> Void,
+        onEnabledChange: @escaping @MainActor @Sendable (Bool) -> Void = { _ in }
+    ) {
         // SwiftUI can retain and redraw a row during its deletion animation.
         // Capture values while the record is live; child views must not read it afterward.
-        content = AlarmRowContent(hour: alarm.hour, minute: alarm.minute, name: alarm.label,
-                                  repeatSummary: AlarmRepeatSummary.text(for: alarm.repeatDays),
-                                  exitPointSummary: alarm.exitPointSummary, exitPointSymbol: alarm.exitPoint.symbol)
+        content = AlarmRowContent(
+            hour: alarm.hour, minute: alarm.minute, name: alarm.label,
+            repeatSummary: AlarmRepeatSummary.text(for: alarm.repeatDays),
+            exitPointSummary: alarm.exitPointSummary, exitPointSymbol: alarm.exitPoint.symbol)
         isEnabled = alarm.isEnabled
         self.isUpdating = isUpdating
         self.onEdit = onEdit
@@ -23,7 +26,8 @@ struct AlarmRow: View {
     }
 
     var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
+        let layout =
+            dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading))
             : AnyLayout(HStackLayout(alignment: .top))
         layout {
@@ -34,8 +38,9 @@ struct AlarmRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Edit this alarm")
-            AlarmEnabledToggle(hour: content.hour, minute: content.minute, isEnabled: isEnabled,
-                               isUpdating: isUpdating, onEnabledChange: onEnabledChange)
+            AlarmEnabledToggle(
+                hour: content.hour, minute: content.minute, isEnabled: isEnabled,
+                isUpdating: isUpdating, onEnabledChange: onEnabledChange)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

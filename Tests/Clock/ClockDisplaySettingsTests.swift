@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -13,7 +14,8 @@ struct ClockDisplaySettingsTests {
         #expect(ClockDisplaySettings(defaults: defaults).format == .twentyFourHour)
     }
 
-    @Test func explicitPreferenceSurvivesRelaunchAndPeriodChoiceSurvivesTwentyFourHourMode() throws {
+    @Test func explicitPreferenceSurvivesRelaunchAndPeriodChoiceSurvivesTwentyFourHourMode() throws
+    {
         let suite = "ClockSettingsTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }

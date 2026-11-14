@@ -1,13 +1,15 @@
 import Foundation
 import SwiftData
 import Testing
+
 @testable import Sunalta
 
 @MainActor
 struct AlarmPersistenceTests {
     private func makeContainer() throws -> ModelContainer {
-        try ModelContainer(for: AlarmRecord.self, AlarmStopTarget.self,
-                           configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        try ModelContainer(
+            for: AlarmRecord.self, AlarmStopTarget.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     }
 
     @Test(arguments: [0, 12, 19])
@@ -19,8 +21,10 @@ struct AlarmPersistenceTests {
         draft.name = " \n Morning workout \t "
         draft.time = Date(timeIntervalSinceReferenceDate: TimeInterval(hour * 3600 + 5 * 60))
         draft.repeatDays = [.monday, .friday]
-        draft.exitPoint = .init(selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "wake-up"))
-        let created = try AlarmEditorService(context: container.mainContext, calendar: calendar).create(draft)
+        draft.exitPoint = .init(
+            selection: .qrCode, scannedCode: .init(kind: .qrCode, value: "wake-up"))
+        let created = try AlarmEditorService(context: container.mainContext, calendar: calendar)
+            .create(draft)
 
         // Fetch from an independent context to verify an explicit save, not an in-memory insertion.
         let context = ModelContext(container)
@@ -35,7 +39,9 @@ struct AlarmPersistenceTests {
     }
 
     @Test(arguments: [("", ""), (" \t\n\r ", ""), ("\u{00A0}\u{2003}", ""), (" Alarm ", "Alarm")])
-    func creationKeepsUnnamedAlarmsDistinctFromAnExplicitAlarmName(name: String, expectedLabel: String) throws {
+    func creationKeepsUnnamedAlarmsDistinctFromAnExplicitAlarmName(
+        name: String, expectedLabel: String
+    ) throws {
         let container = try makeContainer()
         var draft = AlarmEditorDraft()
         draft.name = name
@@ -77,8 +83,9 @@ struct AlarmPersistenceTests {
         let alarm = try AlarmEditorService(context: first.mainContext).create(draft)
         let secondRuntime = AlarmRuntime(context: second.mainContext)
         // An unknown alarm ID must remain a harmless no-op in a separate store.
-        try await secondRuntime.handleStop(alarmID: alarm.id.uuidString,
-                                           systemID: alarm.id.uuidString, token: "")
+        try await secondRuntime.handleStop(
+            alarmID: alarm.id.uuidString,
+            systemID: alarm.id.uuidString, token: "")
         #expect(secondRuntime.activeAlarm == nil)
         #expect(try second.mainContext.fetchCount(FetchDescriptor<AlarmRecord>()) == 0)
         #expect(try first.mainContext.fetchCount(FetchDescriptor<AlarmRecord>()) == 1)

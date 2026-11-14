@@ -8,10 +8,13 @@ nonisolated struct ClockTimeDisplay: Equatable {
     let text: String
     let period: String?
 
-    init(date: Date, format: ClockTimeFormat, calendar: Calendar = .autoupdatingCurrent,
-         locale: Locale = .autoupdatingCurrent) {
-        self.init(hour: calendar.component(.hour, from: date),
-                  minute: calendar.component(.minute, from: date), format: format, locale: locale)
+    init(
+        date: Date, format: ClockTimeFormat, calendar: Calendar = .autoupdatingCurrent,
+        locale: Locale = .autoupdatingCurrent
+    ) {
+        self.init(
+            hour: calendar.component(.hour, from: date),
+            minute: calendar.component(.minute, from: date), format: format, locale: locale)
     }
 
     init(hour: Int, minute: Int, format: ClockTimeFormat, locale: Locale = .autoupdatingCurrent) {
@@ -23,11 +26,16 @@ nonisolated struct ClockTimeDisplay: Equatable {
         // A fixed UTC day formats wall-clock components without a DST gap or calendar conversion.
         let date = Date(timeIntervalSinceReferenceDate: TimeInterval(hour * 3600 + minute * 60))
         let locale = format.locale(overriding: locale)
-        text = date.formatted(Date.FormatStyle(date: .omitted, time: .shortened,
-                                              locale: locale, timeZone: .gmt))
-        period = format == .twelveHour ? date.formatted(Date.VerbatimFormatStyle(
-            format: "\(dayPeriod: .standard(.abbreviated))", locale: locale,
-            timeZone: .gmt, calendar: Calendar(identifier: .gregorian)
-        )) : nil
+        text = date.formatted(
+            Date.FormatStyle(
+                date: .omitted, time: .shortened,
+                locale: locale, timeZone: .gmt))
+        period =
+            format == .twelveHour
+            ? date.formatted(
+                Date.VerbatimFormatStyle(
+                    format: "\(dayPeriod: .standard(.abbreviated))", locale: locale,
+                    timeZone: .gmt, calendar: Calendar(identifier: .gregorian)
+                )) : nil
     }
 }

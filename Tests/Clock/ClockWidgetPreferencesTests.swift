@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -9,9 +10,11 @@ struct ClockWidgetPreferencesTests {
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let writer = ClockWidgetPreferencesStore(defaults: defaults)
-        let reader = ClockWidgetPreferencesStore(defaults: try #require(UserDefaults(suiteName: suite)))
-        var preferences = ClockWidgetPreferences(themeID: "midnight", timeFormat: .twelveHour,
-                                                 showsPeriod: false)
+        let reader = ClockWidgetPreferencesStore(
+            defaults: try #require(UserDefaults(suiteName: suite)))
+        var preferences = ClockWidgetPreferences(
+            themeID: "midnight", timeFormat: .twelveHour,
+            showsPeriod: false)
         #expect(try writer.save(preferences))
         #expect(reader.load() == preferences)
         #expect(try !writer.save(preferences))

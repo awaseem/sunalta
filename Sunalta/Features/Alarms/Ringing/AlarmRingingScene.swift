@@ -60,8 +60,10 @@ final class AlarmRingingScene {
         }
         if theme.clockFlyby != .none, flybys == nil {
             do {
-                let flybys = try AlarmFlybyController(kind: theme.clockFlyby, appearance: theme.clock)
-                flybys.root.components.set(ImageBasedLightReceiverComponent(imageBasedLight: studio))
+                let flybys = try AlarmFlybyController(
+                    kind: theme.clockFlyby, appearance: theme.clock)
+                flybys.root.components.set(
+                    ImageBasedLightReceiverComponent(imageBasedLight: studio))
                 root.addChild(flybys.root)
                 self.flybys = flybys
             } catch {
@@ -76,7 +78,8 @@ final class AlarmRingingScene {
             theme.clock.ambientIntensityExponent + Float(theme.clock.lighting.fill)
         keyLight.light.color = .init(theme.clock.lightColor)
         keyLight.light.intensity = Float(theme.clock.lighting.strength)
-        keyLight.look(at: .zero, from: theme.clock.lighting.lightPosition, relativeTo: timePlacement)
+        keyLight.look(
+            at: .zero, from: theme.clock.lighting.lightPosition, relativeTo: timePlacement)
         updateLayout()
     }
 
@@ -101,8 +104,9 @@ final class AlarmRingingScene {
 
     private func updateLayout() {
         guard viewport.width > 0, viewport.height > 0,
-              timeFrame.width > 0, timeFrame.height > 0,
-              bellFrame.width > 0, bellFrame.height > 0 else { return }
+            timeFrame.width > 0, timeFrame.height > 0,
+            bellFrame.width > 0, bellFrame.height > 0
+        else { return }
         var projection = OrthographicCameraComponent()
         projection.scaleDirection = .vertical
         // Orthographic scale is the half-height of the visible world.
@@ -113,8 +117,9 @@ final class AlarmRingingScene {
         flybys?.setViewport(viewport)
 
         let bounds = numerals.root.visualBounds(relativeTo: timePlacement)
-        let timeScale = min(Float(timeFrame.width) / max(bounds.extents.x * 1.15, 0.001),
-                            Float(timeFrame.height) / max(bounds.extents.y * 1.2, 0.001))
+        let timeScale = min(
+            Float(timeFrame.width) / max(bounds.extents.x * 1.15, 0.001),
+            Float(timeFrame.height) / max(bounds.extents.y * 1.2, 0.001))
         timePlacement.scale = SIMD3(repeating: timeScale)
         timePlacement.position = position(for: timeFrame) - bounds.center * timeScale
 

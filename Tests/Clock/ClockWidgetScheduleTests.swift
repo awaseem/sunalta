@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 struct ClockWidgetScheduleTests {
@@ -15,7 +16,9 @@ struct ClockWidgetScheduleTests {
     }
 
     @Test(arguments: ["2026-03-08T08:59:00Z", "2026-11-01T07:59:00Z"])
-    func daylightSavingChangesKeepEntriesStrictlyIncreasingWithoutDuplicateBoundary(_ timestamp: String) throws {
+    func daylightSavingChangesKeepEntriesStrictlyIncreasingWithoutDuplicateBoundary(
+        _ timestamp: String
+    ) throws {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(identifier: "America/Edmonton"))
         let now = try Date(timestamp, strategy: .iso8601)

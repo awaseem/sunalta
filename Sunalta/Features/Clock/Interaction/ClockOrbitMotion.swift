@@ -26,12 +26,14 @@ nonisolated struct ClockOrbitMotion {
 
     mutating func drag(translation: SIMD2<Float>, width: Float) {
         let proposed = dragOrigin + angularMotion(translation, width: width)
-        offset = simd_clamp(proposed, SIMD2(repeating: -maximumAngle), SIMD2(repeating: maximumAngle))
+        offset = simd_clamp(
+            proposed, SIMD2(repeating: -maximumAngle), SIMD2(repeating: maximumAngle))
     }
 
     mutating func release(velocity: SIMD2<Float>, width: Float) {
-        self.velocity = simd_clamp(angularMotion(velocity, width: width),
-                                   SIMD2(repeating: -1.5), SIMD2(repeating: 1.5))
+        self.velocity = simd_clamp(
+            angularMotion(velocity, width: width),
+            SIMD2(repeating: -1.5), SIMD2(repeating: 1.5))
     }
 
     /// Returns true once the spring has settled exactly at the configured resting angle.

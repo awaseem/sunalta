@@ -10,18 +10,24 @@ struct AlarmRepeatPicker: View {
             HStack(spacing: 8) {
                 ForEach(AlarmRepeatSummary.orderedDays, id: \.rawValue) { day in
                     Button {
-                        if repeatDays.contains(day) { repeatDays.remove(day) }
-                        else { repeatDays.insert(day) }
+                        if repeatDays.contains(day) {
+                            repeatDays.remove(day)
+                        } else {
+                            repeatDays.insert(day)
+                        }
                     } label: {
                         Text(String(day.abbreviation.prefix(1)))
                             .font(.body.bold())
                             .frame(width: dayDiameter, height: dayDiameter)
-                            .foregroundStyle(repeatDays.contains(day)
-                                ? theme.palette.onControl
-                                : theme.palette.foreground)
-                            .background(repeatDays.contains(day)
-                                ? theme.palette.control
-                                : theme.palette.surface, in: .circle)
+                            .foregroundStyle(
+                                repeatDays.contains(day)
+                                    ? theme.palette.onControl
+                                    : theme.palette.foreground
+                            )
+                            .background(
+                                repeatDays.contains(day)
+                                    ? theme.palette.control
+                                    : theme.palette.surface, in: .circle)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(day.name)

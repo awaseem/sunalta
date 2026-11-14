@@ -6,7 +6,8 @@ struct AlarmEditorService {
     let context: ModelContext
     var calendar: Calendar = .autoupdatingCurrent
     var authorize: @MainActor () async throws -> Void = AlarmScheduler.authorize
-    var schedule: @MainActor (AlarmRecord, UUID, Alarm.Schedule) async throws -> Void = AlarmScheduler.schedule
+    var schedule: @MainActor (AlarmRecord, UUID, Alarm.Schedule) async throws -> Void =
+        AlarmScheduler.schedule
     var cancel: @MainActor (UUID) throws -> Void = AlarmScheduler.cancel
     var hasActiveSession: @MainActor (AlarmRecord) throws -> Bool = AlarmScheduler.hasActiveSession
     var save: @MainActor (ModelContext) throws -> Void = { try $0.save() }
@@ -93,35 +94,46 @@ struct AlarmEditorService {
                     try cancel(alarm.id)
                     try await schedule(alarm, alarm.id, alarm.alarmKitSchedule())
                 } catch {
-                    recoveryError = recoveryError.map {
-                        AlarmRecoveryError(operationError: $0, recoveryError: error)
-                    } ?? error
+                    recoveryError =
+                        recoveryError.map {
+                            AlarmRecoveryError(operationError: $0, recoveryError: error)
+                        } ?? error
                 }
             }
             if let recoveryError {
-                throw AlarmRecoveryError(operationError: operationError, recoveryError: recoveryError)
+                throw AlarmRecoveryError(
+                    operationError: operationError, recoveryError: recoveryError)
             }
             throw operationError
         }
     }
 
     private func requireInactive(_ alarm: AlarmRecord) throws {
-        guard alarm.modelContext != nil, !alarm.isDeleted else { throw AlarmRuntime.SessionError.alarmDeleted }
+        guard alarm.modelContext != nil, !alarm.isDeleted else {
+            throw AlarmRuntime.SessionError.alarmDeleted
+        }
         guard alarm.pendingSince == nil, alarm.snoozedUntil == nil, alarm.retryAlarmIDs.isEmpty,
-              try !hasActiveSession(alarm) else {
+            try !hasActiveSession(alarm)
+        else {
             throw AlarmRuntime.SessionError.scanRequired
         }
     }
 
-    private func stopTarget(for draft: AlarmEditorDraft, reusing targets: [AlarmStopTarget]) throws -> AlarmStopTarget? {
+    private func stopTarget(for draft: AlarmEditorDraft, reusing targets: [AlarmStopTarget]) throws
+        -> AlarmStopTarget?
+    {
         guard let code = draft.exitPoint.scannedCode else { return nil }
-        if let existing = targets.first(where: { $0.matches(codeValue: code.value, kind: code.kind) }) {
+        if let existing = targets.first(where: {
+            $0.matches(codeValue: code.value, kind: code.kind)
+        }) {
             return existing
         }
         return try draft.exitPoint.makeStopTarget()
     }
 
-    private func apply(_ draft: AlarmEditorDraft, to alarm: AlarmRecord, targets: [AlarmStopTarget]) throws {
+    private func apply(_ draft: AlarmEditorDraft, to alarm: AlarmRecord, targets: [AlarmStopTarget])
+        throws
+    {
         let time = draft.timeComponents(calendar: calendar)
         try alarm.setTime(hour: time.hour ?? 7, minute: time.minute ?? 0)
         try alarm.setSnoozeDuration(minutes: draft.snoozeMinutes)

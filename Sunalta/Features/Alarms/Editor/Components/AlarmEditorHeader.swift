@@ -20,6 +20,7 @@ struct AlarmEditorHeader: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(isEditing ? "Edit alarm" : "New alarm"), step \(step + 1) of \(stepCount)")
+        .accessibilityLabel(
+            "\(isEditing ? "Edit alarm" : "New alarm"), step \(step + 1) of \(stepCount)")
     }
 }

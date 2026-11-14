@@ -25,9 +25,12 @@ struct AlarmListPage: View {
                         LazyVStack(spacing: 12) {
                             ForEach(alarms, id: \.persistentModelID) { alarm in
                                 if alarm.modelContext != nil, !alarm.isDeleted {
-                                    AlarmRow(alarm: alarm, isUpdating: updatingAlarmID == alarm.id, onEdit: {
-                                        editAlarm(alarm)
-                                    }) { enabled in
+                                    AlarmRow(
+                                        alarm: alarm, isUpdating: updatingAlarmID == alarm.id,
+                                        onEdit: {
+                                            editAlarm(alarm)
+                                        }
+                                    ) { enabled in
                                         Task { await setEnabled(enabled, for: alarm) }
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -59,7 +62,8 @@ struct AlarmListPage: View {
                     canReturnToClock = offset <= 1
                 }
                 if isActive, let returnToClock, canReturnToClock,
-                   oldPhase == .interacting, phase != .interacting, offset < -60 {
+                    oldPhase == .interacting, phase != .interacting, offset < -60
+                {
                     canReturnToClock = false
                     returnToClock()
                 }
@@ -105,9 +109,12 @@ struct AlarmListPage: View {
         .onChange(of: runtime.isAlarmPresented) { _, presented in
             if presented { activeSheet = nil }
         }
-        .alert("Couldn't update alarm", isPresented: Binding(
-            get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
-        )) {
+        .alert(
+            "Couldn't update alarm",
+            isPresented: Binding(
+                get: { schedulingError != nil }, set: { if !$0 { schedulingError = nil } }
+            )
+        ) {
             if AlarmManager.shared.authorizationState == .denied {
                 AppSettingsButton()
             }

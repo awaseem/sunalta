@@ -1,5 +1,6 @@
-import simd
 import Testing
+import simd
+
 @testable import Sunalta
 
 struct ClockOrbitMotionTests {

@@ -8,8 +8,9 @@ struct ClockWidgetSync: ViewModifier {
     @Environment(\.scenePhase) private var scenePhase
 
     private var preferences: ClockWidgetPreferences {
-        ClockWidgetPreferences(themeID: themeSettings.theme.id, timeFormat: clockSettings.format,
-                               showsPeriod: clockSettings.showsPeriod)
+        ClockWidgetPreferences(
+            themeID: themeSettings.theme.id, timeFormat: clockSettings.format,
+            showsPeriod: clockSettings.showsPeriod)
     }
 
     func body(content: Content) -> some View {
@@ -21,7 +22,9 @@ struct ClockWidgetSync: ViewModifier {
     }
 
     private func synchronize(_ preferences: ClockWidgetPreferences) {
-        guard let defaults = UserDefaults(suiteName: ClockWidgetPreferences.appGroup) else { return }
+        guard let defaults = UserDefaults(suiteName: ClockWidgetPreferences.appGroup) else {
+            return
+        }
         do {
             if try ClockWidgetPreferencesStore(defaults: defaults).save(preferences) {
                 WidgetCenter.shared.reloadTimelines(ofKind: ClockWidgetPreferences.kind)

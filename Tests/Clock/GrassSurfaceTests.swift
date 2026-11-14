@@ -1,5 +1,6 @@
 import RealityKit
 import Testing
+
 @testable import Sunalta
 
 @MainActor
@@ -8,11 +9,13 @@ struct GrassSurfaceTests {
         let scene = try NumeralClockScene()
         scene.show(time: "11:11")
         try await scene.apply(theme: .grass)
-        let originalGrass = try #require(scene.firstDigit?.findEntity(named: GrassSurface.entityName))
+        let originalGrass = try #require(
+            scene.firstDigit?.findEntity(named: GrassSurface.entityName))
         let original = try #require(originalGrass.components[ModelComponent.self]?.mesh)
 
         scene.show(time: "22:22")
-        let replacementGrass = try #require(scene.firstDigit?.findEntity(named: GrassSurface.entityName))
+        let replacementGrass = try #require(
+            scene.firstDigit?.findEntity(named: GrassSurface.entityName))
         let replacement = try #require(replacementGrass.components[ModelComponent.self]?.mesh)
         #expect(original !== replacement)
         #expect(scene.root.children.allSatisfy { $0.children.count == 1 })

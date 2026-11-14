@@ -12,7 +12,8 @@ nonisolated struct ClockFlybyPath {
     var origin: Float = 0
     var horizontalReach: Float = 1.25
 
-    func position(at elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float) -> SIMD3<Float> {
+    func position(at elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float) -> SIMD3<Float>
+    {
         let progress = Float(min(max(elapsed / duration, 0), 1))
         let distance = cameraDistance - Self.depth
         let perspective = distance / cameraDistance
@@ -21,9 +22,11 @@ nonisolated struct ClockFlybyPath {
         let bend = 0.2 * progress + 0.8 * progress * progress
         let x = origin + (direction * horizontalReach - origin) * bend
         let y = height + arc * sin(.pi * progress / 2)
-        return [x * viewport.x / 2 * perspective,
-                y * viewport.y / 2 * perspective,
-                -distance]
+        return [
+            x * viewport.x / 2 * perspective,
+            y * viewport.y / 2 * perspective,
+            -distance,
+        ]
     }
 
     func opacity(at elapsed: Double) -> Float {
@@ -43,10 +46,14 @@ nonisolated struct ClockFlybyPath {
         return value * value * (3 - 2 * value)
     }
 
-    func orientation(at elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float) -> simd_quatf {
+    func orientation(at elapsed: Double, viewport: SIMD2<Float>, cameraDistance: Float)
+        -> simd_quatf
+    {
         let progress = min(max(elapsed, 0), duration)
-        let before = position(at: max(0, progress - 0.01), viewport: viewport, cameraDistance: cameraDistance)
-        let after = position(at: min(duration, progress + 0.01), viewport: viewport, cameraDistance: cameraDistance)
+        let before = position(
+            at: max(0, progress - 0.01), viewport: viewport, cameraDistance: cameraDistance)
+        let after = position(
+            at: min(duration, progress + 0.01), viewport: viewport, cameraDistance: cameraDistance)
         let tangent = simd_normalize(after - before)
         // Keep the bird upright while its beak follows the curve toward either edge.
         let yaw = atan2(-tangent.z, tangent.x)

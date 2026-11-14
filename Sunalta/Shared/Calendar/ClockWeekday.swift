@@ -1,7 +1,8 @@
 import Foundation
 
 nonisolated enum ClockWeekday: Int, CaseIterable, Sendable {
-    case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
+    case sunday = 1
+    case monday, tuesday, wednesday, thursday, friday, saturday
 
     var abbreviation: String {
         switch self {

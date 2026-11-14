@@ -1,9 +1,10 @@
 import Foundation
 
 struct AlarmEditorDraft {
-    var time = Calendar.autoupdatingCurrent.date(
-        from: DateComponents(year: 2001, month: 1, day: 1, hour: 7, minute: 0)
-    ) ?? .now
+    var time =
+        Calendar.autoupdatingCurrent.date(
+            from: DateComponents(year: 2001, month: 1, day: 1, hour: 7, minute: 0)
+        ) ?? .now
     var repeatDays: Set<ClockWeekday> = []
     var snoozeEnabled = true
     var snoozeMinutes = 10
@@ -14,13 +15,15 @@ struct AlarmEditorDraft {
     func validate(calendar: Calendar = .autoupdatingCurrent) throws {
         let components = timeComponents(calendar: calendar)
         guard let hour = components.hour, let minute = components.minute,
-              (0...23).contains(hour), (0...59).contains(minute) else {
+            (0...23).contains(hour), (0...59).contains(minute)
+        else {
             throw AlarmValidationError.invalidTime
         }
         guard snoozeMinutes > 0 else { throw AlarmValidationError.invalidSnoozeDuration }
         if let code = exitPoint.scannedCode {
             guard code.kind == exitPoint.selection.scanKind,
-                  AlarmStopTarget.isValidScan(codeValue: code.value, kind: code.kind) else {
+                AlarmStopTarget.isValidScan(codeValue: code.value, kind: code.kind)
+            else {
                 throw AlarmValidationError.invalidScanTarget
             }
         }
@@ -37,10 +40,16 @@ extension AlarmEditorDraft {
         soundSelection = .theme(theme.id)
     }
 
-    init(alarm: AlarmRecord, theme: AppTheme = .defaultTheme, calendar: Calendar = .autoupdatingCurrent) {
+    init(
+        alarm: AlarmRecord, theme: AppTheme = .defaultTheme,
+        calendar: Calendar = .autoupdatingCurrent
+    ) {
         self.init(theme: theme)
-        time = calendar.date(from: DateComponents(year: 2001, month: 1, day: 1,
-                                                  hour: alarm.hour, minute: alarm.minute)) ?? time
+        time =
+            calendar.date(
+                from: DateComponents(
+                    year: 2001, month: 1, day: 1,
+                    hour: alarm.hour, minute: alarm.minute)) ?? time
         repeatDays = alarm.repeatDays
         snoozeEnabled = alarm.snoozeEnabled
         snoozeMinutes = alarm.snoozeDurationMinutes

@@ -20,10 +20,13 @@ struct AlarmRootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await runtime.refresh() } }
         }
-        .alert("Alarm needs attention", isPresented: Binding(
-            get: { runtime.errorMessage != nil },
-            set: { if !$0 { runtime.errorMessage = nil } }
-        )) {
+        .alert(
+            "Alarm needs attention",
+            isPresented: Binding(
+                get: { runtime.errorMessage != nil },
+                set: { if !$0 { runtime.errorMessage = nil } }
+            )
+        ) {
             Button("Retry") { Task { await runtime.refresh() } }
             Button("OK", role: .cancel) { runtime.errorMessage = nil }
         } message: {

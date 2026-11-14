@@ -21,7 +21,8 @@ struct HomeScreen: View {
             let pageHeight = geometry.size.height + insets.top + insets.bottom
             let pageWidth = geometry.size.width + insets.leading + insets.trailing
             let columnWidth = isLandscape ? pageWidth / 2 : pageWidth
-            let layout = isLandscape
+            let layout =
+                isLandscape
                 ? AnyLayout(HStackLayout(spacing: 0))
                 : AnyLayout(VStackLayout(spacing: 0))
             ScrollView(isLandscape ? [] : .vertical) {
@@ -36,9 +37,10 @@ struct HomeScreen: View {
                                 isVisible: (isLandscape || isClockVisible) && alarmEditor == nil,
                                 showsAlarmHint: !isLandscape,
                                 availableHeight: geometry.size.height,
-                                safeAreaInsets: EdgeInsets(top: insets.top, leading: insets.leading,
-                                                           bottom: insets.bottom,
-                                                           trailing: isLandscape ? 0 : insets.trailing)
+                                safeAreaInsets: EdgeInsets(
+                                    top: insets.top, leading: insets.leading,
+                                    bottom: insets.bottom,
+                                    trailing: isLandscape ? 0 : insets.trailing)
                             )
                         }
                     }
@@ -49,11 +51,13 @@ struct HomeScreen: View {
                         alarms: alarms, isActive: isLandscape || !isClockVisible,
                         createAlarm: { presentEditor(.create) },
                         editAlarm: { presentEditor(.edit($0)) },
-                        returnToClock: isLandscape ? nil : {
-                            withAnimation(reduceMotion ? nil : .smooth) {
-                                pagePosition.scrollTo(edge: .top)
+                        returnToClock: isLandscape
+                            ? nil
+                            : {
+                                withAnimation(reduceMotion ? nil : .smooth) {
+                                    pagePosition.scrollTo(edge: .top)
+                                }
                             }
-                        }
                     )
                     // Keep the navigation container at the display edge so Duo
                     // can place its toolbar in the trailing system bar region.
@@ -72,7 +76,8 @@ struct HomeScreen: View {
                 guard !isLandscape else { return }
                 isScrolling = phase != .idle
                 if phase == .idle {
-                    let offset = context.geometry.contentOffset.y + context.geometry.contentInsets.top
+                    let offset =
+                        context.geometry.contentOffset.y + context.geometry.contentInsets.top
                     portraitShowsAlarms = offset >= pageHeight / 2
                 }
             }
@@ -95,7 +100,9 @@ struct HomeScreen: View {
             // Measure the viewport independently of keyboard presentation.
             Color.clear
                 .ignoresSafeArea(.keyboard)
-                .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: {
+                .onGeometryChange(for: Bool.self) {
+                    $0.size.width > $0.size.height
+                } action: {
                     isLandscape = $0
                 }
         }

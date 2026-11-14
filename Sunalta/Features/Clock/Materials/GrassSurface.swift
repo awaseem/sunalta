@@ -38,7 +38,8 @@ enum GrassSurface {
 
     static func update(_ entity: Entity, time: Float, opacity: Float = 1) {
         guard var component = entity.components[ModelComponent.self],
-              var material = component.materials.first as? CustomMaterial else { return }
+            var material = component.materials.first as? CustomMaterial
+        else { return }
         material.custom.value = [time, opacity, 0, 0]
         material.blending = opacity < 1 ? .transparent(opacity: .init(scale: 1)) : .opaque
         component.materials = [material]

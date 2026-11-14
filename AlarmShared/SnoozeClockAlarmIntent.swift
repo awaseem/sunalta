@@ -12,7 +12,7 @@ struct SnoozeClockAlarmIntent: LiveActivityIntent {
     @Parameter(title: "Schedule") var token: String
 
     #if !CLOCK_WIDGET_EXTENSION
-    @Dependency private var runtime: AlarmRuntime
+        @Dependency private var runtime: AlarmRuntime
     #endif
 
     init() {}
@@ -26,7 +26,7 @@ struct SnoozeClockAlarmIntent: LiveActivityIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         #if !CLOCK_WIDGET_EXTENSION
-        try await runtime.snooze(alarmID: alarmID, systemID: systemID, token: token)
+            try await runtime.snooze(alarmID: alarmID, systemID: systemID, token: token)
         #endif
         return .result()
     }

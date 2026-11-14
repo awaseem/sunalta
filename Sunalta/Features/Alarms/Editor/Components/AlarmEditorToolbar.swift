@@ -24,8 +24,9 @@ struct AlarmEditorToolbar: ToolbarContent {
                 .foregroundStyle(theme.palette.onControl)
         }
         ToolbarItem(placement: .principal) {
-            AlarmEditorHeader(isEditing: isEditing, step: step.rawValue,
-                              stepCount: AlarmEditorStep.allCases.count)
+            AlarmEditorHeader(
+                isEditing: isEditing, step: step.rawValue,
+                stepCount: AlarmEditorStep.allCases.count)
         }
     }
 

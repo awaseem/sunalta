@@ -63,7 +63,8 @@ final class ThemeSettings {
             do {
                 adjustments = try JSONDecoder().decode([String: ThemeAdjustments].self, from: data)
             } catch {
-                errorMessage = "Couldn't read saved appearance settings. Reset this theme to restore its defaults."
+                errorMessage =
+                    "Couldn't read saved appearance settings. Reset this theme to restore its defaults."
             }
         }
     }

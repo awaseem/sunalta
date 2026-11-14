@@ -13,7 +13,10 @@ struct AlarmExitPointDraft: Equatable {
 
     func makeStopTarget() throws -> AlarmStopTarget? {
         guard let scannedCode else { return nil }
-        guard scannedCode.kind == selection.scanKind else { throw AlarmValidationError.invalidScanTarget }
-        return try AlarmStopTarget(name: selection.title, kind: scannedCode.kind, codeValue: scannedCode.value)
+        guard scannedCode.kind == selection.scanKind else {
+            throw AlarmValidationError.invalidScanTarget
+        }
+        return try AlarmStopTarget(
+            name: selection.title, kind: scannedCode.kind, codeValue: scannedCode.value)
     }
 }

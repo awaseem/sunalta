@@ -62,8 +62,10 @@ final class ClockRenderView: ClockMetalView {
         didSet { if oldValue != allowsAmbientAnimation { updateFlybys() } }
     }
 
-    init(theme: AppTheme, isAlarmPreview: Bool = false, previewNumeral: String? = nil,
-         audioService: ClockAudioService? = nil) {
+    init(
+        theme: AppTheme, isAlarmPreview: Bool = false, previewNumeral: String? = nil,
+        audioService: ClockAudioService? = nil
+    ) {
         self.theme = theme
         self.audioService = audioService
         self.isAlarmPreview = isAlarmPreview || previewNumeral != nil
@@ -83,13 +85,16 @@ final class ClockRenderView: ClockMetalView {
         var projection = PerspectiveCameraComponent()
         projection.fieldOfViewInDegrees = 12
         camera.components.set(projection)
-        orbitInteraction = ClockOrbitInteraction(view: self, restingAngles: .zero,
-                                                 allowsVerticalDrag: isAlarmPreview) { [weak self] _ in
+        orbitInteraction = ClockOrbitInteraction(
+            view: self, restingAngles: .zero,
+            allowsVerticalDrag: isAlarmPreview
+        ) { [weak self] _ in
             self?.applyViewingAngle()
         }
         orbitInteraction?.onBegan = { [weak self] in self?.onOrbitBegan?() }
         orbitInteraction?.onSettled = { [weak self] in self?.onOrbitSettled?() }
-        accessibilityHint = isAlarmPreview
+        accessibilityHint =
+            isAlarmPreview
             ? "Drag to change the viewing angle. Release to return to the front view."
             : "Drag horizontally to change the viewing angle. Swipe up to see alarms."
         anchor.addChild(camera)
@@ -142,7 +147,7 @@ final class ClockRenderView: ClockMetalView {
         NSLayoutConstraint.activate([
             message.centerXAnchor.constraint(equalTo: centerXAnchor),
             message.centerYAnchor.constraint(equalTo: centerYAnchor),
-            message.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, constant: -32)
+            message.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, constant: -32),
         ])
         assertionFailure("Clock scene failed to load: \(error)")
     }
@@ -170,11 +175,13 @@ final class ClockRenderView: ClockMetalView {
         keyLight.light.intensity = Float(settings.strength)
         keyLight.shadow = theme.clock.shadow.map {
             DirectionalLightComponent.Shadow(
-                shadowProjection: .automatic(maximumDistance: $0.maximumDistance), depthBias: $0.depthBias
+                shadowProjection: .automatic(maximumDistance: $0.maximumDistance),
+                depthBias: $0.depthBias
             )
         }
         let appearance = theme.clock
-        realityRenderer?.lighting.intensityExponent = appearance.ambientIntensityExponent + Float(settings.fill)
+        realityRenderer?.lighting.intensityExponent =
+            appearance.ambientIntensityExponent + Float(settings.fill)
         let background = UIColor(theme.palette.background)
         realityRenderer?.cameraSettings.colorBackground = .color(background.cgColor)
         backdrop.model?.materials = [appearance.backdropMaterial(color: background)]
@@ -184,8 +191,9 @@ final class ClockRenderView: ClockMetalView {
 
     private func applyWeekdayLighting(verticalDirection: Float = 1) {
         guard !isAlarmPreview, !weekdayFrame.isEmpty, bounds.height > 0,
-              cameraRestOffset.z > 0, let content,
-              content.firstDigit != nil else {
+            cameraRestOffset.z > 0, let content,
+            content.firstDigit != nil
+        else {
             weekdayLight.isEnabled = false
             return
         }
@@ -209,46 +217,54 @@ final class ClockRenderView: ClockMetalView {
         let direction = Float(glow.direction * .pi / 180)
         // The home label shines upward; widget exports place it above the row.
         let target = source + SIMD3<Float>(sin(direction), cos(direction) * verticalDirection, -1.5)
-        weekdayLight.look(at: camera.convert(position: target, to: nil),
-                          from: camera.convert(position: source, to: nil), relativeTo: nil)
+        weekdayLight.look(
+            at: camera.convert(position: target, to: nil),
+            from: camera.convert(position: source, to: nil), relativeTo: nil)
     }
 
-#if DEBUG
-    /// Captures the final widget row, with the weekday shining down onto the hours.
-    func prepareWidgetArtwork(time: String, visibleSlot: Int?) throws -> CGRect {
-        guard let content, let realityRenderer, isReady else { throw CocoaError(.coderInvalidValue) }
-        for digit in content.root.children { digit.isEnabled = true }
-        content.show(time: "88:88")
-        content.arrangeRow()
-        layoutSubviews()
-        let clockBounds = content.root.visualBounds(relativeTo: nil)
-        let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
-        let scale = focalLength / (cameraRestOffset.z - clockBounds.max.z)
-        let center = CGPoint(x: bounds.midX + CGFloat(clockBounds.center.x * scale),
-                             y: bounds.midY - CGFloat(clockBounds.center.y * scale))
-        let reference = ClockWidgetComposition.numerals
-        let side = max(CGFloat(clockBounds.extents.x * scale) / reference.width,
-                       CGFloat(clockBounds.extents.y * scale) / reference.height)
-            * ClockWidgetComposition.side * 1.04
-        let crop = CGRect(x: center.x - reference.midX / ClockWidgetComposition.side * side,
-                          y: center.y - reference.midY / ClockWidgetComposition.side * side,
-                          width: side, height: side)
-        let label = ClockWidgetComposition.weekdayLight
-        let labelScale = side / ClockWidgetComposition.side
-        weekdayFrame = CGRect(x: crop.minX + label.minX * labelScale,
-                              y: crop.minY + label.minY * labelScale,
-                              width: label.width * labelScale, height: label.height * labelScale)
-        applyWeekdayLighting(verticalDirection: -1)
-        content.show(time: time)
-        content.arrangeRow()
-        for (index, digit) in content.root.children.enumerated() {
-            digit.isEnabled = visibleSlot == nil || index == visibleSlot
+    #if DEBUG
+        /// Captures the final widget row, with the weekday shining down onto the hours.
+        func prepareWidgetArtwork(time: String, visibleSlot: Int?) throws -> CGRect {
+            guard let content, let realityRenderer, isReady else {
+                throw CocoaError(.coderInvalidValue)
+            }
+            for digit in content.root.children { digit.isEnabled = true }
+            content.show(time: "88:88")
+            content.arrangeRow()
+            layoutSubviews()
+            let clockBounds = content.root.visualBounds(relativeTo: nil)
+            let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
+            let scale = focalLength / (cameraRestOffset.z - clockBounds.max.z)
+            let center = CGPoint(
+                x: bounds.midX + CGFloat(clockBounds.center.x * scale),
+                y: bounds.midY - CGFloat(clockBounds.center.y * scale))
+            let reference = ClockWidgetComposition.numerals
+            let side =
+                max(
+                    CGFloat(clockBounds.extents.x * scale) / reference.width,
+                    CGFloat(clockBounds.extents.y * scale) / reference.height)
+                * ClockWidgetComposition.side * 1.04
+            let crop = CGRect(
+                x: center.x - reference.midX / ClockWidgetComposition.side * side,
+                y: center.y - reference.midY / ClockWidgetComposition.side * side,
+                width: side, height: side)
+            let label = ClockWidgetComposition.weekdayLight
+            let labelScale = side / ClockWidgetComposition.side
+            weekdayFrame = CGRect(
+                x: crop.minX + label.minX * labelScale,
+                y: crop.minY + label.minY * labelScale,
+                width: label.width * labelScale, height: label.height * labelScale)
+            applyWeekdayLighting(verticalDirection: -1)
+            content.show(time: time)
+            content.arrangeRow()
+            for (index, digit) in content.root.children.enumerated() {
+                digit.isEnabled = visibleSlot == nil || index == visibleSlot
+            }
+            backdrop.isEnabled = false
+            realityRenderer.cameraSettings.colorBackground = .color(CGColor(gray: 0, alpha: 0))
+            return crop
         }
-        backdrop.isEnabled = false
-        realityRenderer.cameraSettings.colorBackground = .color(CGColor(gray: 0, alpha: 0))
-        return crop
-    }
-#endif
+    #endif
 
     private func applyMaterials() {
         guard let content else { return }
@@ -312,7 +328,8 @@ final class ClockRenderView: ClockMetalView {
 
     private func updateFlybys() {
         if allowsAmbientAnimation, window != nil, isReady,
-           !isAlarmPreview, theme.clock.surface == .grass {
+            !isAlarmPreview, theme.clock.surface == .grass
+        {
             grassBreeze.onFrame = { [weak self] deltaTime in
                 guard let self else { return }
                 content?.advanceBreeze(by: deltaTime)
@@ -323,15 +340,17 @@ final class ClockRenderView: ClockMetalView {
             grassBreeze.stop()
         }
         guard allowsAmbientAnimation, window != nil, isReady,
-              !isAlarmPreview, theme.clockFlyby != .none,
-              bounds.width > 0, bounds.height > 0, cameraRestOffset.z > 1 else {
+            !isAlarmPreview, theme.clockFlyby != .none,
+            bounds.width > 0, bounds.height > 0, cameraRestOffset.z > 1
+        else {
             flybys?.stop()
             return
         }
         if flybys == nil {
             do {
-                let visitor = try ClockFlybyController(kind: theme.clockFlyby, appearance: theme.clock,
-                                                      audioService: audioService)
+                let visitor = try ClockFlybyController(
+                    kind: theme.clockFlyby, appearance: theme.clock,
+                    audioService: audioService)
                 visitor.onFrame = { [weak self] in self?.requestFrame() }
                 camera.addChild(visitor.root)
                 flybys = visitor
@@ -343,15 +362,17 @@ final class ClockRenderView: ClockMetalView {
             }
         }
         let height = 2 * cameraRestOffset.z * tan(Float(6 * Double.pi / 180))
-        flybys?.setViewport([height * Float(bounds.width / bounds.height), height],
-                           cameraDistance: cameraRestOffset.z)
+        flybys?.setViewport(
+            [height * Float(bounds.width / bounds.height), height],
+            cameraDistance: cameraRestOffset.z)
         flybys?.start()
     }
 
     private func updateWeekdayAnchor() {
         guard !isAlarmPreview, bounds.height > 0, cameraRestOffset.z > 0,
-              let content,
-              let firstDigit = content.firstDigit else { return }
+            let content,
+            let firstDigit = content.firstDigit
+        else { return }
         let firstBounds = firstDigit.visualBounds(relativeTo: nil)
         let clockBounds = content.root.visualBounds(relativeTo: nil)
         // Project from the resting camera, keeping the label fixed during an orbit.
@@ -369,7 +390,8 @@ final class ClockRenderView: ClockMetalView {
 
     private func updatePeriodAnchor() {
         guard previewNumeral == nil, bounds.height > 0, cameraRestOffset.z > 0,
-              let content, let hourDigit = content.lastHourDigit else { return }
+            let content, let hourDigit = content.lastHourDigit
+        else { return }
         let hourBounds = hourDigit.visualBounds(relativeTo: nil)
         let clockBounds = content.root.visualBounds(relativeTo: nil)
         let focalLength = Float(bounds.height) / (2 * tan(Float(6 * Double.pi / 180)))
@@ -386,7 +408,8 @@ final class ClockRenderView: ClockMetalView {
 
     private func applyViewingAngle() {
         let orbit = orbitInteraction?.motion.orientation ?? simd_quatf(angle: 0, axis: [0, 1, 0])
-        let entrance = simd_quatf(angle: entranceAngles.x, axis: [0, 1, 0])
+        let entrance =
+            simd_quatf(angle: entranceAngles.x, axis: [0, 1, 0])
             * simd_quatf(angle: entranceAngles.y, axis: [1, 0, 0])
         let orientation = orbit * entrance
         camera.orientation = orientation
@@ -402,9 +425,11 @@ final class ClockRenderView: ClockMetalView {
             // The camera moves opposite the finger. Let the light follow the
             // finger at 30% of that angle, using the same spring on release.
             let maximumAngle = orbitInteraction?.motion.maximumAngle ?? .pi / 7
-            let boundedAngles = simd_clamp(angles, SIMD2(repeating: -maximumAngle),
-                                          SIMD2(repeating: maximumAngle))
-            let lightOrbit = simd_quatf(angle: -boundedAngles.x * 0.3, axis: [0, 1, 0])
+            let boundedAngles = simd_clamp(
+                angles, SIMD2(repeating: -maximumAngle),
+                SIMD2(repeating: maximumAngle))
+            let lightOrbit =
+                simd_quatf(angle: -boundedAngles.x * 0.3, axis: [0, 1, 0])
                 * simd_quatf(angle: -boundedAngles.y * 0.3, axis: [1, 0, 0])
             position = lightOrbit.act(position)
         }
@@ -421,7 +446,8 @@ final class ClockRenderView: ClockMetalView {
         guard self.display != display else { return }
         let previousDigits = self.display?.digits
         self.display = display
-        accessibilityLabel = isAlarmPreview ? "Alarm time, \(display.text)" : "Time, \(display.text)"
+        accessibilityLabel =
+            isAlarmPreview ? "Alarm time, \(display.text)" : "Time, \(display.text)"
         // A locale or period change can update accessibility without submitting an identical scene.
         if previousDigits != display.digits { updateTime() }
     }

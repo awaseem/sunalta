@@ -27,7 +27,8 @@ struct SupportContentView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom
+            geometry.containerSize.height - geometry.contentInsets.top
+                - geometry.contentInsets.bottom
         } action: { _, height in
             viewportHeight = height
         }

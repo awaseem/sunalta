@@ -1,6 +1,7 @@
 import AVFAudio
 import Foundation
 import Testing
+
 @testable import Sunalta
 
 @Suite(.serialized)
@@ -119,7 +120,8 @@ struct ClockAudioTests {
         #expect(!player.isPlaying, "A canceled replay must stay silent")
     }
 
-    @Test func themeChangesReplaceEffectsWithoutRestartingUnchangedMusicAndCanBecomeSilent() throws {
+    @Test func themeChangesReplaceEffectsWithoutRestartingUnchangedMusicAndCanBecomeSilent() throws
+    {
         let suite = "ClockAudioTests-\(UUID())"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -143,9 +145,12 @@ struct ClockAudioTests {
         audio.playEntrance()
 
         try #require(players.count == 3)
-        let musicPlayer = try #require(players.first { $0.url?.lastPathComponent == music.fileName })
-        let flybyPlayer = try #require(players.first { $0.url?.lastPathComponent == flyby.fileName })
-        let entrancePlayer = try #require(players.first { $0.url?.lastPathComponent == entrance.fileName })
+        let musicPlayer = try #require(
+            players.first { $0.url?.lastPathComponent == music.fileName })
+        let flybyPlayer = try #require(
+            players.first { $0.url?.lastPathComponent == flyby.fileName })
+        let entrancePlayer = try #require(
+            players.first { $0.url?.lastPathComponent == entrance.fileName })
         #expect(players.allSatisfy { $0.isPlaying })
         musicPlayer.currentTime = 2
 
@@ -166,7 +171,8 @@ struct ClockAudioTests {
         audio.playEntrance()
         try #require(players.count == 5)
         #expect(players.suffix(2).allSatisfy { $0.isPlaying })
-        #expect(Set(players.suffix(2).compactMap { $0.url?.lastPathComponent })
+        #expect(
+            Set(players.suffix(2).compactMap { $0.url?.lastPathComponent })
                 == Set([flyby.fileName, entrance.fileName]))
         #expect(musicPlayer.currentTime >= 1.9)
 
@@ -181,14 +187,16 @@ struct ClockAudioTests {
     }
 
     private func makeDelayedMusic(defaults: UserDefaults, delay: Duration) throws
-        -> (ClockAudioService, AVAudioPlayer) {
+        -> (ClockAudioService, AVAudioPlayer)
+    {
         let url = try #require(Bundle.main.url(forResource: "white-dawn.mp3", withExtension: nil))
         let player = try AVAudioPlayer(contentsOf: url)
         let audio = ClockAudioService(defaults: defaults) { _ in player }
-        audio.apply(configuration: .init(
-            music: ClockSound(fileName: "white-dawn.mp3", volume: 0),
-            musicLoopDelay: delay
-        ))
+        audio.apply(
+            configuration: .init(
+                music: ClockSound(fileName: "white-dawn.mp3", volume: 0),
+                musicLoopDelay: delay
+            ))
         return (audio, player)
     }
 
@@ -197,6 +205,7 @@ struct ClockAudioTests {
         while player.isPlaying != isPlaying && ContinuousClock.now < timeout {
             try await Task.sleep(for: .milliseconds(10))
         }
-        try #require(player.isPlaying == isPlaying, "The music must reach the expected playback state")
+        try #require(
+            player.isPlaying == isPlaying, "The music must reach the expected playback state")
     }
 }

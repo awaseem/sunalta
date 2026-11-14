@@ -1,5 +1,5 @@
-import simd
 import UIKit
+import simd
 
 /// Shared gesture handling and a display-synchronized return to each scene's resting angle.
 @MainActor
@@ -13,8 +13,10 @@ final class ClockOrbitInteraction: NSObject, UIGestureRecognizerDelegate {
     private var returnLink: CADisplayLink?
     private var lastFrame: CFTimeInterval = 0
 
-    init(view: UIView, restingAngles: SIMD2<Float> = .zero, allowsVerticalDrag: Bool = false,
-         onChange: @escaping (simd_quatf) -> Void) {
+    init(
+        view: UIView, restingAngles: SIMD2<Float> = .zero, allowsVerticalDrag: Bool = false,
+        onChange: @escaping (simd_quatf) -> Void
+    ) {
         self.view = view
         motion = ClockOrbitMotion(restingAngles: restingAngles)
         self.allowsVerticalDrag = allowsVerticalDrag
@@ -27,7 +29,8 @@ final class ClockOrbitInteraction: NSObject, UIGestureRecognizerDelegate {
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard !allowsVerticalDrag, let view,
-              let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
+            let pan = gestureRecognizer as? UIPanGestureRecognizer
+        else { return true }
         let velocity = pan.velocity(in: view)
         return abs(velocity.x) > abs(velocity.y)
     }
@@ -47,19 +50,22 @@ final class ClockOrbitInteraction: NSObject, UIGestureRecognizerDelegate {
             onBegan?()
         case .changed:
             let translation = gesture.translation(in: view)
-            motion.drag(translation: SIMD2(Float(translation.x), Float(translation.y)),
-                        width: Float(view.bounds.width))
+            motion.drag(
+                translation: SIMD2(Float(translation.x), Float(translation.y)),
+                width: Float(view.bounds.width))
             onChange(motion.orientation)
         case .ended, .cancelled, .failed:
             let speed = gesture.velocity(in: view)
-            motion.release(velocity: SIMD2(Float(speed.x), Float(speed.y)), width: Float(view.bounds.width))
+            motion.release(
+                velocity: SIMD2(Float(speed.x), Float(speed.y)), width: Float(view.bounds.width))
             if UIAccessibility.isReduceMotionEnabled {
                 reset()
                 onSettled?()
             } else {
                 stopReturn()
                 let link = CADisplayLink(target: self, selector: #selector(returnToRest(_:)))
-                link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 60, preferred: 60)
+                link.preferredFrameRateRange = CAFrameRateRange(
+                    minimum: 60, maximum: 60, preferred: 60)
                 link.add(to: .main, forMode: .common)
                 returnLink = link
             }

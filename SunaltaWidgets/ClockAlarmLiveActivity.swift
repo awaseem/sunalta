@@ -8,10 +8,12 @@ struct ClockAlarmLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: AlarmAttributes<ClockAlarmMetadata>.self) { context in
             let palette = currentPalette
-            AlarmCountdownContent(metadata: context.attributes.metadata, state: context.state, palette: palette)
-                .padding()
-                .activityBackgroundTint(palette.background)
-                .activitySystemActionForegroundColor(palette.foreground)
+            AlarmCountdownContent(
+                metadata: context.attributes.metadata, state: context.state, palette: palette
+            )
+            .padding()
+            .activityBackgroundTint(palette.background)
+            .activitySystemActionForegroundColor(palette.foreground)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -32,9 +34,11 @@ struct ClockAlarmLiveActivity: Widget {
                         Text(context.attributes.metadata?.statusText ?? "Snoozed")
                             .font(.subheadline)
                             .foregroundStyle(ThemePalette.midnight.secondaryForeground)
-                        AlarmCountdownAction(metadata: context.attributes.metadata, systemID: context.state.alarmID,
-                                             palette: .midnight)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        AlarmCountdownAction(
+                            metadata: context.attributes.metadata, systemID: context.state.alarmID,
+                            palette: .midnight
+                        )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                 }
             } compactLeading: {
@@ -52,11 +56,15 @@ struct ClockAlarmLiveActivity: Widget {
     }
 
     private var currentPalette: ThemePalette {
-        guard let defaults = UserDefaults(suiteName: ClockWidgetPreferences.appGroup) else { return .white }
+        guard let defaults = UserDefaults(suiteName: ClockWidgetPreferences.appGroup) else {
+            return .white
+        }
         return .resolve(id: ClockWidgetPreferencesStore(defaults: defaults).load().themeID)
     }
 
-    private func symbol(_ context: ActivityViewContext<AlarmAttributes<ClockAlarmMetadata>>) -> String {
+    private func symbol(_ context: ActivityViewContext<AlarmAttributes<ClockAlarmMetadata>>)
+        -> String
+    {
         context.attributes.metadata?.scanSymbol ?? "alarm"
     }
 }
