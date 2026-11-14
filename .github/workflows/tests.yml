@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-tests:
+    name: iOS tests
+    # This image includes the iOS 27 SDK and simulator required by the project.
+    runs-on: xcode-27
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Show toolchain and simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/TestResults"
+          xcodebuild \
+            -project Sunalta.xcodeproj \
+            -scheme Sunalta \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=27.0' \
+            -destination-timeout 120 \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -resultBundlePath "$RUNNER_TEMP/TestResults/SunaltaTests.xcresult" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -only-testing:SunaltaTests \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            test | tee "$RUNNER_TEMP/TestResults/xcodebuild.log"
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-test-results
+          path: ${{ runner.temp }}/TestResults
+          retention-days: 7
+          if-no-files-found: ignore
